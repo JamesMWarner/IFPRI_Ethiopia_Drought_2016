@@ -1,5 +1,34 @@
 # Functions        --------------------------------------------------------
 
+
+auc = function(x, y, from = min(x), to = max(x), type = c("linear","spline"), absolutearea = FALSE, ...){
+    # auc from the MESS package
+    type <- match.arg(type)
+    if (length(x) != length(y)) 
+        stop("x and y must have the same length")
+    if (length(unique(x)) < 2) 
+        return(NA)
+    if (type == "linear") {
+        if (absolutearea) 
+            y <- y - min(y)
+        values <- approx(x, y, xout = sort(unique(c(from, to, 
+            x[x > from & x < to]))), ...)
+        res <- 0.5 * sum(diff(values$x) * (values$y[-1] + values$y[-length(values$y)]))
+        if (absolutearea) 
+            res <- res - min(y) * (max(x) - min(x))
+    }
+    else {
+        if (absolutearea) 
+            myfunction <- function(x) {
+                abs(splinefun(x, y, method = "natural"))
+            }
+        else myfunction <- splinefun(x, y, method = "natural")
+        res <- integrate(myfunction, lower = from, upper = to)$value
+    }
+    res
+}
+
+
  PlantHarvestDates = function(start_date,end_date,PlantingMonth,PlantingDay,HarvestMonth,HarvestDay){
     # this function takes in date range and returns planting and harvest date for time series
     # set planting
@@ -364,13 +393,14 @@
      # if return_df==T, returns data frame of summary stats for long form panel
      # if spline_spar = 0, doesn't smooth data, as spline_spar increases smoothing decreases
      # iterate between spatial objects
-     require(MESS)
+     #require(MESS) # auc function defined above now
 
      if(!is.data.frame(PlantHarvestTable) ){
 	RicePlantHarvest=PlantHarvestTable[[2]];PlantHarvestTable=PlantHarvestTable[[1]]}
 
      registerDoParallel(num_workers)
      result_summary=foreach(i = 1:length(extr_values),.packages=c('raster','zoo'),.inorder=T) %dopar%{
+	print(i)
         if(sum(!is.na(extr_values[[i]]))==0){ print('Empty Object');return(NA)} # avoid empties
 
         # if aggregate = T, summarize multiple pixels per polygon into one smooth time series
@@ -466,14 +496,31 @@
  	G_AUC_Qnt = lapply(1:length(G_AUC),function(z){rep(quantile(x = G_AUC[[z]],p=Quant_percentile,type=8,na.rm=T),
                 length(G_AUC[[z]])) }) #quantile of annual max values
         for(z in 1:length(G_AUC_Qnt)){names(G_AUC_Qnt[[z]])=names(G_AUC[[z]])}  # change names
+ 	correct = G_mx_dates[[1]] #correct number of dates for G-mx_dates (sometimes includes 1 extra year)
+	G_mx_dates[[1]] = correct[names(G_mx_dates[[1]]) %in% names(G_mn[[1]]) ] 
 
       	G_AUC2 = lapply(1:length(smooth),function(z){ PeriodAUC_method2(x_in = smooth[[z]],dates_in = dats,
                 DOY_start_in=plant_dates[[z]],DOY_end_in=harvest_dates[[z]]) })
-        G_AUC_leading  = lapply(1:length(smooth),function(z){ PeriodAUC(x_in = smooth[[z]],dates_in = dats,
-                DOY_start_in=plant_dates[[z]],DOY_end_in=G_mx_dates[[z]]) })
-        G_AUC_trailing = lapply(1:length(smooth),function(z){ PeriodAUC(x_in = smooth[[z]],dates_in = dats,
-                DOY_start_in=G_mx_dates[[z]],DOY_end_in=harvest_dates[[z]]) })
-	      G_Qnt =  lapply(1:length(smooth),function(z){ PeriodAggregator(x = smooth[[z]],
+
+	
+        G_AUC_leading  = tryCatch({ lapply(1:length(smooth),function(z){ PeriodAUC(x_in = smooth[[z]],dates_in = dats,
+                DOY_start_in=plant_dates[[z]],DOY_end_in=G_mx_dates[[z]]) })}, error = function(err){
+		#deal with errors when estimated harvest preceeds planting?
+		copy = G_AUC
+		copy[[1]] = rep(NA,length(copy[[1]]))
+		names(copy[[1]])= names(G_AUC[[1]])
+		return(copy)
+		})
+        G_AUC_trailing =  tryCatch({ lapply(1:length(smooth),function(z){ PeriodAUC(x_in = smooth[[z]],dates_in = dats,
+                DOY_start_in=G_mx_dates[[z]],DOY_end_in=harvest_dates[[z]]) })}, error = function(err){
+                #deal with errors when estimated harvest preceeds planting?
+                copy = G_AUC
+                copy[[1]] = rep(NA,length(copy[[1]]))
+                names(copy[[1]])= names(G_AUC[[1]])
+                return(copy)
+                })
+
+        G_Qnt =  lapply(1:length(smooth),function(z){ PeriodAggregator(x = smooth[[z]],
                 dates_in = dats, date_range_st=plant_dates[[z]],
                 date_range_end=harvest_dates[[z]], by_in='days',FUN=function(x) quantile(x,p=Quant_percentile,type=8,na.rm=T))})
 
@@ -952,7 +999,6 @@ Annual_Summary_Functions_OtherData = function(extr_values, PlantHarvestTable, Ve
      # if return_df==T, returns data frame of summary stats for long form panel
      # if spline_spar = 0, doesn't smooth data, as spline_spar increases smoothing decreases
      # iterate between spatial objects
-     require(MESS)
 
 
      registerDoParallel(num_workers)
