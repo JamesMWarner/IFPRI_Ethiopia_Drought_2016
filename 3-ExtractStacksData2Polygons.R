@@ -51,7 +51,7 @@ location = c(9.145000, 40.489673)  # Lat Lon of a location of interest within yo
 tiles =   c('h21v07','h22v07','h21v08','h22v08')   # India example c('h13v12')
 dates = c('2011-01-01','2016-03-30') # example c('year-month-day',year-month-day') c('2002-07-04','2016-02-02') 
 
-
+version = 2 # updated land cover classes
 
 
 # Extract polygon or points data from stacks -------------------------------------
@@ -64,7 +64,7 @@ dir.create(file.path('/lustre/groups/manngroup/Processed Panel/ExtractRaw/'), sh
 
 # load data stacks from both directories
 rm(list=ls()[grep('stack',ls())]) # running into memory issues clear stacks load one by one
-dir1 = list.files('	.','.RData',full.names=T)
+dir1 = list.files('.',pattern=paste('*',version,'.RData',sep=''),full.names=T)
 lapply(dir1, load,.GlobalEnv)
 
 # get polygon data 
@@ -110,7 +110,7 @@ out = foreach(rows= seq(1,inter_rows$length)) %do% {
   save(Poly_Veg_Ext ,
        file = paste(
          '/lustre/groups/manngroup/Processed Panel/ExtractRaw/',
-         rows,product,'_panel_','_ExtractRaw','.RData',sep='') )
+         rows,product,'_panel_','_ExtractRaw_V',version,'.RData',sep='') )
   rm(Poly_Veg_Ext)
   return(0)
 }
@@ -268,8 +268,8 @@ load(flist[1])
   #       Polys_sub[[layer]] = as.numeric(mean)
   #}
 
-#writeOGR(obj=Polys_sub, dsn="/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/",
-#	 layer="EnumerationAreasSIN_sub_agss_codes_wdata", driver="ESRI Shapefile")
+ #writeOGR(obj=Polys_sub, dsn="/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/",
+ #	 layer="EnumerationAreasSIN_sub_agss_codes_wdata", driver="ESRI Shapefile")
 
 
 

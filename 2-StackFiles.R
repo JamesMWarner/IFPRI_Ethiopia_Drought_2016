@@ -10,7 +10,7 @@ echo "TMP='$HOME/.Rtmp'" > $HOME/.Renviron
 
 module load proj.4/4.8.0
 module load gdal/gcc/1.11 
-module load R
+module load R/3.1.1
 module load gcc/4.9.0
 R
 
@@ -67,6 +67,7 @@ strptime(gsub("^.*A([0-9]+).*$", "\\1",GetDates(location[1], location[2],product
 #  out_dir = 'R:\\Mann_Research\\IFPRI_Ethiopia_Drought_2016\\Data\\VegetationIndex'
 #  setwd(out_dir)
 
+version = 2    # update to 'more' landcover classification that includes more training sites and settlement land class
 
 # Stack Raw data -----------------------------------------------------
 
@@ -291,7 +292,8 @@ for(product in  c('EVI','NDVI')){  #'EVI','NDVI'
 
 # Limit to crop signal ----------------------------------------------------
 #  Class Codes:
-#  1 agforest 2 arid 3 dryag 4 forest 5 semiarid 6 shrub 7 water 8 wetag 9 wetforest
+# version 1  1 agforest 2 arid 3 dryag 4 forest 5 semiarid 6 shrub 7 water 8 wetag 9 wetforest
+# version 2 "more"  1 agforest 2 arid 3 dryag 4 forest 5 semiarid 6 settlement 7 shrub 8 water 9 wetag 10 wetforest
 
 
 # load data in previous section and run common dates
@@ -307,8 +309,9 @@ lapply(dir1, load,.GlobalEnv)
 
 # set up directories and names
 setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data//Data Stacks')
-landcover_prefix = 'smooth_lc_svm_mn.tif'
+landcover_prefix = 'smooth_lc_svm_mnsdmx_newtrain_more.tif'
 landcover_path = '../LandUseClassifications/'
+
 
 registerDoParallel(25)
 
@@ -323,11 +326,13 @@ for(product in  c('EVI','NDVI')){  #'EVI','NDVI'
     
     foreach(i=(1:dim(data_stackvalues)[3]), .inorder=F) %dopar% {
       print(i)
-      data_stackvalues[[i]][lc_stackvalues[[i]]==2|lc_stackvalues[[i]]==7|
-                              lc_stackvalues[[i]]==9]=NA
+      # exlude land covers and write out to lustre
+      data_stackvalues[[i]][lc_stackvalues[[i]]==2|lc_stackvalues[[i]]==4| lc_stackvalues[[i]]==5|
+                              lc_stackvalues[[i]]==6 |lc_stackvalues[[i]]==7| lc_stackvalues[[i]]==8|
+				lc_stackvalues[[i]]==10 ]=NA
       writeRaster(data_stackvalues[[i]],paste('/lustre/groups/manngroup/WO Clouds Clean LC/Tifs/'
                                               ,product,'_',tile,'_',names(data_stackvalues[[i]]),
-                                              '_Clean_LC','.tif',sep=''),overwrite=T)
+                                              '_Clean_LC_V',version,'.tif',sep=''),overwrite=T)
     }
     
     # Copy files back from lustre and delete lustre
@@ -341,7 +346,7 @@ for(product in  c('EVI','NDVI')){  #'EVI','NDVI'
     print(paste('Restacking',product,tile,sep=' '))
     
     # Set up data
-    flist = list.files("./WO Clouds Clean LC/tifs/",glob2rx(paste(product,'_',tile,'*','.tif$',sep='')),full.names = T)
+    flist = list.files("./WO Clouds Clean LC/tifs/",glob2rx(paste(product,'_',tile,'*','V',version,'.tif$',sep='')),full.names = T)
     flist_dates = gsub("^.*_X([0-9]{7}).*$", "\\1",flist,perl = T)  # Strip dates
     flist = flist[order(flist_dates)]  # file list in order
     flist_dates = flist_dates[order(flist_dates)]  # file_dates list in order
@@ -351,7 +356,7 @@ for(product in  c('EVI','NDVI')){  #'EVI','NDVI'
     names(stacked) = flist_dates
     assign(paste(product,'stack',tile,'WO_Clouds_Clean_LC',sep='_'),stacked)
     save( list=paste(product,'stack',tile,'WO_Clouds_Clean_LC',sep='_') ,
-          file = paste('./WO_Clouds_Clean_LC/',product,'_stack_',
-                       tile,'_WO_Clouds_Clean_LC','.RData',sep='') )
+          file = paste('./WO Clouds Clean LC/',product,'_stack_',
+                       tile,'_WO_Clouds_Clean_LC_V',version,'.RData',sep='') )
   }}
 
