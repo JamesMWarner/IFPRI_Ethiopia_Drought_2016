@@ -54,91 +54,6 @@ dates = c('2011-01-01','2016-03-30') # example c('year-month-day',year-month-day
 version = 2 # updated land cover classes
 
 
-# Extract polygon or points data from stacks -------------------------------------
-# Do this is 3A-Extract2AllPolygons_script.R
-
-#library(data.table)
-#setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Data Stacks/WO Clouds Clean LC/') # don't load smoothed...
-#dir.create(file.path('../../Processed Panel/ExtractRaw/'), showWarnings=F,recursive=T) # create dir for tifs
-#dir.create(file.path('/lustre/groups/manngroup/Processed Panel/ExtractRaw/'), showWarnings=F,recursive=T) # folder on high speed
-
-
-## load data stacks from both directories
-#rm(list=ls()[grep('stack',ls())]) # running into memory issues clear stacks load one by one
-#dir1 = list.files('.',pattern=paste('*',version,'.RData',sep=''),full.names=T)
-#lapply(dir1, load,.GlobalEnv)
-
-# get polygon data 
-#ogrInfo('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasUTM')
-#Polys = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasUTM')
-#Polys = spTransform(Polys, CRS("+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs"))
-#writeOGR(Polys, dsn="/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/", 
-#     layer="EnumerationAreasSIN", driver="ESRI Shapefile") # this is in geographical projection
-
-
-# Do this is 3A-Extract2AllPolygons_script.R
-#Polys = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasSIN',
-#                stringsAsFactors = F)
-#Polys$id = 1:dim(Polys@data)[1]
-#
-#head(Polys)
-#unique(Polys$R_NAME)
-#Polys = Polys[!(Polys$R_NAME %in% c('SOMALI','Addis Ababa','SOMALIE')),]
-
-
-## break into blocks of polygons
-#block_width = 250
-#nrows = dim(Polys)[1]
-#nblocks <- nrows%/%block_width
-#bs_rows <- seq(1,nblocks*block_width+1,block_width)
-#bs_nrows <- rbind(matrix(block_width,length(bs_rows)-1,1),nrows-bs_rows[length(bs_rows)]+1)
-#print('Working on the following rows')
-#print(paste(bs_rows))
-#
-## use iterator package to move through rows 
-##inter_rows = lapply(1:length(bs_rows), function(x) seq(bs_rows[x],(bs_rows[x]+bs_nrows[x]-1)))  
-#inter_rows = iter(inter_rows)
-#
-#product = c('NDVI','EVI')[1]
-#
-#out = foreach(rows= seq(1,inter_rows$length)) %do% {
-#  # limit size of polys to avoid memory issues
-#  Polys_sub = Polys[nextElem(inter_rows),]
-#  # extract values croped to point or polygon
-#  Poly_Veg_Ext = extract_value_point_polygon(Polys_sub,
-#                                             list(get(paste(product,'_stack_h22v08_WO_Clouds_Clean_LC',sep='')),
-#                                                  get(paste(product,'_stack_h22v07_WO_Clouds_Clean_LC',sep='')),
-#                                                  get(paste(product,'_stack_h21v08_WO_Clouds_Clean_LC',sep='')),
-#                                                  get(paste(product,'_stack_h21v07_WO_Clouds_Clean_LC',sep=''))),10)
-#  print(paste("saving block",rows))
-#  save(Poly_Veg_Ext ,
-#       file = paste(
-#         '/lustre/groups/manngroup/Processed Panel/ExtractRaw/',
-#         rows,product,'_panel_','_ExtractRaw_V',version,'.RData',sep='') )
-#  rm(Poly_Veg_Ext)
-#  return(0)
-#}
-##
-## Copy files back from lustre and delete lustre
-#setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Processed Panel/ExtractRaw/')
-#flist = list.files("/lustre/groups/manngroup/Processed Panel/ExtractRaw/",
-#                   glob2rx(paste('*','.RData$',sep='')),full.names = T)
-#fname = list.files("/lustre/groups/manngroup/Processed Panel/ExtractRaw/",
-#                   glob2rx(paste('*','.RData$',sep='')),full.names = F)
-#file.copy(from=flist, to=paste(".",fname,sep='/'),
-#          overwrite = T, recursive = F, copy.mode = T)
-#file.remove(flist)
-#print(paste('Restacking',product,tile,sep=' '))
-## Compile data from polygon extract  --------------------------------------
-#flist = list.files("/lustre/groups/manngroup/Processed Panel/ExtractRaw/",
-#                   glob2rx(paste('*','.RData$',sep='')),full.names = T)
-#fname = list.files("/lustre/groups/manngroup/Processed Panel/ExtractRaw/",
-#                   glob2rx(paste('*','.RData$',sep='')),full.names = F)
-#
-#load(flist[1])
-
-
-
 
 # Extract data from subset of eas that have agss data --------------------------
 
@@ -314,8 +229,8 @@ version = 2 # updated land cover classes
 
   # Load data
   setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
-  load('./Outputs/Poly_PET_Ext_sub.RData')
-  load('./Outputs/Poly_ETA_Ext_sub.RData')
+  load('./Outputs/PET_summary')
+  load('./Outputs/ETA_summary')
   load(paste('./Outputs/NDVI_summary_v',version,sep=''))
 
   Polys_sub = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasSIN_sub_agss_codes_wdata',
