@@ -22,7 +22,7 @@ module load gdal/gcc/1.11
 module load R/3.1.1
 module load gcc/4.9.0
 
-srun R CMD BATCH ./scriptextract1.R
+srun R CMD BATCH ./scriptextract_selectEAs.R
 
 
 

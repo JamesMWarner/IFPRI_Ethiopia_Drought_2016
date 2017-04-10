@@ -173,7 +173,7 @@ NDVI_summary_all_EAs = Annual_Summary_Functions(extr_values, PlantHarvestTable,Q
                                          return_df=T,num_workers)  # make sure to convert block from integer to numeric for index
 
 product = 'NDVI'
- save(Poly_Veg_Ext, file = paste('../Processed Panel/ExtractRaw_Combined_AllEAs/','AllEAs_',product,'_panel_summary.RData',sep='') )
+ save(NDVI_summary_all_EAs, file = paste('../Processed Panel/ExtractRaw_Combined_AllEAs/','AllEAs_',product,'_panel_summary.RData',sep='') )
 
 
 

@@ -9,7 +9,7 @@ echo "TMP='$HOME/.Rtmp'" > $HOME/.Renviron
 
 module load proj.4/4.8.0
 module load gdal/gcc/1.11
-module load R
+module load R/3.1.1
 module load gcc/4.9.0
 R
 
@@ -112,8 +112,8 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
   points = spTransform(points, CRS(projection(NDVI_stack_h21v07_smooth)))
   #  writeOGR(points, dsn=".", layer="LUTrainingPoints", driver="ESRI Shapefile")
 
-  plot(NDVI_stack_h21v07_smooth[[1]])
-  plot(points,add=T)
+  #plot(NDVI_stack_h21v07_smooth[[1]])
+  #plot(points,add=T)
 
 
   ot_training = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/LandUseClassifications/',
@@ -174,15 +174,29 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
   #writeRaster(NDVI_stack_h22v08_smooth_mx,'NDVI_stack_h22v08_smooth_mx.tif')
   #endCluster()
 
+  #beginCluster(5,type="SOCK")
+  #f2 <- function(x) calc(x, min)
+  #setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Data Stacks/Smoothed/')
+  #NDVI_stack_h21v07_smooth_min=clusterR(NDVI_stack_h21v07_smooth, f2)
+  #writeRaster(NDVI_stack_h21v07_smooth_min,'NDVI_stack_h21v07_smooth_min.tif')
+  #NDVI_stack_h21v08_smooth_min=clusterR(NDVI_stack_h21v08_smooth,f2)
+  #writeRaster(NDVI_stack_h21v08_smooth_min,'NDVI_stack_h21v08_smooth_min.tif')
+  #NDVI_stack_h22v07_smooth_min=clusterR(NDVI_stack_h22v07_smooth,f2)
+  #writeRaster(NDVI_stack_h22v07_smooth_min,'NDVI_stack_h22v07_smooth_min.tif')
+  #NDVI_stack_h22v08_smooth_min=clusterR(NDVI_stack_h22v08_smooth,f2)
+  #writeRaster(NDVI_stack_h22v08_smooth_min,'NDVI_stack_h22v08_smooth_min.tif')
+  #endCluster()
+
 
 
   # add mean & sd to stacks
-  layers_2_add = c('mean','sd','mx','tile') # 'mean','sd','tile' :  Tile adds tile number for training
+  layers_2_add = c('mean','sd','mx','tile','min') # :  Tile adds tile number for training
 
-  foreach(product = c('NDVI')) %do% {
+  for(product in c('NDVI')){
      for( tile in  tiles){
           stack_name = paste(product,'_stack_',tile,'_smooth',sep='') 
 	  stack_data = get(stack_name)
+	  print(stack_name)
 
 	  zs = dim(stack_data)[3]  # use as index
 	  for(layer in layers_2_add){
@@ -201,15 +215,21 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
 	  }
      }
   }
+  # fix weird problem with mx.1 name
+  names(NDVI_stack_h21v07_smooth)[names(NDVI_stack_h21v07_smooth)=='mx.1']='mx'
+  names(NDVI_stack_h22v07_smooth)[names(NDVI_stack_h22v07_smooth)=='mx.1']='mx'
+  names(NDVI_stack_h21v08_smooth)[names(NDVI_stack_h21v08_smooth)=='mx.1']='mx'
+  names(NDVI_stack_h22v08_smooth)[names(NDVI_stack_h22names(NDVI_stack_h22v07_smooth)[v08_smooth)=='mx.1']='mx'
+
 
 
   # extract time series (MUST BE DONE ON SHORT OR LARGER MEMORY NODE, DOESN"T WORK ON DEFQ OR DEBUG)
-  #NDVI = extract_value_point_polygon(points,list(NDVI_stack_h21v07_smooth,
-  #     NDVI_stack_h21v08_smooth,NDVI_stack_h22v07_smooth,
-  #     NDVI_stack_h22v08_smooth),20)
+  #  NDVI = extract_value_point_polygon(points,list(NDVI_stack_h21v07_smooth,
+  #       NDVI_stack_h21v08_smooth,NDVI_stack_h22v07_smooth,
+  #       NDVI_stack_h22v08_smooth),15)
 
-  #save(NDVI, file = paste('./NDVI_200p_LUClasses_mnsdmx_newtrain.RData',sep='') )
-  load('./NDVI_200p_LUClasses_mnsdmx_newtrain.RData')
+  #save(NDVI, file = paste('./NDVI_200p_LUClasses_mnsdmx_newtrain_evenmore.RData',sep='') )
+  load('./NDVI_200p_LUClasses_mnsdmx_newtrain_evenmore.RData')
 
   # create a dataframe from list
   NDVI = rbindlist(NDVI, fill=T) # convert list to table
@@ -235,14 +255,14 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
   plot(rf)
   varImpPlot(rf)
 
-  #source( '/groups/manngroup/IFPRI_Ethiopia_Dought_2016/IFPRI_Ethiopia_Drought_2016/mctune.R')
-  rf_ranges = list(ntree=c(seq(1,1000,100),seq(1000,8000,500)),mtry=seq(5,15,2))
-  set.seed(10)
-  tuned.rf = mctune(method = randomForest, train.x = formula1, data = na.omit(NDVI_smooth),
-         tunecontrol = tune.control(sampling = "cross",cross = 5), ranges=rf_ranges,
-         mc.control=list(mc.cores=20, mc.preschedule=T),confusionmatrizes=T )
-  save(tuned.rf, file = paste('./NDVI_tuned_rf_mnsdmx_newtrain.RData',sep='') )
-  load('./NDVI_tuned_rf_mnsdmx_newtrain.RData')
+  source( '/groups/manngroup/IFPRI_Ethiopia_Dought_2016/IFPRI_Ethiopia_Drought_2016/mctune.R')
+  #rf_ranges = list(ntree=c(seq(1,1000,100),seq(1000,8000,500)),mtry=seq(5,15,2))
+  #set.seed(10)
+  #tuned.rf = mctune(method = randomForest, train.x = formula1, data = na.omit(NDVI_smooth),
+  #       tunecontrol = tune.control(sampling = "cross",cross = 5), ranges=rf_ranges,
+  #       mc.control=list(mc.cores=20, mc.preschedule=T),confusionmatrizes=T )
+  #save(tuned.rf, file = paste('./NDVI_tuned_rf_mnsdmx_newtrain_more.RData',sep='') )
+  load('./NDVI_tuned_rf_mnsdmx_newtrain_more.RData')
 
   tuned.rf$best.model
   #plot(tuned.rf)
@@ -261,21 +281,22 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
           tunecontrol=tune.control(sampling='cross',cross=3,performances=T,nrepeat=5,best.model=T))
 
   save(svm_tuned,
-    file = '/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/LandUseClassifications/svm_model_tuned_mnsdmx_newtrain.RData')
+    file = '/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/LandUseClassifications/svm_model_tuned_mnsdmx_newtrain_more.RData')
+  load('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/LandUseClassifications/svm_model_tuned_mnsdmx_newtrain_more.RData')
 
   svm_tuned$best.model
-  table(predict(svm_tuned$best.model), NDVI_smooth$Class)
-
+  table(predict(svm_tuned$best.model), NDVI_smooth$Class[rowSums(is.na( NDVI_smooth)) ==0])  # table with missing data removed
+  plot(svm_tuned)
 
 
 
   # Predict land class --------------------------------------------------
   #  Class Codes:
-  #  1 agforest 2 arid 3 dryag 4 forest 5 semiarid 6 shrub 7 water 8 wetag 9 wetforest
+  #  1 agforest 2 arid 3 dryag 4 forest 5 semiarid 6 settlement 7 shrub 8 water 9 wetag 10 wetforest
 
 
   setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/LandUseClassifications/')
-  load('./svm_model_tuned_mnsdmx_newtrain.RData')
+  load('./svm_model_tuned_mnsdmx_newtrain_more.RData')
 
   for(stacks in c('NDVI_stack_h21v07_smooth','NDVI_stack_h21v08_smooth','NDVI_stack_h22v07_smooth',
                 'NDVI_stack_h22v08_smooth') ){
@@ -283,7 +304,7 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
         print(paste('predicting stack',stacks))
         lc = clusterR(get(stacks), predict, args=list(model = svm_tuned$best.model))
         endCluster()
-        writeRaster(lc,paste('./',stacks,'_lc_svm_mnsdmx_newtrain.tif',sep=''),
+        writeRaster(lc,paste('./',stacks,'_lc_svm_mnsdmx_newtrain_more.tif',sep=''),
                 overwrite=T)
   }
 
