@@ -55,17 +55,18 @@ version = 2 # updated land cover classes
 
 
 # Extract polygon or points data from stacks -------------------------------------
+# Do this is 3A-Extract2AllPolygons_script.R
 
-library(data.table)
-setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Data Stacks/WO Clouds Clean LC/') # don't load smoothed...
-dir.create(file.path('../../Processed Panel/ExtractRaw/'), showWarnings=F,recursive=T) # create dir for tifs
-dir.create(file.path('/lustre/groups/manngroup/Processed Panel/ExtractRaw/'), showWarnings=F,recursive=T) # folder on high speed
+#library(data.table)
+#setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Data Stacks/WO Clouds Clean LC/') # don't load smoothed...
+#dir.create(file.path('../../Processed Panel/ExtractRaw/'), showWarnings=F,recursive=T) # create dir for tifs
+#dir.create(file.path('/lustre/groups/manngroup/Processed Panel/ExtractRaw/'), showWarnings=F,recursive=T) # folder on high speed
 
 
-# load data stacks from both directories
-rm(list=ls()[grep('stack',ls())]) # running into memory issues clear stacks load one by one
-dir1 = list.files('.',pattern=paste('*',version,'.RData',sep=''),full.names=T)
-lapply(dir1, load,.GlobalEnv)
+## load data stacks from both directories
+#rm(list=ls()[grep('stack',ls())]) # running into memory issues clear stacks load one by one
+#dir1 = list.files('.',pattern=paste('*',version,'.RData',sep=''),full.names=T)
+#lapply(dir1, load,.GlobalEnv)
 
 # get polygon data 
 #ogrInfo('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasUTM')
@@ -73,71 +74,68 @@ lapply(dir1, load,.GlobalEnv)
 #Polys = spTransform(Polys, CRS("+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs"))
 #writeOGR(Polys, dsn="/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/", 
 #     layer="EnumerationAreasSIN", driver="ESRI Shapefile") # this is in geographical projection
-Polys = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasSIN',
-                stringsAsFactors = F)
-Polys$id = 1:dim(Polys@data)[1]
-
-head(Polys)
-unique(Polys$R_NAME)
-Polys = Polys[!(Polys$R_NAME %in% c('SOMALI','Addis Ababa','SOMALIE')),]
 
 
-# break into blocks of polygons
-block_width = 250
-nrows = dim(Polys)[1]
-nblocks <- nrows%/%block_width
-bs_rows <- seq(1,nblocks*block_width+1,block_width)
-bs_nrows <- rbind(matrix(block_width,length(bs_rows)-1,1),nrows-bs_rows[length(bs_rows)]+1)
-print('Working on the following rows')
-print(paste(bs_rows))
-
-# use iterator package to move through rows 
-inter_rows = lapply(1:length(bs_rows), function(x) seq(bs_rows[x],(bs_rows[x]+bs_nrows[x]-1)))  
-inter_rows = iter(inter_rows)
-
-product = c('NDVI','EVI')[1]
-
-out = foreach(rows= seq(1,inter_rows$length)) %do% {
-  # limit size of polys to avoid memory issues
-  Polys_sub = Polys[nextElem(inter_rows),]
-  # extract values croped to point or polygon
-  Poly_Veg_Ext = extract_value_point_polygon(Polys_sub,
-                                             list(get(paste(product,'_stack_h22v08_WO_Clouds_Clean_LC',sep='')),
-                                                  get(paste(product,'_stack_h22v07_WO_Clouds_Clean_LC',sep='')),
-                                                  get(paste(product,'_stack_h21v08_WO_Clouds_Clean_LC',sep='')),
-                                                  get(paste(product,'_stack_h21v07_WO_Clouds_Clean_LC',sep=''))),10)
-  print(paste("saving block",rows))
-  save(Poly_Veg_Ext ,
-       file = paste(
-         '/lustre/groups/manngroup/Processed Panel/ExtractRaw/',
-         rows,product,'_panel_','_ExtractRaw_V',version,'.RData',sep='') )
-  rm(Poly_Veg_Ext)
-  return(0)
-}
-
-# Copy files back from lustre and delete lustre
-setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Processed Panel/ExtractRaw/')
-flist = list.files("/lustre/groups/manngroup/Processed Panel/ExtractRaw/",
-                   glob2rx(paste('*','.RData$',sep='')),full.names = T)
-fname = list.files("/lustre/groups/manngroup/Processed Panel/ExtractRaw/",
-                   glob2rx(paste('*','.RData$',sep='')),full.names = F)
-file.copy(from=flist, to=paste(".",fname,sep='/'),
-          overwrite = T, recursive = F, copy.mode = T)
-file.remove(flist)
-print(paste('Restacking',product,tile,sep=' '))
+# Do this is 3A-Extract2AllPolygons_script.R
+#Polys = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasSIN',
+#                stringsAsFactors = F)
+#Polys$id = 1:dim(Polys@data)[1]
+#
+#head(Polys)
+#unique(Polys$R_NAME)
+#Polys = Polys[!(Polys$R_NAME %in% c('SOMALI','Addis Ababa','SOMALIE')),]
 
 
-
-
-# Compile data from polygon extract  --------------------------------------
-
-
-flist = list.files("/lustre/groups/manngroup/Processed Panel/ExtractRaw/",
-                   glob2rx(paste('*','.RData$',sep='')),full.names = T)
-fname = list.files("/lustre/groups/manngroup/Processed Panel/ExtractRaw/",
-                   glob2rx(paste('*','.RData$',sep='')),full.names = F)
-
-load(flist[1])
+## break into blocks of polygons
+#block_width = 250
+#nrows = dim(Polys)[1]
+#nblocks <- nrows%/%block_width
+#bs_rows <- seq(1,nblocks*block_width+1,block_width)
+#bs_nrows <- rbind(matrix(block_width,length(bs_rows)-1,1),nrows-bs_rows[length(bs_rows)]+1)
+#print('Working on the following rows')
+#print(paste(bs_rows))
+#
+## use iterator package to move through rows 
+##inter_rows = lapply(1:length(bs_rows), function(x) seq(bs_rows[x],(bs_rows[x]+bs_nrows[x]-1)))  
+#inter_rows = iter(inter_rows)
+#
+#product = c('NDVI','EVI')[1]
+#
+#out = foreach(rows= seq(1,inter_rows$length)) %do% {
+#  # limit size of polys to avoid memory issues
+#  Polys_sub = Polys[nextElem(inter_rows),]
+#  # extract values croped to point or polygon
+#  Poly_Veg_Ext = extract_value_point_polygon(Polys_sub,
+#                                             list(get(paste(product,'_stack_h22v08_WO_Clouds_Clean_LC',sep='')),
+#                                                  get(paste(product,'_stack_h22v07_WO_Clouds_Clean_LC',sep='')),
+#                                                  get(paste(product,'_stack_h21v08_WO_Clouds_Clean_LC',sep='')),
+#                                                  get(paste(product,'_stack_h21v07_WO_Clouds_Clean_LC',sep=''))),10)
+#  print(paste("saving block",rows))
+#  save(Poly_Veg_Ext ,
+#       file = paste(
+#         '/lustre/groups/manngroup/Processed Panel/ExtractRaw/',
+#         rows,product,'_panel_','_ExtractRaw_V',version,'.RData',sep='') )
+#  rm(Poly_Veg_Ext)
+#  return(0)
+#}
+##
+## Copy files back from lustre and delete lustre
+#setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Processed Panel/ExtractRaw/')
+#flist = list.files("/lustre/groups/manngroup/Processed Panel/ExtractRaw/",
+#                   glob2rx(paste('*','.RData$',sep='')),full.names = T)
+#fname = list.files("/lustre/groups/manngroup/Processed Panel/ExtractRaw/",
+#                   glob2rx(paste('*','.RData$',sep='')),full.names = F)
+#file.copy(from=flist, to=paste(".",fname,sep='/'),
+#          overwrite = T, recursive = F, copy.mode = T)
+#file.remove(flist)
+#print(paste('Restacking',product,tile,sep=' '))
+## Compile data from polygon extract  --------------------------------------
+#flist = list.files("/lustre/groups/manngroup/Processed Panel/ExtractRaw/",
+#                   glob2rx(paste('*','.RData$',sep='')),full.names = T)
+#fname = list.files("/lustre/groups/manngroup/Processed Panel/ExtractRaw/",
+#                   glob2rx(paste('*','.RData$',sep='')),full.names = F)
+#
+#load(flist[1])
 
 
 
@@ -160,15 +158,15 @@ load(flist[1])
   Polys_sub$id = 1:dim(Polys_sub@data)[1]
   product = c('NDVI','EVI')[1]
 
-  #Poly_Veg_Ext_sub = extract_value_point_polygon(Polys_sub,
-  #               list(get(paste(product,'_stack_h22v08_WO_Clouds_Clean_LC',sep='')),
-  #               get(paste(product,'_stack_h22v07_WO_Clouds_Clean_LC',sep='')),
-  #               get(paste(product,'_stack_h21v08_WO_Clouds_Clean_LC',sep='')),
-  #               get(paste(product,'_stack_h21v07_WO_Clouds_Clean_LC',sep=''))),15)
+  Poly_Veg_Ext_sub = extract_value_point_polygon(Polys_sub,
+                 list(get(paste(product,'_stack_h22v08_WO_Clouds_Clean_LC',sep='')),
+                 get(paste(product,'_stack_h22v07_WO_Clouds_Clean_LC',sep='')),
+                 get(paste(product,'_stack_h21v08_WO_Clouds_Clean_LC',sep='')),
+                 get(paste(product,'_stack_h21v07_WO_Clouds_Clean_LC',sep=''))),15)
 
-  #save(Poly_Veg_Ext_sub,
-  #	file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Processed Panel/ExtractRaw/',
-  #	product,'_Poly_Ext_sub_agss.RData',sep=''))
+  save(Poly_Veg_Ext_sub,
+       file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Processed Panel/ExtractRaw/',
+       product,'_Poly_Ext_sub_agss.RData',sep=''))
 
 
 
@@ -254,6 +252,7 @@ load(flist[1])
   NDVI_summary =  Annual_Summary_Functions(extr_values, PlantHarvestTable,Quant_percentile, aggregate=T, 
                                          return_df=T,num_workers)
 
+  save(NDVI_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/NDVI_summary_v',version,sep=''))
 
   # pull data to polygons
   # load data
@@ -276,19 +275,21 @@ load(flist[1])
 # pull ETA PET data to polygons -----------------------------------
 
   setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
-  #load('./PET/PET_stack.RData')
-  #load('./ETa Anomaly/ETA_stack.RData')
-  #Poly_PET_Ext_sub = extract_value_point_polygon(Polys_sub,PET_stack,15)
-  #save(Poly_PET_Ext_sub,
-  #      file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Processed Panel/ExtractRaw/',
-  #      'Poly_PET_Ext_sub.RData',sep=''))
-  #Poly_ETA_Ext_sub = extract_value_point_polygon(Polys_sub,ETA_stack,15)
-  #save(Poly_ETA_Ext_sub,
-  #      file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Processed Panel/ExtractRaw/',
-  #      'Poly_ETA_Ext_sub.RData',sep=''))
+#  load('./PET/PET_stack.RData')
+#  load('./ETa Anomaly/ETA_stack.RData')
+#  Poly_PET_Ext_sub = extract_value_point_polygon(Polys_sub,PET_stack,12)
+#  save(Poly_PET_Ext_sub,
+#        file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+#        'Poly_PET_Ext_sub.RData',sep=''))
+#  Poly_ETA_Ext_sub = extract_value_point_polygon(Polys_sub,ETA_stack,15)
+#  save(Poly_ETA_Ext_sub,
+#        file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+#        'Poly_ETA_Ext_sub.RData',sep=''))
 
-  load('./Processed Panel/ExtractRaw/Poly_PET_Ext_sub.RData')
-  load('./Processed Panel/ExtractRaw/Poly_ETA_Ext_sub.RData')
+  load('./Outputs/Poly_PET_Ext_sub.RData')
+  load('./Outputs/Poly_ETA_Ext_sub.RData')
+  load(paste('./Outputs/NDVI_summary_v',version,sep=''))
+
 
   # Get summary statistics lists
   extr_values = Poly_PET_Ext_sub  
@@ -304,18 +305,24 @@ load(flist[1])
   extr_values= Poly_ETA_Ext_sub
   name_prefix = 'ETA'
   ETA_summary =  Annual_Summary_Functions_OtherData(extr_values, PlantHarvestTable, Veg_Annual_Summary,name_prefix,
-                                                  Quant_percentile,return_df,num_workers=5,spline_spar = 0,aggregate=T)
+                                                  Quant_percentile,return_df,num_workers=5,spline_spar,aggregate)
+  save(PET_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/PET_summary'))
+  save(ETA_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/ETA_summary'))
 
 
 # Convert data to panel format --------------------------------------------
 
+  # Load data
+  setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
+  load('./Outputs/Poly_PET_Ext_sub.RData')
+  load('./Outputs/Poly_ETA_Ext_sub.RData')
+  load(paste('./Outputs/NDVI_summary_v',version,sep=''))
 
-  library(plyr)
   Polys_sub = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasSIN_sub_agss_codes_wdata',
                     stringsAsFactors = F)
   Polys_sub_data = Polys_sub@data
-
   Polys_sub_data$i = 1:dim(Polys_sub_data)[1]  # add id to join to 
+
 
   holder_list = list()
   for(i in 1:dim(Polys_sub_data)[1]){
@@ -341,4 +348,4 @@ load(flist[1])
   library(data.table)
   output = rbindlist(holder_list, fill=T)
 
-  write.csv(output,'./Outputs/EA_NDVI_ET_panel.csv')
+  write.csv(output,paste('./Outputs/EA_NDVI_ET_panel_V',version,'.csv',sep=''))
