@@ -808,7 +808,7 @@ SplineAndOutlierRemovalNA <- function(x, dates, out_sigma=3, spline_spar=0.3, ou
 
 
 
-stack_smoother <- function(stack_in,dates,pred_dates,spline_spar=0.1,workers=20,stack_name,out_dir,whole_script=T){
+stack_smoother <- function(stack_in,dates,pred_dates,spline_spar=0.1,workers=20,stack_name,version,out_dir,whole_script=T){
     #Takes stack and returns smoothed stack using SplineAndOutlierRemovalNA tool
     # as spline_spar increases smoothing decreases
     #Determine optimal block size for loading in MODIS stack data
@@ -876,7 +876,7 @@ stack_smoother <- function(stack_in,dates,pred_dates,spline_spar=0.1,workers=20,
       r = stack_in[[layer]]
       r = setValues(r, matrix(result_table[[layer]],nrow=dim(r)[1],byrow=T))
       writeRaster(r,paste('NDVI_h',hnumb,'v',vnumb,'_',names(stack_in)[layer],
-		'_smooth_',spline_spar,'.tif',sep=''),overwrite=T)
+		'_smooth_',spline_spar,'_V',version,,'.tif',sep=''),overwrite=T)
       return(0)
    }
    rm(list=c('result','data_list','result_table'))

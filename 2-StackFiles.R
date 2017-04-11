@@ -68,11 +68,13 @@ strptime(gsub("^.*A([0-9]+).*$", "\\1",GetDates(location[1], location[2],product
 #  setwd(out_dir)
 
 version = 3    # update to 'more' landcover classification that includes more training sites and settlement land class
+               # version 3 has new landcover and 2010 data 
+
+
 
 # Stack Raw data -----------------------------------------------------
 
-
-registerDoParallel(5)
+registerDoParallel(3)
 setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/VegetationIndex/')  # folder where  EVI .tifs are
 # create data stack for each variable and tile 
 
@@ -105,28 +107,28 @@ foreach(product =  c('EVI','NDVI','pixel_reliability')) %dopar% {
 # Limit stacks to common dates -------------------------------------------
 
 
-setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
+ setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
 
-# load data stacks from both directories
-versiontolook = paste('_V',version,'.RData')
-stack_types_2_load =c('EVI','NDVI','pixel_reliability')
-dir1 = list.files('./Data Stacks/Raw Stacks/',versiontolook,full.names=T)
-lapply(dir1, load,.GlobalEnv)
-
-# limit stacks to common elements
-for(product in stack_types_2_load ){  
-  for( tile in tiles){
-    # find dates that exist in all datasets for current tile
-    all_dates = lapply(paste(stack_types_2_load,'stack',tile,sep='_'),function(x){names(get(x))})
-    # restrict to common dates 
-    common_dates = Reduce(intersect, all_dates)
-    # subset stacks for common dates  
-    assign(paste(product,'_stack_',tile,sep=''),subset( get(paste(product,'_stack_',tile,sep='')), 
-                                                        common_dates, drop=F) )
-    print('raster depth all equal')
-    print( all.equal(common_dates,names(get(paste(product,'_stack_',tile,sep=''))))   )
-    print(dim(get(paste(product,'_stack_',tile,sep='')))[3])
-  }}
+ # load data stacks from both directories
+ versiontolook = paste('_V',version,'.RData',sep='')
+ stack_types_2_load =c('EVI','NDVI','pixel_reliability')
+ dir1 = list.files('./Data Stacks/Raw Stacks/',versiontolook,full.names=T)
+ lapply(dir1, load,.GlobalEnv)
+ 
+ # limit stacks to common elements
+ for(product in stack_types_2_load ){  
+   for( tile in tiles){
+     # find dates that exist in all datasets for current tile
+     all_dates = lapply(paste(stack_types_2_load,'stack',tile,sep='_'),function(x){names(get(x))})
+     # restrict to common dates 
+     common_dates = Reduce(intersect, all_dates)
+     # subset stacks for common dates  
+     assign(paste(product,'_stack_',tile,sep=''),subset( get(paste(product,'_stack_',tile,sep='')), 
+                                                         common_dates, drop=F) )
+     print('raster depth all equal')
+     print( all.equal(common_dates,names(get(paste(product,'_stack_',tile,sep=''))))   )
+     print(dim(get(paste(product,'_stack_',tile,sep='')))[3])
+   }}
 
 
 
@@ -136,12 +138,11 @@ for(product in stack_types_2_load ){
 # stack smoother -----------------------------------------------------
 # this stack is used for land cover classification only (bc classifier can't have NA values)
 
-rm(list=ls()[grep('stack',ls())]) # running into memory issues clear stacks load one by one
 
 setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Data Stacks/Raw Stacks/') # don't load smoothed...
 
 # load data stacks from both directories
-dir1 = list.files('.','.RData',full.names=T)
+dir1 = list.files('.',versiontolook,full.names=T)
 lapply(dir1, load,.GlobalEnv)
 
 
@@ -156,7 +157,7 @@ for( i in ls(pattern = "NDVI_stack*")){
   spline_spar=0.4  # 0.4 for RF
   workers = 20
   out_dir = '/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Data Stacks/Smoothed/'
-  stack_smoother(stack_in,dates,pred_dates,spline_spar,workers,stack_name,out_dir)
+  stack_smoother(stack_in,dates,pred_dates,spline_spar,workers,stack_name,version,out_dir)
 }
 
 
@@ -171,7 +172,7 @@ for( i in ls(pattern = "EVI_stack*")){
   spline_spar=0.4  # 0.4 for RF
   workers = 20
   out_dir = '/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Data Stacks/Smoothed/'
-  stack_smoother(stack_in,dates,pred_dates,spline_spar,workers,stack_name,out_dir)
+  stack_smoother(stack_in,dates,pred_dates,spline_spar,workers,stack_name,version,out_dir)
 }
 
 
@@ -183,7 +184,7 @@ setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Data Stacks/Smoothed/Ti
 # create data stack for each variable and tile
 
 # load data stacks from both directories
-dir1 = list.files('.','.RData',full.names=T)
+dir1 = list.files('.',versiontolook,full.names=T)
 lapply(dir1, load,.GlobalEnv)
 
 foreach(product = c('NDVI','EVI')) %do% {
@@ -215,7 +216,8 @@ foreach(product = c('NDVI','EVI')) %do% {
 rm(list=ls()[grep('stack',ls())]) # running into memory issues clear stacks load one by one
 setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Data Stacks/Raw Stacks/') # don't load smoothed...
 # load data stacks from both directories
-dir1 = list.files('.','.RData',full.names=T)
+versiontolook = paste('_V',version,'.RData',sep='')
+dir1 = list.files('.',versiontolook,full.names=T)
 lapply(dir1, load,.GlobalEnv)
 
 # set up directories and names
@@ -249,7 +251,7 @@ for(product in  c('EVI','NDVI')){  #'EVI','NDVI'
       x[x==as.numeric(valid_values$fill)]=NA
       x[x < as.numeric(valid_values$validL)]=NA
       x[x > as.numeric(valid_values$validU)]=NA
-      #x = x * as.numeric(valid_values$scale)
+      #x = x * as.numeric(valid_values$scale)  # don't scale take up too much memory
       x[ y<0 | y>1 ] = NA     # remove very low quality  
       x}
     # process and write to lustre
@@ -257,14 +259,14 @@ for(product in  c('EVI','NDVI')){  #'EVI','NDVI'
       print(i)
       data_stackvalues[[i]] = ScaleClean(data_stackvalues[[i]],reliability_stackvalues[[i]])
       writeRaster(data_stackvalues[[i]],paste('/lustre/groups/manngroup/WO Clouds Clean/Tifs/',product,'_',tile,
-                                              '_',names(data_stackvalues[[i]]),'.tif',sep=''),overwrite=T)
+                                              '_',names(data_stackvalues[[i]]),'_V',version,'.tif',sep=''),overwrite=T)
     }
     
     # Copy files back from lustre and delete lustre
     flist = list.files("/lustre/groups/manngroup/WO Clouds Clean/Tifs/",
-                       glob2rx(paste(product,'_',tile,'*','.tif$',sep='')),full.names = T)
+                       glob2rx(paste(product,'_',tile,'*','_V',version,'.tif$',sep='')),full.names = T)
     fname = list.files("/lustre/groups/manngroup/WO Clouds Clean/Tifs/",
-                       glob2rx(paste(product,'_',tile,'*','.tif$',sep='')),full.names = F)
+                       glob2rx(paste(product,'_',tile,'*','_V',version,'.tif$',sep='')),full.names = F)
     file.copy(from=flist, to=paste("./WO Clouds Clean/tifs",fname,sep='/'), 
               overwrite = T, recursive = F, copy.mode = T)
     file.remove(flist)
@@ -272,7 +274,7 @@ for(product in  c('EVI','NDVI')){  #'EVI','NDVI'
     # Restack outputs 
     print(paste('Restacking',product,tile,sep=' '))
     # Set up data
-    flist = list.files("./WO Clouds Clean/tifs/",glob2rx(paste(product,'_',tile,'*','.tif$',sep='')),full.names = T)
+    flist = list.files("./WO Clouds Clean/tifs/",glob2rx(paste(product,'_',tile,'*','_V',version,'.tif$',sep='')),full.names = T)
     flist_dates = gsub("^.*_X([0-9]{7}).*$", "\\1",flist,perl = T)  # Strip dates
     flist = flist[order(flist_dates)]  # file list in order
     flist_dates = flist_dates[order(flist_dates)]  # file_dates list in order
@@ -283,7 +285,7 @@ for(product in  c('EVI','NDVI')){  #'EVI','NDVI'
     assign(paste(product,'stack',tile,'wo_clouds_clean',sep='_'),stacked)
     save( list=paste(product,'stack',tile,'wo_clouds_clean',sep='_') ,
           file = paste('./WO Clouds Clean/',product,'_stack_',
-                       tile,'_wo_clouds_clean','.RData',sep='') )
+                       tile,'_wo_clouds_clean','_V',version,'.RData',sep='') )
   }} 
 
 
