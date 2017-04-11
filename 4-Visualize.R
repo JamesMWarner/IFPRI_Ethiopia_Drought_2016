@@ -6,7 +6,7 @@ echo "TMP='$HOME/.Rtmp'" > $HOME/.Renviron
 
 module load proj.4/4.8.0
 module load gdal/gcc/1.11 
-module load R
+module load R/3.3.3
 module load gcc/4.9.0
 R
 
@@ -17,14 +17,15 @@ source('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/IFPRI_Ethiopia_Drought_2016
 
 
 
-library(RCurl)
+#library(RCurl)
 library(raster)
-library(MODISTools)
-library(rgdal)
+#library(MODISTools)
+#library(rgdal)
+library(fastshp)
 library(sp)
 library(maptools)
 #library(rts)
-library(gdalUtils)
+#library(gdalUtils)
 library(foreach)
 library(doParallel)
 library(compiler)
@@ -63,22 +64,24 @@ strptime(gsub("^.*A([0-9]+).*$", "\\1",GetDates(location[1], location[2],product
 #  out_dir = 'R:\\Mann_Research\\IFPRI_Ethiopia_Drought_2016\\Data\\VegetationIndex'
 #  setwd(out_dir)
 
-
+version = 2
 
 
 # Visualize examples of smoothed data -------------------------------------
 
-
-
 setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/LandUseClassifications/')
-load('./NDVI_200p_LUClasses.RData')
+load('./NDVI_200p_LUClasses_mnsdmx_newtrain_evenmore.RData')
+# load points with NDVI data
+load("./LUTrainingPoints_v2.RData")
+
 library(data.table)
-#NDVI = rbindlist(NDVI)
+NDVI = rbindlist(NDVI)
 NDVI_dates = strptime(gsub("^.*X([0-9]{7}).*$", "\\1",names(NDVI),perl = T),format='%Y%j')  # Strip dates
 
 NDVI = as.data.frame.matrix(NDVI)
-NDVI$Class = as.factor(points$class) # add classification
-
+# clean up for smoother
+NDVI_dates = NDVI_dates[!(names(NDVI) %in% c('mean','sd','mx','tile','min','Class')) ]  # remove dates for columns wo dates
+NDVI = NDVI[,!(names(NDVI) %in% c('mean','sd','mx','tile','min','Class'))  ]  # remove irrelevant columns
 
 # smooth evi sample to avoid problems with NAs
 NDVI_smooth = NDVI
@@ -104,7 +107,7 @@ plotdata = rbind(plotdata, data.frame(NDVI= plotdata_NDVI_smooth$NDVI, ID = plot
                                       dates =as.Date(strptime(plotdata_NDVI$time,'%Y%j')),type = 'smoothed'))
 head(plotdata)
 
-plotdata =  plotdata[plotdata$Class %in% c('wetag'),]   # c('wetag','dryag','agforest')
+plotdata =  plotdata[plotdata$Class %in% c('wetag','dryag','agforest'),]   # c('wetag','dryag','agforest')
 
 
 # Get planting and harvest dates
@@ -114,7 +117,8 @@ plantharvest =   PlantHarvestDates(dates[1],dates[2],PlantingMonth=4,PlantingDay
 rects = data.frame(xstart = as.Date(plantharvest$planting),
                    xend = as.Date(plantharvest$harvest))
 
-ggplot()+geom_rect(data = rects, aes(xmin = xstart, xmax = xend, ymin = -Inf, ymax = Inf), alpha = 0.4)+
-  geom_point(data= plotdata[plotdata$type=='smoothed',], aes(x=dates,y=NDVI,group=ID) )
-facet_wrap(~Class)
+plotdata = plotdata[plotdata$type=='unsmoothed',]
+plotdata$Year = year(plotdata$dates)
+ggplot()+geom_rect(data = rects, aes(xmin = xstart, xmax = xend, ymin = -Inf, ymax = Inf), alpha = 0.1)+
+  geom_point(data= plotdata[sample(nrow(plotdata),3000)	,], aes(x=dates,y=NDVI,group=ID, colour=Class) )+facet_wrap(~Class)
 

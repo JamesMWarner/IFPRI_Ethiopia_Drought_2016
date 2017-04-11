@@ -126,7 +126,8 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
   ot_training$Class[ot_training$Class=='wetagri'] = 'wetag'
   names(ot_training) = c('z','class')
   points =  rbind(points,ot_training)
-
+  writeOGR(points, dsn=".", layer="LUTrainingPoints_v2", driver="ESRI Shapefile")
+  save(points,file ='./LUTrainingPoints_v2.RData')
 
   #### Train classifier ####
   library(randomForest)
@@ -226,7 +227,7 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
   # extract time series (MUST BE DONE ON SHORT OR LARGER MEMORY NODE, DOESN"T WORK ON DEFQ OR DEBUG)
   #  NDVI = extract_value_point_polygon(points,list(NDVI_stack_h21v07_smooth,
   #       NDVI_stack_h21v08_smooth,NDVI_stack_h22v07_smooth,
-  #       NDVI_stack_h22v08_smooth),15)
+  #       NDVI_stack_h22v08_smooth),10)
 
   #save(NDVI, file = paste('./NDVI_200p_LUClasses_mnsdmx_newtrain_evenmore.RData',sep='') )
   load('./NDVI_200p_LUClasses_mnsdmx_newtrain_evenmore.RData')
