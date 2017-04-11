@@ -107,7 +107,31 @@ plotdata = rbind(plotdata, data.frame(NDVI= plotdata_NDVI_smooth$NDVI, ID = plot
                                       dates =as.Date(strptime(plotdata_NDVI$time,'%Y%j')),type = 'smoothed'))
 head(plotdata)
 
-plotdata =  plotdata[plotdata$Class %in% c('wetag','dryag','agforest'),]   # c('wetag','dryag','agforest')
+plotdata =  plotdata[plotdata$Class %in% c('wetag','dryag','agforest','forest','semiarid','water','arid','shrub'),]   # c('wetag','dryag','agforest')
+
+
+# Get planting and harvest dates
+plantharvest =   PlantHarvestDates(dates[1],dates[2],PlantingMonth=4,PlantingDay=1,HarvestMonth=1,HarvestDay=30)
+
+plantharvest =   PlantHarvestDates(dates[1],dates[2],PlantingMonth=3,PlantingDay=6,HarvestMonth=2,HarvestDay=15)
+
+# get data ready for plotting
+plotdata_NDVI = as.data.frame.matrix(reshape(NDVI,dir = 'long', times = format(NDVI_dates,'%Y%j'),varying = list(1:(dim(NDVI)[2]-1))))
+names(plotdata_NDVI)[3] = 'NDVI'
+head(plotdata_NDVI)
+plotdata_NDVI_smooth = reshape(NDVI_smooth,dir = 'long', times = format(NDVI_dates,'%Y%j'),varying = list(1:(dim(NDVI)[2]-1))  )
+names(plotdata_NDVI_smooth)[3] = 'NDVI'
+head(plotdata_NDVI_smooth)
+
+
+plotdata = data.frame(NDVI= plotdata_NDVI$NDVI, ID = plotdata_NDVI$id,Class = plotdata_NDVI$Class,
+                      dates =as.Date(strptime(plotdata_NDVI$time,'%Y%j')),type = 'unsmoothed')
+
+plotdata = rbind(plotdata, data.frame(NDVI= plotdata_NDVI_smooth$NDVI, ID = plotdata_NDVI_smooth$id,Class = plotdata_NDVI_smooth$Class,
+                                      dates =as.Date(strptime(plotdata_NDVI$time,'%Y%j')),type = 'smoothed'))
+head(plotdata)
+
+plotdata =  plotdata[plotdata$Class %in% c('wetag','dryag','agforest','forest','semiarid','water','arid','shrub'),]   # c('wetag','dryag','agfor$
 
 
 # Get planting and harvest dates
@@ -120,5 +144,5 @@ rects = data.frame(xstart = as.Date(plantharvest$planting),
 plotdata = plotdata[plotdata$type=='unsmoothed',]
 plotdata$Year = year(plotdata$dates)
 ggplot()+geom_rect(data = rects, aes(xmin = xstart, xmax = xend, ymin = -Inf, ymax = Inf), alpha = 0.1)+
-  geom_point(data= plotdata[sample(nrow(plotdata),3000)	,], aes(x=dates,y=NDVI,group=ID, colour=Class) )+facet_wrap(~Class)
+  geom_point(data= plotdata[sample(nrow(plotdata),3000) ,], aes(x=dates,y=NDVI,group=ID, colour=Class) )+facet_wrap(~Class,ncol=3)
 

@@ -60,14 +60,14 @@ MRT = 'H:/Projects/MRT/bin'
 products =  c('MYD13Q1')  #EVI c('MYD13Q1','MOD13Q1')  , land cover = 'MCD12Q1' for 250m and landcover ='MCD12Q2'
 location = c(9.145000, 40.489673)  # Lat Lon of a location of interest within your tiles listed above #India c(-31.467934,-57.101319)  #
 tiles =   c('h21v07','h22v07','h21v08','h22v08')   # India example c('h13v12')
-dates = c('2011-01-01','2016-03-30') # example c('year-month-day',year-month-day') c('2002-07-04','2016-02-02') 
+dates = c('2010-01-01','2016-03-30') # example c('year-month-day',year-month-day') c('2002-07-04','2016-02-02') 
 ftp = 'ftp://ladsweb.nascom.nasa.gov/allData/6/'    # allData/6/ for evi, /51/ for landcover
 # allData/51/ for landcover DOESn't WORK jUST PULL FROM FTP
 strptime(gsub("^.*A([0-9]+).*$", "\\1",GetDates(location[1], location[2],products[1])),'%Y%j') # get list of all available dates for products[1]
 #  out_dir = 'R:\\Mann_Research\\IFPRI_Ethiopia_Drought_2016\\Data\\VegetationIndex'
 #  setwd(out_dir)
 
-version = 2    # update to 'more' landcover classification that includes more training sites and settlement land class
+version = 3    # update to 'more' landcover classification that includes more training sites and settlement land class
 
 # Stack Raw data -----------------------------------------------------
 
@@ -76,8 +76,7 @@ registerDoParallel(5)
 setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/VegetationIndex/')  # folder where  EVI .tifs are
 # create data stack for each variable and tile 
 
-foreach(product =  c('composite_day_of_the_year',
-                     'EVI','NDVI','pixel_reliability')) %dopar% {  
+foreach(product =  c('EVI','NDVI','pixel_reliability')) %dopar% {  
                        for( tile_2_process in  tiles){
                          # Set up data
                          print('stacking')
@@ -97,7 +96,7 @@ foreach(product =  c('composite_day_of_the_year',
                          assign(paste(product,'stack',tile_2_process,sep='_'),stacked)
                          dir.create(file.path('../Data Stacks/Raw Stacks/'), showWarnings=F,recursive=T) # create stack directory if doesnt exist
                          save( list=paste(product,'stack',tile_2_process,sep='_') ,
-                               file = paste('../Data Stacks/Raw Stacks/',product,'_stack_',tile_2_process,'.RData',sep='') )
+                               file = paste('../Data Stacks/Raw Stacks/',product,'_stack_',tile_2_process,'_V',version,'.RData',sep='') )
                        }}
 
 
@@ -109,8 +108,9 @@ foreach(product =  c('composite_day_of_the_year',
 setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
 
 # load data stacks from both directories
-stack_types_2_load =c('composite_day_of_the_year','EVI','NDVI','pixel_reliability')
-dir1 = list.files('./Data Stacks/Raw Stacks/','.RData',full.names=T)
+versiontolook = paste('_V',version,'.RData')
+stack_types_2_load =c('EVI','NDVI','pixel_reliability')
+dir1 = list.files('./Data Stacks/Raw Stacks/',versiontolook,full.names=T)
 lapply(dir1, load,.GlobalEnv)
 
 # limit stacks to common elements
