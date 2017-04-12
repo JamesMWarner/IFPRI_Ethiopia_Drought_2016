@@ -227,7 +227,7 @@ dir.create(file.path('./WO Clouds/Tifs'), showWarnings=F,recursive=T)
 dir.create(file.path('./WO Clouds Clean/tifs'), showWarnings=F,recursive=T)
 dir.create(file.path('/lustre/groups/manngroup/WO Clouds Clean/Tifs'), showWarnings=F,recursive=T) # folder on high speed ssd drive
 
-registerDoParallel(25)
+registerDoParallel(17)
 
 
 # setup a dataframe with valid ranges and scale factors
