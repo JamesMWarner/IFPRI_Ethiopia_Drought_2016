@@ -864,7 +864,7 @@ stack_smoother <- function(stack_in,dates,pred_dates,spline_spar=0.1,workers=20,
 
    print('writing out tifs')
 
-   registerDoParallel(5)
+   registerDoParallel(2)
    
    dir.create(file.path(out_dir, 'Tifs'), showWarnings = FALSE) 
    setwd(file.path(out_dir, 'Tifs'))

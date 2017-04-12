@@ -227,7 +227,7 @@ dir.create(file.path('./WO Clouds/Tifs'), showWarnings=F,recursive=T)
 dir.create(file.path('./WO Clouds Clean/tifs'), showWarnings=F,recursive=T)
 dir.create(file.path('/lustre/groups/manngroup/WO Clouds Clean/Tifs'), showWarnings=F,recursive=T) # folder on high speed ssd drive
 
-registerDoParallel(17)
+registerDoParallel(15)
 
 
 # setup a dataframe with valid ranges and scale factors
@@ -255,7 +255,7 @@ for(product in  c('EVI','NDVI')){  #'EVI','NDVI'
       x[ y<0 | y>1 ] = NA     # remove very low quality  
       x}
     # process and write to lustre
-    foreach(i=(1:dim(data_stackvalues)[3]), .inorder=F) %dopar% { 
+    foreach(i=(1:dim(data_stackvalues)[3]), .inorder=F, .errorhandling='remove') %dopar% { 
       print(i)
       data_stackvalues[[i]] = ScaleClean(data_stackvalues[[i]],reliability_stackvalues[[i]])
       writeRaster(data_stackvalues[[i]],paste('/lustre/groups/manngroup/WO Clouds Clean/Tifs/',product,'_',tile,
@@ -295,7 +295,7 @@ for(product in  c('EVI','NDVI')){  #'EVI','NDVI'
 # Limit to crop signal ----------------------------------------------------
 #  Class Codes:
 # version 1  1 agforest 2 arid 3 dryag 4 forest 5 semiarid 6 shrub 7 water 8 wetag 9 wetforest
-# version 2 "more"  1 agforest 2 arid 3 dryag 4 forest 5 semiarid 6 settlement 7 shrub 8 water 9 wetag 10 wetforest
+# version 2-3 "more"  1 agforest 2 arid 3 dryag 4 forest 5 semiarid 6 settlement 7 shrub 8 water 9 wetag 10 wetforest
 
 
 # load data in previous section and run common dates
@@ -303,10 +303,11 @@ rm(list=ls()[grep('stack',ls())]) # running into memory issues clear stacks load
 setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Data Stacks/WO Clouds Clean/') # don't load smoothed...
 dir.create(file.path('../WO Clouds Clean LC/tifs/'), showWarnings=F,recursive=T) # create dir for tifs
 dir.create(file.path('/lustre/groups/manngroup/WO Clouds Clean LC/Tifs'), showWarnings=F,recursive=T) # folder on high speed
+versiontolook = paste('_V',version,'.RData',sep='')
 
 
 # load data stacks from both directories
-dir1 = list.files('.','.RData',full.names=T)
+dir1 = list.files('.',versiontolook,full.names=T)
 lapply(dir1, load,.GlobalEnv)
 
 # set up directories and names
