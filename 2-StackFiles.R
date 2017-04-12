@@ -155,7 +155,7 @@ for( i in ls(pattern = "NDVI_stack*")){
   dates =   as.numeric(gsub("^.*X([0-9]{7}).*$", "\\1",names(stack_in),perl = T))  # Strip dates
   pred_dates = dates
   spline_spar=0.4  # 0.4 for RF
-  workers = 20
+  workers = 12
   out_dir = '/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Data Stacks/Smoothed/'
   stack_smoother(stack_in,dates,pred_dates,spline_spar,workers,stack_name,version,out_dir)
 }
@@ -170,7 +170,7 @@ for( i in ls(pattern = "EVI_stack*")){
   dates =   as.numeric(gsub("^.*X([0-9]{7}).*$", "\\1",names(stack_in),perl = T))  # Strip dates
   pred_dates = dates
   spline_spar=0.4  # 0.4 for RF
-  workers = 20
+  workers = 12
   out_dir = '/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Data Stacks/Smoothed/'
   stack_smoother(stack_in,dates,pred_dates,spline_spar,workers,stack_name,version,out_dir)
 }
