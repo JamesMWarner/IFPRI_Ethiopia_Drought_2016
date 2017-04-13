@@ -814,7 +814,7 @@ stack_smoother <- function(stack_in,dates,pred_dates,spline_spar=0.1,workers=20,
     #Determine optimal block size for loading in MODIS stack data
     require(data.table)
 
-    # RUN THIS FUNCTION ON RAW DATA NOT ON CLOUD REMOVED
+    print(' RUN THIS FUNCTION ON RAW DATA NOT ON CLOUD REMOVED ')
 
     print(paste('working on:',stack_name))
     block_width = 15
@@ -840,7 +840,7 @@ stack_smoother <- function(stack_in,dates,pred_dates,spline_spar=0.1,workers=20,
         function(j){ SplineAndOutlierRemovalNA(x = stack_values[j,], dates=dates,
                 pred_dates=pred_dates,spline_spar = spline_spar)} )
         print(paste("Saving pheno_matrix for row",i))
-        smooth_holder = do.call('rbind',smooth_holderl)
+        smooth_holder =  do.call('rbind',smooth_holderl) 
         save(smooth_holder,file =
         	paste('./',stack_name,"/Temp/smooth_holderl_temp_big",bs_rows[i],".RData",sep = ""))
         return(0)
@@ -857,8 +857,10 @@ stack_smoother <- function(stack_in,dates,pred_dates,spline_spar=0.1,workers=20,
    f = f[order(id)]
 
    #make list of raster chunks and then rbind them using data.table
-   data_list = lapply(f, function(x){ print(x);  as.data.table(mget(load(x))[[1]])})
+   data_list = lapply(f, function(x){ print(x);  as.data.table(mget(load(x))[[1]]) })
    result_table = rbindlist(data_list,fill=T)
+   # save to min memory needs
+   rm(data_list)
 
    #do.call(file.remove, list(list.files(".",full.names = TRUE))) # delete temp files
 

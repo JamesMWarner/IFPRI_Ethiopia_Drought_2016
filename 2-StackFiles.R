@@ -139,26 +139,27 @@ foreach(product =  c('EVI','NDVI','pixel_reliability')) %dopar% {
 # this stack is used for land cover classification only (bc classifier can't have NA values)
 
 
-setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Data Stacks/Raw Stacks/') # don't load smoothed...
+  setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Data Stacks/Raw Stacks/') # don't load smoothed...
 
-# load data stacks from both directories
-dir1 = list.files('.',versiontolook,full.names=T)
-lapply(dir1, load,.GlobalEnv)
+  # load data stacks from both directories
+  versiontolook = paste('_V',version,'.RData',sep='')
+  dir1 = list.files('.',versiontolook,full.names=T)
+  lapply(dir1, load,.GlobalEnv)
 
 
-for( i in ls(pattern = "NDVI_stack*")){
-  print('##############################################################')
-  dir.create(file.path(getwd(), i), showWarnings = FALSE)
-  print(paste('Starting processing of:',i))
-  stack_in = get(i)
-  stack_name = i
-  dates =   as.numeric(gsub("^.*X([0-9]{7}).*$", "\\1",names(stack_in),perl = T))  # Strip dates
-  pred_dates = dates
-  spline_spar=0.4  # 0.4 for RF
-  workers = 12
-  out_dir = '/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Data Stacks/Smoothed/'
-  stack_smoother(stack_in,dates,pred_dates,spline_spar,workers,stack_name,version,out_dir)
-}
+  for( i in ls(pattern = "NDVI_stack*")){
+    print('##############################################################')
+    dir.create(file.path(getwd(), i), showWarnings = FALSE)
+    print(paste('Starting processing of:',i))
+    stack_in = get(i)
+    stack_name = i
+    dates =   as.numeric(gsub("^.*X([0-9]{7}).*$", "\\1",names(stack_in),perl = T))  # Strip dates
+    pred_dates = dates
+    spline_spar=0.4  # 0.4 for RF
+    workers = 15
+    out_dir = '/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Data Stacks/Smoothed/'
+    stack_smoother(stack_in,dates,pred_dates,spline_spar,workers,stack_name,version,out_dir)
+  }
 
 
 for( i in ls(pattern = "EVI_stack*")){

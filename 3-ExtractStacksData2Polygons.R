@@ -51,7 +51,7 @@ location = c(9.145000, 40.489673)  # Lat Lon of a location of interest within yo
 tiles =   c('h21v07','h22v07','h21v08','h22v08')   # India example c('h13v12')
 dates = c('2011-01-01','2016-03-30') # example c('year-month-day',year-month-day') c('2002-07-04','2016-02-02') 
 
-version = 2 # updated land cover classes
+version = 3 # updated land cover classes
 
 
 
@@ -71,18 +71,19 @@ version = 2 # updated land cover classes
   Polys_sub = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasSIN_sub_agss_codes',
                       stringsAsFactors = F)
   Polys_sub$id = 1:dim(Polys_sub@data)[1]
-  product = c('NDVI','EVI')[1]
+  products = c('NDVI','EVI')
 
-  Poly_Veg_Ext_sub = extract_value_point_polygon(Polys_sub,
+  for(product in products){
+    Poly_Veg_Ext_sub = extract_value_point_polygon(Polys_sub,
                  list(get(paste(product,'_stack_h22v08_WO_Clouds_Clean_LC',sep='')),
                  get(paste(product,'_stack_h22v07_WO_Clouds_Clean_LC',sep='')),
                  get(paste(product,'_stack_h21v08_WO_Clouds_Clean_LC',sep='')),
                  get(paste(product,'_stack_h21v07_WO_Clouds_Clean_LC',sep=''))),15)
 
-  save(Poly_Veg_Ext_sub,
+    save(Poly_Veg_Ext_sub,
        file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Processed Panel/ExtractRaw/',
-       product,'_Poly_Ext_sub_agss.RData',sep=''))
-
+       product,'_Poly_Ext_sub_agss_V',version,'.RData',sep=''))
+  }
 
 
 
