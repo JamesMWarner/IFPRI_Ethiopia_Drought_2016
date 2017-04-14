@@ -17,9 +17,7 @@ source('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/IFPRI_Ethiopia_Drought_2016
 # R/3.0.2 seems to work maybe
 
 
-library(RCurl)
 library(raster)
-library(MODISTools)
 library(rgdal)
 library(sp)
 library(maptools)
@@ -28,7 +26,7 @@ library(gdalUtils)
 library(foreach)
 library(doParallel)
 library(compiler)
-library(ggplot2)
+library(plyr)
 
 #cl <- makeCluster(32)
 #registerDoParallel(cl)
@@ -71,7 +69,7 @@ version = 3 # updated land cover classes
   Polys_sub = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasSIN_sub_agss_codes',
                       stringsAsFactors = F)
   Polys_sub$id = 1:dim(Polys_sub@data)[1]
-  products = c('NDVI','EVI')
+  products = c('NDVI','EVI')[2]
 
   for(product in products){
     Poly_Veg_Ext_sub = extract_value_point_polygon(Polys_sub,
@@ -150,10 +148,11 @@ version = 3 # updated land cover classes
   Polys_sub = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasSIN_sub_agss_codes',
                     stringsAsFactors = F)
   Polys_sub$id = 1:dim(Polys_sub@data)[1] 
+
   product = 'NDVI'
 
   load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Processed Panel/ExtractRaw/',
-           product,'_Poly_Ext_sub_agss.RData',sep=''))
+           product,'_Poly_Ext_sub_agss_V',version,'.RData',sep=''))
 
   # Get planting and harvest dates
   plantharvest =   PlantHarvestDates(start_date=dates[1],end_date=dates[2],PlantingMonth=4,
@@ -168,7 +167,7 @@ version = 3 # updated land cover classes
   NDVI_summary =  Annual_Summary_Functions(extr_values, PlantHarvestTable,Quant_percentile, aggregate=T, 
                                          return_df=T,num_workers)
 
-  save(NDVI_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/NDVI_summary_v',version,sep=''))
+  save(NDVI_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/NDVI_summary_V',version,sep=''))
 
   # pull data to polygons
   # load data
@@ -204,7 +203,7 @@ version = 3 # updated land cover classes
 
   load('./Outputs/Poly_PET_Ext_sub.RData')
   load('./Outputs/Poly_ETA_Ext_sub.RData')
-  load(paste('./Outputs/NDVI_summary_v',version,sep=''))
+  load(paste('./Outputs/NDVI_summary_V',version,sep=''))
 
 
   # Get summary statistics lists
@@ -217,22 +216,22 @@ version = 3 # updated land cover classes
   aggregate=T
   return_df=T
   PET_summary =  Annual_Summary_Functions_OtherData(extr_values, PlantHarvestTable, Veg_Annual_Summary,name_prefix,
-                                                  Quant_percentile,return_df,num_workers=5,spline_spar,aggregate)
+                                                  Quant_percentile,return_df,num_workers,spline_spar,aggregate)
   extr_values= Poly_ETA_Ext_sub
   name_prefix = 'ETA'
   ETA_summary =  Annual_Summary_Functions_OtherData(extr_values, PlantHarvestTable, Veg_Annual_Summary,name_prefix,
-                                                  Quant_percentile,return_df,num_workers=5,spline_spar,aggregate)
-  save(PET_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/PET_summary'))
-  save(ETA_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/ETA_summary'))
+                                                  Quant_percentile,return_df,num_workers,spline_spar,aggregate)
+  save(PET_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/PET_summary_V',version,'.Rdata',sep=''))
+  save(ETA_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/ETA_summary_V',version,'.Rdata',sep=''))
 
 
 # Convert data to panel format --------------------------------------------
 
   # Load data
   setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
-  load('./Outputs/PET_summary')
-  load('./Outputs/ETA_summary')
-  load(paste('./Outputs/NDVI_summary_v',version,sep=''))
+  load(paste('./Outputs/PET_summary_V',version,'.Rdata',sep=''))
+  load(paste('./Outputs/ETA_summary_V',version,'.Rdata',sep=''))
+  load(paste('./Outputs/NDVI_summary_V',version,sep=''))
 
   Polys_sub = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasSIN_sub_agss_codes_wdata',
                     stringsAsFactors = F)
@@ -265,3 +264,5 @@ version = 3 # updated land cover classes
   output = rbindlist(holder_list, fill=T)
 
   write.csv(output,paste('./Outputs/EA_NDVI_ET_panel_V',version,'.csv',sep=''))
+
+

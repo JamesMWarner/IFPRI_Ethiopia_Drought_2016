@@ -1089,7 +1089,7 @@ Annual_Summary_Functions_OtherData = function(extr_values, PlantHarvestTable, Ve
       	G_AUC2 = lapply(1:length(smooth),function(z){ PeriodAUC_method2(x_in = smooth[[z]],dates_in = dats,
                 DOY_start_in=plant_dates[[z]],DOY_end_in=harvest_dates[[z]]) })
         G_AUC_leading  = lapply(1:length(smooth),function(z){ PeriodAUC(x_in = smooth[[z]],dates_in = dats,
-                DOY_start_in=plant_dates[[1]],DOY_end_in=Veg_Annual_Summary[[i]]$G_mx_dates) })
+                DOY_start_in=plant_dates[[1]],DOY_end_in=na.omit(Veg_Annual_Summary[[i]]$G_mx_dates)  )})
 
         G_AUC_trailing = lapply(1:length(smooth),function(z){ PeriodAUC(x_in = smooth[[z]],dates_in = dats,
                 DOY_start_in=na.omit(Veg_Annual_Summary[[i]]$G_mx_dates),DOY_end_in=harvest_dates[[1]]) })
