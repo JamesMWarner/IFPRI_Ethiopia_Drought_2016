@@ -27,6 +27,7 @@ library(foreach)
 library(doParallel)
 library(compiler)
 library(plyr)
+library(foreign)
 
 #cl <- makeCluster(32)
 #registerDoParallel(cl)
@@ -266,3 +267,124 @@ version = 3 # updated land cover classes
   write.csv(output,paste('./Outputs/EA_NDVI_ET_panel_V',version,'.csv',sep=''))
   write.csv(output,paste('../IFPRI_Ethiopia_Drought_2016/Outputs4Pred/EA_NDVI_ET_panel_V',version,'.csv',sep=''))
 
+  
+  
+  
+  # Create PCA values for annual grwoing and etapet values--------------------------------------------
+  # switched to desktop
+  setwd('R://Mann_Research/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_Code/Outputs4Pred/')
+  file_location = './EA_NDVI_ET_panel_V3.csv'
+  output = read.csv(file_location,stringsAsFactors = F,na.strings = '.')
+  output = output[output$Year != 2010 & output$Year != 2016,]
+  output$year_id = paste(output$Year,output$EA_cd_m,sep='_')
+  
+  # add PCA for NDVI data
+  PCA_input_Annual =    year_id  ~ A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd + A_max_Qnt + A_AUC_Qnt
+   #Note: don't use G_AUC2 too many missing values
+  PCA_input_Growing =   year_id  ~ G_mn + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt  + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th + T_G_Qnt + G_sd  
+  PCA_input_PETAET =    year_id  ~ PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd + ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 + ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd
+    
+  # USE PCA 
+  # annual
+  PCA_input_Annual_input = na.omit(model.frame(PCA_input_Annual,output))
+  PCA_input_Annual_input_data = PCA_input_Annual_input[,!(names(PCA_input_Annual_input) %in% c('year_id'  ))] # remove dependent variable data
+  PCA_input_Annual_out = prcomp( PCA_input_Annual_input_data, scale = T,center = T ) 
+  PCA_input_Annual_pred = as.data.frame(stats::predict(PCA_input_Annual_out))
+  names(PCA_input_Annual_pred)=paste('A_',names(PCA_input_Annual_pred),sep='')
+  PCA_input_Annual_pred$year_id =  PCA_input_Annual_input$year_id
+  # growing
+  PCA_input_Growing_input = na.omit(model.frame(PCA_input_Growing,output))
+  PCA_input_Growing_input_data = PCA_input_Growing_input[,!(names(PCA_input_Growing_input) %in% c('year_id'  ))] # remove dependent variable data
+  PCA_input_Growing_out = prcomp( PCA_input_Growing_input_data, scale = T,center = T ) 
+  PCA_input_Growing_pred = as.data.frame(stats::predict(PCA_input_Growing_out))
+  names(PCA_input_Growing_pred)=paste('G_',names(PCA_input_Growing_pred),sep='')
+  PCA_input_Growing_pred$year_id =  PCA_input_Growing_input$year_id
+  # PETAET
+  PCA_input_PETAET_input = na.omit(model.frame(PCA_input_PETAET,output))
+  PCA_input_PETAET_input_data = PCA_input_PETAET_input[,!(names(PCA_input_PETAET_input) %in% c('year_id'  ))] # remove dependent variable data
+  PCA_input_PETAET_out = prcomp( PCA_input_PETAET_input_data, scale = T,center = T ) 
+  PCA_input_PETAET_pred = as.data.frame(stats::predict(PCA_input_PETAET_out))
+  names(PCA_input_PETAET_pred)=paste('PETAET_',names(PCA_input_PETAET_pred),sep='')
+  PCA_input_PETAET_pred$year_id =  PCA_input_PETAET_input$year_id
+  
+  #merge back in 
+  output = join(output, PCA_input_Annual_pred, by='year_id')
+  output = join(output, PCA_input_Growing_pred, by='year_id')
+  output = join(output, PCA_input_PETAET_pred, by='year_id')
+
+
+  
+  
+  ## Create PCA values for annual grwoing and etapet values ANNUAL PCA  --------------------------------------------
+  ## switched to desktop
+  #setwd('R://Mann_Research/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_Code/Outputs4Pred/')
+  #file_location = './EA_NDVI_ET_panel_V3.csv'
+  #output = read.csv(file_location,stringsAsFactors = F,na.strings = '.')
+  #output = output[output$Year != 2010 & output$Year != 2016,]
+  #output$year_id = paste(output$Year,output$EA_cd_m,sep='_')
+  
+  # add PCA for NDVI data
+  #PCA_input_Annual =    year_id  ~ A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd + A_max_Qnt + A_AUC_Qnt
+  #Note: don't use G_AUC2 too many missing values
+  #PCA_input_Growing =   year_id  ~ G_mn + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt  + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th + T_G_Qnt + G_sd  
+  #PCA_input_PETAET =    year_id  ~ PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd + ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 + ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd
+  
+  # USE PCA 
+  # annual (full season stats)
+  years = c(2011,2012,2013,2014,2015)
+  PCA_input_Annual_store = list()
+  counter = 1
+  for(year in years){
+    PCA_input_Annual_input = na.omit(model.frame(PCA_input_Annual,output[output$Year==year,]))
+    PCA_input_Annual_input_data = PCA_input_Annual_input[,!(names(PCA_input_Annual_input) %in% c('year_id'  ))] # remove dependent variable data
+    PCA_input_Annual_out = prcomp( PCA_input_Annual_input_data, scale = T,center = T ) 
+    PCA_input_Annual_pred = as.data.frame(stats::predict(PCA_input_Annual_out))
+    names(PCA_input_Annual_pred)=paste('A_',names(PCA_input_Annual_pred),'_v2',sep='')
+    PCA_input_Annual_pred$year_id =  PCA_input_Annual_input$year_id  
+    PCA_input_Annual_store[[counter]] = PCA_input_Annual_pred
+    counter = counter + 1
+  }  
+  PCA_input_Annual_store = rbindlist(PCA_input_Annual_store)
+  
+  # growing season
+  PCA_input_Growing_store = list()
+  counter = 1
+  for(year in years){
+    PCA_input_Growing_input = na.omit(model.frame(PCA_input_Growing,output[output$Year==year,]))
+    PCA_input_Growing_input_data = PCA_input_Growing_input[,!(names(PCA_input_Growing_input) %in% c('year_id'  ))] # remove dependent variable data
+    PCA_input_Growing_out = prcomp( PCA_input_Growing_input_data, scale = T,center = T ) 
+    PCA_input_Growing_pred = as.data.frame(stats::predict(PCA_input_Growing_out))
+    names(PCA_input_Growing_pred)=paste('G_',names(PCA_input_Growing_pred),'_v2',sep='')
+    PCA_input_Growing_pred$year_id =  PCA_input_Growing_input$year_id
+    PCA_input_Growing_store[[counter]] = PCA_input_Growing_pred
+    counter = counter + 1
+  }  
+  PCA_input_Growing_store = rbindlist(PCA_input_Growing_store)
+  
+  # PETAET
+  PCA_input_PETAET_store = list()
+  counter = 1
+  for(year in years){
+    PCA_input_PETAET_input = na.omit(model.frame(PCA_input_PETAET,output[output$Year==year,]))
+    PCA_input_PETAET_input_data = PCA_input_PETAET_input[,!(names(PCA_input_PETAET_input) %in% c('year_id'  ))] # remove dependent variable data
+    PCA_input_PETAET_out = prcomp( PCA_input_PETAET_input_data, scale = T,center = T ) 
+    PCA_input_PETAET_pred = as.data.frame(stats::predict(PCA_input_PETAET_out))
+    names(PCA_input_PETAET_pred)=paste('PETAET_',names(PCA_input_PETAET_pred),'_v2',sep='')
+    PCA_input_PETAET_pred$year_id =  PCA_input_PETAET_input$year_id
+    PCA_input_PETAET_store[[counter]] = PCA_input_PETAET_pred
+    counter = counter + 1
+  }  
+  PCA_input_PETAET_store = rbindlist(PCA_input_PETAET_store)
+  
+  #merge back in 
+  output = join(output, PCA_input_Annual_store, by='year_id')
+  output = join(output, PCA_input_Growing_store, by='year_id')
+  output = join(output, PCA_input_PETAET_store, by='year_id')
+  
+  
+  # write out
+  write.csv(output,paste('./EA_NDVI_ET_panel_PCA_V',version,'.csv',sep=''))
+  write.dta(output,paste('./EA_NDVI_ET_panel_PCA_V',version,'.dta',sep=''))
+  write.dta(output,paste('C:/Users/mmann/Dropbox/Ethiopia_Drought/Drought_Study/AgSS_Data1_2010_16_Cleaned/EA_NDVI_ET_panel_PCA_V',version,'.dta',sep=''))
+  
+  
