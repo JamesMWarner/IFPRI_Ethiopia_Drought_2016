@@ -189,3 +189,101 @@ attr(vswheat3$terms,'term.labels')[vswheat3$varselect.pred])
 
 
 
+# Machine Learning Alternatives -------------------------------------------
+
+  
+  
+  library(REEMtree)
+  library(readstata13)
+  library(e1071) 
+
+  setwd('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_Code/Outputs4Pred/')
+  
+  
+  load('../../Data/VariableSelection/vswheat_0.RData')
+  load('../../Data/VariableSelection/vswheat_1.RData')
+  load('../../Data/VariableSelection/vswheat_2.RData')
+  load('../../Data/VariableSelection/vswheat_3.RData')
+  
+  
+  
+  data_in = read.dta13("./AgSS_2010_15_Compiled_panel_merged_clean_PCA_v3.dta")
+  data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
+  
+  form_EA = paste(paste(
+    c(attr(vswheat0$terms,'term.labels')[vswheat0$varselect.interp],
+      attr(vswheat1$terms,'term.labels')[vswheat1$varselect.interp],
+      attr(vswheat2$terms,'term.labels')[vswheat2$varselect.interp],
+      attr(vswheat3$terms,'term.labels')[vswheat3$varselect.interp]), collapse='+'),'+EACODE')
+  
+  form = paste( c(attr(vswheat0$terms,'term.labels')[vswheat0$varselect.interp],
+      attr(vswheat1$terms,'term.labels')[vswheat1$varselect.interp],
+      attr(vswheat2$terms,'term.labels')[vswheat2$varselect.interp],
+      attr(vswheat3$terms,'term.labels')[vswheat3$varselect.interp]), collapse='+')
+  
+  # formula  
+  form_EA = as.formula(paste('WHEATOPH_W ~',form_EA,sep=' '))
+  training_EA = na.omit(model.frame(form_EA,data_in))
+  
+  form = as.formula(paste('WHEATOPH_W ~',form,sep=' '))
+  training = na.omit(model.frame(form,data_in))
+
+
+#### RE-EM Tree RE Trees 
+  
+  reem1 = REEMtree(form_EA, data=training_EA, random=~1|EACODE|Year)
+  plot(reem1)
+  reem1
+
+
+#### Support Vector Regression 
+  
+  source( '../mctune.R')
+  
+  # Problem not spliting by groups... look at gkf.split for scikitlearn 
+  svm_model1 <- svm(form,data_in)
+  summary((predict(svm_model1)- training$WHEATOPH_W))
+  
+  # Tuned regression 
+  svr_tuned <- tune(svm, form,  data = data_in,
+                     ranges = list(epsilon = seq(0,1,0.1), cost = 2^(2:9)))
+  print(svr_tuned)
+  plot(svr_tuned)
+  save(svr_tuned, file = './svr_tuned.RData')
+
+  summary((predict(svr_tuned$best.model)- training$WHEATOPH_W))
+ 
+#### Panel Regression 
+  library(plm)
+  data_in_plm <- pdata.frame(data_in, index=c("EACODE","Year"),  row.names=TRUE)
+  
+  wht.re <- plm(form, data = data_in_plm, model = "random")
+  summary(wht.re)
+  summary(wht.re$residuals)
+  
+  
+  
+  
+  
+#### RPART - regresion trees (tunable with e1071)
+  library(rpart)
+  
+  rpart_reg <- rpart(form, data=training)
+  rpart_reg
+  summary((predict(rpart_reg)- training$WHEATOPH_W))
+  
+  set.seed(10)
+  svm_tuned<-mctune(confusionmatrizes=T,
+                    mc.control=list(mc.cores=1, mc.preschedule=F), method=svr,
+                    ranges=list(type='C',kernel='radial',gamma=3^(-10:-1),cost=3^(-8:8)),
+                    train.x=form,data = training,validation.x=NULL,  validation.y=NULL,
+                    tunecontrol=tune.control(sampling='cross',cross=3,performances=T,nrepeat=5,best.model=T,))
+  
+  save(svm_tuned,
+       file = '/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/LandUseClassifications/svm_model_tuned_mnsdmx_newtrain_more.RData')
+  load('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/LandUseClassifications/svm_model_tuned_mnsdmx_newtrain_more.RData')
+  
+  svm_tuned$best.model
+  table(predict(svm_tuned$best.model), NDVI_smooth$Class[rowSums(is.na( NDVI_smooth)) ==0])  # table with missing data removed
+  plot(svm_tuned)
+
