@@ -16,33 +16,27 @@ R
 
 
 rm(list=ls())
-#source('R:\\Mann Research\\IFPRI_Ethiopia_Drought_2016\\IFPRI_Ethiopia_Drought_Code\\ModisDownload.R')
-source('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/IFPRI_Ethiopia_Drought_2016/SummaryFunctions.R')
 
-
-
-library(RCurl)
 library(raster)
-library(MODISTools)
 library(rgdal)
 library(sp)
 library(maptools)
 #library(rts)
-library(gdalUtils)
 library(foreach)
 library(doParallel)
 library(compiler)
-library(ggplot2)
 
 #cl <- makeCluster(32)
 #registerDoParallel(cl)
 
 
-# Compile Functions ---------------------------------------------------------------
+
+source('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/IFPRI_Ethiopia_Drought_2016/SummaryFunctions.R')
 
 
 functions_in = lsf.str()
 lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # byte code compile all functions http://adv-r.had.co.nz/Profil$
+
 
 
 
@@ -60,16 +54,11 @@ MRT = 'H:/Projects/MRT/bin'
 products =  c('MYD13Q1')  #EVI c('MYD13Q1','MOD13Q1')  , land cover = 'MCD12Q1' for 250m and landcover ='MCD12Q2'
 location = c(9.145000, 40.489673)  # Lat Lon of a location of interest within your tiles listed above #India c(-31.467934,-57.101319)  #
 tiles =   c('h21v07','h22v07','h21v08','h22v08')   # India example c('h13v12')
-dates = c('2010-01-01','2016-03-30') # example c('year-month-day',year-month-day') c('2002-07-04','2016-02-02') 
-ftp = 'ftp://ladsweb.nascom.nasa.gov/allData/6/'    # allData/6/ for evi, /51/ for landcover
-# allData/51/ for landcover DOESn't WORK jUST PULL FROM FTP
-strptime(gsub("^.*A([0-9]+).*$", "\\1",GetDates(location[1], location[2],products[1])),'%Y%j') # get list of all available dates for products[1]
-#  out_dir = 'R:\\Mann_Research\\IFPRI_Ethiopia_Drought_2016\\Data\\VegetationIndex'
-#  setwd(out_dir)
+dates = c('2009-01-01','2016-03-6') # example c('year-month-day',year-month-day')  
 
-version = 3    # update to 'more' landcover classification that includes more training sites and settlement land class
+version = 4    # update to 'more' landcover classification that includes more training sites and settlement land class
                # version 3 has new landcover and 2010 data 
-
+               # version 4 has more data 2009, full 2016, part 2017
 
 
 # Stack Raw data -----------------------------------------------------
