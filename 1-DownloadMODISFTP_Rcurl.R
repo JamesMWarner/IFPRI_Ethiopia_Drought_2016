@@ -15,7 +15,7 @@ R
 
 
 rm(list=ls())
-#source('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_Code/ModisDownload.R')
+source('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_Code/ModisDownload.R')
 #source('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/IFPRI_Ethiopia_Drought_2016/SummaryFunctions.R')
 source('Z:/Mann_Research/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_Code/SummaryFunctions.R')
 
@@ -32,7 +32,7 @@ library(gdalUtils)
 library(foreach)
 library(doParallel)
 library(compiler)
-library(ggplot2)
+
 
 #cl <- makeCluster(32)
 #registerDoParallel(cl)
@@ -57,10 +57,10 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
   #GetProducts()
   
   # Product Filters 
-  products =  c('MOD13Q1')  #EVI c('MYD13Q1','MOD13Q1')  , land cover = 'MCD12Q1' for 250m and landcover ='MCD12Q2'
+  products =  c('MOD13Q1','MYD13Q1')  #EVI c('MYD13Q1','MOD13Q1')  , land cover = 'MCD12Q1' for 250m and landcover ='MCD12Q2'
   location = c(9.145000, 40.489673)  # Lat Lon of a location of interest within your tiles listed above #India c(-31.467934,-57.101319)  #
   tiles =   c('h21v07','h22v07','h21v08','h22v08')   # India example c('h13v12')
-  dates = c('2010-01-01','2016-03-30') # example c('year-month-day',year-month-day') c('2002-07-04','2016-02-02') 
+  dates = c('2009-01-01','2017-05-01') # example c('year-month-day',year-month-day') c('2002-07-04','2016-02-02') 
   ftp = 'ftp://ladsweb.nascom.nasa.gov/allData/6/'    # allData/6/ for evi, /51/ for landcover
   # allData/51/ for landcover DOESn't WORK jUST PULL FROM FTP
   strptime(gsub("^.*A([0-9]+).*$", "\\1",GetDates(location[1], location[2],products[1])),'%Y%j') # get list of all available dates for products[1]
@@ -95,6 +95,9 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
   not_needed_files_df = avail_files_df[ !(avail_files_df$date %in% as.character(seq(as.Date(dates[1]),as.Date(dates[2]),'days')) ) ,] # limit available files to needed date range
   head(needed_files_df)
   dim(needed_files_df)
+  
+  # subset for a particular download
+  #needed_files_df = needed_files_df[needed_files_df$year == 2009 | needed_files_df$year == 2017 | needed_files_df$year == 2016, ]
   
   # find all urls for download
   urls = paste(ftp, needed_files_df$products,'/',needed_files_df$year, "/", needed_files_df$doy, "/",sep='')
@@ -140,7 +143,6 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
 # Find any missing files and download -------------------------------------
 
 
-  
   # list all files
   files = data.frame(files=list.files(out_dir,pattern=".hdf", all.files=T, full.names=T),stringsAsFactors = F)
   files$short_name =  list.files(out_dir,pattern=".hdf", all.files=T, full.names=F)
@@ -167,7 +169,7 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
 # Get Names of all Layers in HDF ------------------------------------------
 
 
-  get_subdatasets('./MYD13Q1.A2015361.h22v08.006.2016012202549.hdf')
+  get_subdatasets( files[1,1])
 
   
     
