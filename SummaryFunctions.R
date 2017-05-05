@@ -863,24 +863,33 @@ stack_smoother <- function(stack_in,dates,pred_dates,spline_spar=0.1,workers=20,
    rm(data_list)
 
    #do.call(file.remove, list(list.files(".",full.names = TRUE))) # delete temp files
-
+   
    print('writing out tifs')
 
-   registerDoParallel(2)
+   registerDoParallel(1)
    
    dir.create(file.path(out_dir, 'Tifs'), showWarnings = FALSE) 
    setwd(file.path(out_dir, 'Tifs'))
+
+   # save and load to free up memory
+   save(result_table,file = paste('./result_table',stack_name,".RData",sep = ""))
+   rm(result_table)
+   load(paste('./result_table',stack_name,".RData",sep = ""))
+
+
    hnumb =   gsub("^.*h([0-9]{2}).*$", "\\1",stack_name,perl = T)
    vnumb =   gsub("^.*v([0-9]{2}).*$", "\\1",stack_name,perl = T)
 
-   junk =  foreach( layer = 1:dim(stack_in)[3], .inorder=F) %dopar% {
+   junk =  foreach( layer = 1:dim(stack_in)[3], .inorder=F) %do% {
       print(layer)
       r = stack_in[[layer]]
       r = setValues(r, matrix(result_table[[layer]],nrow=dim(r)[1],byrow=T))
       writeRaster(r,paste('NDVI_h',hnumb,'v',vnumb,'_',names(stack_in)[layer],
-		'_smooth_',spline_spar,'_V',version,,'.tif',sep=''),overwrite=T)
+		'_smooth_',spline_spar,'_V',version,'.tif',sep=''),overwrite=T)
       return(0)
    }
+
+   file.remove(paste('./result_table',stack_name,".RData",sep = ""))
    rm(list=c('result','data_list','result_table'))
    return('finished')
 }
@@ -900,7 +909,6 @@ stack_smoother <- function(stack_in,dates,pred_dates,spline_spar=0.1,workers=20,
     sort(c(x[!x%in%y],
            y[!y%in%x]))
   }
-
 
 
 

@@ -147,6 +147,9 @@ foreach(product =  c('EVI','NDVI','pixel_reliability')) %dopar% {
     spline_spar=0.4  # 0.4 for RF
     workers = 15
     out_dir = '/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Data Stacks/Smoothed/'
+
+  # NOTE: some updates should happen with stack_smoother naming is fixed for NDVI when writing tifs out,
+  # memory issues partially resolved by saving and reloading stack, 
     stack_smoother(stack_in,dates,pred_dates,spline_spar,workers,stack_name,version,out_dir)
   }
 
@@ -285,7 +288,7 @@ for(product in  c('EVI','NDVI')){  #'EVI','NDVI'
 # Limit to crop signal ----------------------------------------------------
 #  Class Codes:
 # version 1  1 agforest 2 arid 3 dryag 4 forest 5 semiarid 6 shrub 7 water 8 wetag 9 wetforest
-# version 2-3 "more"  1 agforest 2 arid 3 dryag 4 forest 5 semiarid 6 settlement 7 shrub 8 water 9 wetag 10 wetforest
+# version 2-4 "more"  1 agforest 2 arid 3 dryag 4 forest 5 semiarid 6 settlement 7 shrub 8 water 9 wetag 10 wetforest
 
 
 # load data in previous section and run common dates

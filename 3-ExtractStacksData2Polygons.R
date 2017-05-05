@@ -48,9 +48,9 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
 products =  c('MYD13Q1')  #EVI c('MYD13Q1','MOD13Q1')  , land cover = 'MCD12Q1' for 250m and landcover ='MCD12Q2'
 location = c(9.145000, 40.489673)  # Lat Lon of a location of interest within your tiles listed above #India c(-31.467934,-57.101319)  #
 tiles =   c('h21v07','h22v07','h21v08','h22v08')   # India example c('h13v12')
-dates = c('2011-01-01','2016-03-30') # example c('year-month-day',year-month-day') c('2002-07-04','2016-02-02') 
+dates = c('2009-01-01','2016-03-6') # example c('year-month-day',year-month-day')
 
-version = 3 # updated land cover classes
+version = 4 # updated land cover classes
 
 
 
@@ -230,8 +230,8 @@ version = 3 # updated land cover classes
 
   # Load data
   setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
-  load(paste('./Outputs/PET_summary_V',version,'.Rdata',sep=''))
-  load(paste('./Outputs/ETA_summary_V',version,'.Rdata',sep=''))
+  load(paste('./Outputs/PET_summary_V3.Rdata',sep=''))
+  load(paste('./Outputs/ETA_summary_V3.Rdata',sep=''))
   load(paste('./Outputs/NDVI_summary_V',version,sep=''))
 
   Polys_sub = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasSIN_sub_agss_codes_wdata',
