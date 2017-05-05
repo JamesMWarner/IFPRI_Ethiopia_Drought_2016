@@ -54,7 +54,7 @@ MRT = 'H:/Projects/MRT/bin'
 products =  c('MYD13Q1')  #EVI c('MYD13Q1','MOD13Q1')  , land cover = 'MCD12Q1' for 250m and landcover ='MCD12Q2'
 location = c(9.145000, 40.489673)  # Lat Lon of a location of interest within your tiles listed above #India c(-31.467934,-57.101319)  #
 tiles =   c('h21v07','h22v07','h21v08','h22v08')   # India example c('h13v12')
-dates = c('2009-01-01','2016-03-6') # example c('year-month-day',year-month-day')  
+dates = c('2009-01-01','2017-03-6') # example c('year-month-day',year-month-day')  
 
 version = 4    # update to 'more' landcover classification that includes more training sites and settlement land class
                # version 3 has new landcover and 2010 data 
