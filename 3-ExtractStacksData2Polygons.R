@@ -1,3 +1,44 @@
+
+# Run the following in bash before starting R
+if [ -e $HOME/.Renviron ]; then cp $HOME/.Renviron $HOME/.Renviron.bkp; fi
+if [ ! -d $HOME/.Rtmp ] ; then mkdir $HOME/.Rtmp; fi
+echo "TMP='$HOME/.Rtmp'" > $HOME/.Renviron
+
+module load proj.4/4.8.0
+module load gdal/gcc/1.11
+module load R/3.1.1
+module load gcc/4.9.0
+R
+
+rm(list=ls())
+#source('R:\\Mann Research\\IFPRI_Ethiopia_Drought_2016\\IFPRI_Ethiopia_Drought_Code\\ModisDownload.R')
+source('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/IFPRI_Ethiopia_Drought_2016/SummaryFunctions.R')
+# R/3.0.2 seems to work maybe
+
+
+library(raster)
+library(rgdal)
+library(sp)
+library(maptools)
+#library(rts)
+library(gdalUtils)
+library(foreach)
+library(doParallel)
+library(compiler)
+library(plyr)
+library(foreign)
+
+#cl <- makeCluster(32)
+#registerDoParallel(cl)
+
+
+# Compile Functions ---------------------------------------------------------------
+
+
+functions_in = lsf.str()
+lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # byte code compile all functions http://adv-r.had.co.nz/Prof$
+
+
 # the file takes stack outputs from 2 - Stack Files.R and extracts data to EA polygons
 
 # Run the following in bash before starting R
@@ -88,9 +129,17 @@ version = 4 # updated land cover classes
 
 # prepare other data ---------------------------------------
   
-  setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/DistanceTransport/')
+ reproject_extent = function(outer_extent,from_proj_4_str,to_proj_4_str){
+	coords =list(c(outer_extent@xmin,outer_extent@ymin),c(outer_extent@xmax,outer_extent@ymax))
+	pnts = SpatialPoints(coords, proj4string=CRS(from_proj_4_str))
+	pnts = spTransform(pnts, CRS(to_proj_4_str))
+	extent(pnts)
+ }
+
+
 
   # reproject transport variables
+  setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/DistanceTransport/')
   example = proj4string(raster('../LandUseClassifications/NDVI_stack_h21v07_smooth_lc_svm_mn.tif'))
   #dist_rcap = raster('EucDist_Rcap.tif')
   #dist_rcap = projectRaster(dist_rcap, crs= crs(example), filename = './EucDist_Rcap_sin.tif',overwrite=T)
@@ -99,48 +148,78 @@ version = 4 # updated land cover classes
   #dist_pp50k = raster('EucDist_pp50k.tif')
   #dist_pp50k = projectRaster(dist_pp50k, crs=crs(example), filename = './EucDist_pp50k_sin.tif',overwrite=T)
 
-  # deal with PET
-  #flist = list.files("../PET/", glob2rx(paste('*','.tif$',sep='')),full.names = T)
-  #year = paste('20',gsub("^.*([0-9]{2})_([0-9]{2}).*$", "\\1",flist,perl = T),sep='')  # Strip dates
-  #month = gsub("^.*([0-9]{2})_([0-9]{2}).*$", "\\2",flist,perl = T)  # Strip dates
-  #flist_dates = format(strptime(paste(year,month,'01',sep='_'),'%Y_%m_%d'),'%Y%j')   
-  #flist = flist[order(as.numeric(paste(year,month,sep='')))]  # file list in order
-  #flist_dates = flist_dates[order(flist_dates)]  # file_dates list in order
-  #PET_stack = stack(flist)
-  #names(PET_stack)=flist_dates
-  #save(PET_stack,file = '../PET/PET_stack.RData')
+  # deal with PET  (untar bil files and place into /PET/Unzip folder)
+  # get extents
+  setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
+
+  # summarize mean by month and project
+  for( year in sprintf('%02d',seq(9,17))){
+   	for( month in sprintf('%02d',seq(1,12))){
+  		flist = list.files("./PET/Unzip/", glob2rx(paste('et',year,month,'*','.bil$',sep='')),full.names = T)
+  		print(flist)
+ 		stk = stack(flist)
+		mn_stk = mean(stk,na.rm=T)
+		proj4string(mn_stk) = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs'
+	 	projectRaster(mn_stk, crs=CRS('+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs'), 
+			filename = paste('./PET/PET',year,month,'mn','sin.tif',sep='_'),overwrite=T)
+  	}
+  }
+
+  flist = list.files("./PET/", glob2rx(paste('*','.tif$',sep='')),full.names = T)
+  year = paste('20',gsub("^.*([0-9]{2})_([0-9]{2}).*$", "\\1",flist,perl = T),sep='')  # Strip dates
+  month = gsub("^.*([0-9]{2})_([0-9]{2}).*$", "\\2",flist,perl = T)  # Strip dates
+  flist_dates = format(strptime(paste(year,month,'01',sep='_'),'%Y_%m_%d'),'%Y%j')   
+  flist = flist[order(as.numeric(paste(year,month,sep='')))]  # file list in order
+  flist_dates = flist_dates[order(flist_dates)]  # file_dates list in order
+  PET_stack = stack(flist)
+  names(PET_stack)=flist_dates
+  save(PET_stack,file = paste('./PET/PET_stack_V',version,'.RData',sep=''))
+
+
 
   # deal with ETa
+  # get extent
+  cl <- makeCluster(25)
+  registerDoParallel(cl)
+
   setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
-  #flist = list.files("./ETa Anomaly/", glob2rx(paste('*','.zip$',sep='')),full.names = T)
-  #foreach(i = 1:length(flist), .inorder=F) %dopar% {unzip(flist[i], exdir ='./ETa Anomaly/')}
-  #flist = list.files("./ETa Anomaly/", glob2rx(paste('*','ET.tif$',sep='')),full.names = T)
-  #flist_dates = paste(gsub("^.*ma([0-9]{4}).*$", "\\1",flist,perl = T),sep='')  # Strip dates
-  #flist = flist[order(flist_dates)]  # file list in order
-  #flist_dates = flist_dates[order(flist_dates)]  # file_dates list in order
-  #flist_dates = paste('20',substr(flist_dates,1,2),'-',substr(flist_dates,3,4),'-01',sep='')
-  #flist_dates = format(strptime(flist_dates, '%Y-%m-%d'),'%Y%j')
+  example1 = (raster('./LandUseClassifications/NDVI_stack_h21v07_smooth_lc_svm_mn.tif'))
 
-  #example = raster(flist[1])
-  #example = projectRaster(example,crs= CRS('+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs'))
-  #for(layer in 1:length(flist)){ print(layer)	
-  #	print(raster(flist[layer]))
-  #	print(extent(raster(flist[layer]))==extent(example))
-  #}
+  # get files and dates 
+  flist = list.files("./ETa Anomaly/", glob2rx(paste('*','.zip$',sep='')),full.names = T)
+  foreach(i = 1:length(flist), .inorder=F) %dopar% {unzip(flist[i], exdir ='./ETa Anomaly/')}
+  flist = list.files("./ETa Anomaly/", glob2rx(paste('*','ET.tif$',sep='')),full.names = T)
+  flist_dates = paste(gsub("^.*ma([0-9]{4}).*$", "\\1",flist,perl = T),sep='')  # Strip dates
+  flist = flist[order(flist_dates)]  # file list in order
+  flist_dates = flist_dates[order(flist_dates)]  # file_dates list in order
+  flist_dates = paste('20',substr(flist_dates,1,2),'-',substr(flist_dates,3,4),'-01',sep='')
+  flist_dates = format(strptime(flist_dates, '%Y-%m-%d'),'%Y%j')
 
-  #registerDoParallel(15)
-  #foreach(layer = 1:length(flist), .inorder=F, .errorhandling ='pass') %dopar% {
-  #	print(layer)
-  #	layer_out = raster(flist[layer])
-  #	if(extent(layer_out)!=extent(example)){
-  #		layer_out = projectRaster(layer_out, example)
-  #		writeRaster(layer_out,flist[layer],overwrite=T)
-  # 	}
-  #}
+  # reproject to sin
+  example2 = raster(flist[1])
+  example2 = projectRaster(example2, crs=CRS('+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs'))
 
-  #ETA_stack = stack(flist)
-  #names(ETA_stack)=flist_dates
-  #save(ETA_stack,file = './ETa Anomaly/ETA_stack.RData')
+  foreach(layer = 1:length(flist), .inorder=F, .errorhandling ='pass',.packages='raster') %dopar% {
+  	print(layer)
+  	layer_out = raster(flist[layer])
+  	if(proj4string(layer_out)!=proj4string(example1)){
+  		layer_out = projectRaster(layer_out, example2)
+  		writeRaster(layer_out,flist[layer],overwrite=T)
+   	}
+	return(0)
+  }  
+  endCluster()
+
+  # check intersection?
+  for(layer in 1:length(flist)){ print(layer)
+        print(raster(flist[layer]))
+        print(proj4string(raster(flist[layer]))=='+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs')
+        print(extent(raster(flist[layer]))== extent(raster(flist[1])))
+  }
+
+  ETA_stack = stack(flist)
+  names(ETA_stack)=flist_dates
+  save(ETA_stack,file = paste('./ETa Anomaly/ETA_stack_V',version,'.RData',sep=''))
 
 
 
