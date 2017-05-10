@@ -55,11 +55,13 @@ file.remove(files)
 
 
 # Stack rasters & save 
+setwd("/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/CHIRPS")
 files = list.files(path='.', 
          pattern=paste("*_",paste(tiles,collapse='_'),"_cropped.tif",sep=''), full.names=T, recursive=T)
 rain_stack = stack(files)
 # strip dates
-LC_dates = strptime( gsub("^.*.([0-9]{4}){1}[.]([0-9]{2})[.]([0-9]{1}).*$",replacement =  '\\1-\\2-\\3',x = files,perl = T) ,format='%Y-%m-%d')
+LC_dates = strptime( gsub("^.*.([0-9]{4}){1}[.]([0-9]{2})[.]([0-9]{1}).*$",replacement =  '\\1-\\2-\\3',x = files,perl = T) ,
+	format='%Y-%m-%d')
 #fix for dekad (-1 = 10th day 2= 20th day =3 is everything after 21)
 
 #How does CHIRPS define a pentad?

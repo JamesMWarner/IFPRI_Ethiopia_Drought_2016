@@ -129,15 +129,6 @@ version = 4 # updated land cover classes
 
 # prepare other data ---------------------------------------
   
- reproject_extent = function(outer_extent,from_proj_4_str,to_proj_4_str){
-	coords =list(c(outer_extent@xmin,outer_extent@ymin),c(outer_extent@xmax,outer_extent@ymax))
-	pnts = SpatialPoints(coords, proj4string=CRS(from_proj_4_str))
-	pnts = spTransform(pnts, CRS(to_proj_4_str))
-	extent(pnts)
- }
-
-
-
   # reproject transport variables
   setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/DistanceTransport/')
   example = proj4string(raster('../LandUseClassifications/NDVI_stack_h21v07_smooth_lc_svm_mn.tif'))
@@ -147,146 +138,151 @@ version = 4 # updated land cover classes
   #roadden = projectRaster(roadden,crs=crs( example), filename = './RoadDen_5km_WLRC_sin.tif',overwrite=T)
   #dist_pp50k = raster('EucDist_pp50k.tif')
   #dist_pp50k = projectRaster(dist_pp50k, crs=crs(example), filename = './EucDist_pp50k_sin.tif',overwrite=T)
+  
 
   # deal with PET  (untar bil files and place into /PET/Unzip folder)
   # get extents
   setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
 
   # summarize mean by month and project
-  for( year in sprintf('%02d',seq(9,17))){
-   	for( month in sprintf('%02d',seq(1,12))){
-  		flist = list.files("./PET/Unzip/", glob2rx(paste('et',year,month,'*','.bil$',sep='')),full.names = T)
-  		print(flist)
- 		stk = stack(flist)
-		mn_stk = mean(stk,na.rm=T)
-		proj4string(mn_stk) = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs'
-	 	projectRaster(mn_stk, crs=CRS('+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs'), 
-			filename = paste('./PET/PET',year,month,'mn','sin.tif',sep='_'),overwrite=T)
-  	}
-  }
+  #for( year in sprintf('%02d',seq(9,17))){
+  # 	for( month in sprintf('%02d',seq(1,12))){
+  #		flist = list.files("./PET/Unzip/", glob2rx(paste('et',year,month,'*','.bil$',sep='')),full.names = T)
+  #		print(flist)
+  #		stk = stack(flist)
+  #		mn_stk = mean(stk,na.rm=T)
+  #		proj4string(mn_stk) = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs'
+  #	 	projectRaster(mn_stk, crs=CRS('+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs'), 
+  #			filename = paste('./PET/PET',year,month,'mn','sin.tif',sep='_'),overwrite=T)
+  #	}
+  #}
 
-  flist = list.files("./PET/", glob2rx(paste('*','.tif$',sep='')),full.names = T)
-  year = paste('20',gsub("^.*([0-9]{2})_([0-9]{2}).*$", "\\1",flist,perl = T),sep='')  # Strip dates
-  month = gsub("^.*([0-9]{2})_([0-9]{2}).*$", "\\2",flist,perl = T)  # Strip dates
-  flist_dates = format(strptime(paste(year,month,'01',sep='_'),'%Y_%m_%d'),'%Y%j')   
-  flist = flist[order(as.numeric(paste(year,month,sep='')))]  # file list in order
-  flist_dates = flist_dates[order(flist_dates)]  # file_dates list in order
-  PET_stack = stack(flist)
-  names(PET_stack)=flist_dates
-  save(PET_stack,file = paste('./PET/PET_stack_V',version,'.RData',sep=''))
+  #flist = list.files("./PET/", glob2rx(paste('*','.tif$',sep='')),full.names = T)
+  #year = paste('20',gsub("^.*([0-9]{2})_([0-9]{2}).*$", "\\1",flist,perl = T),sep='')  # Strip dates
+  #month = gsub("^.*([0-9]{2})_([0-9]{2}).*$", "\\2",flist,perl = T)  # Strip dates
+  #flist_dates = format(strptime(paste(year,month,'01',sep='_'),'%Y_%m_%d'),'%Y%j')   
+  #flist = flist[order(as.numeric(paste(year,month,sep='')))]  # file list in order
+  #flist_dates = flist_dates[order(flist_dates)]  # file_dates list in order
+  #PET_stack = stack(flist)
+  #names(PET_stack)=flist_dates
+  #save(PET_stack,file = paste('./PET/PET_stack_V',version,'.RData',sep=''))
 
 
 
   # deal with ETa
   # get extent
-  cl <- makeCluster(25)
-  registerDoParallel(cl)
+  #cl <- makeCluster(25)
+  #registerDoParallel(cl)
 
-  setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
-  example1 = (raster('./LandUseClassifications/NDVI_stack_h21v07_smooth_lc_svm_mn.tif'))
+  #setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
+  #example1 = (raster('./LandUseClassifications/NDVI_stack_h21v07_smooth_lc_svm_mn.tif'))
 
   # get files and dates 
-  flist = list.files("./ETa Anomaly/", glob2rx(paste('*','.zip$',sep='')),full.names = T)
-  foreach(i = 1:length(flist), .inorder=F) %dopar% {unzip(flist[i], exdir ='./ETa Anomaly/')}
-  flist = list.files("./ETa Anomaly/", glob2rx(paste('*','ET.tif$',sep='')),full.names = T)
-  flist_dates = paste(gsub("^.*ma([0-9]{4}).*$", "\\1",flist,perl = T),sep='')  # Strip dates
-  flist = flist[order(flist_dates)]  # file list in order
-  flist_dates = flist_dates[order(flist_dates)]  # file_dates list in order
-  flist_dates = paste('20',substr(flist_dates,1,2),'-',substr(flist_dates,3,4),'-01',sep='')
-  flist_dates = format(strptime(flist_dates, '%Y-%m-%d'),'%Y%j')
+  #flist = list.files("./ETa Anomaly/", glob2rx(paste('*','.zip$',sep='')),full.names = T)
+  #foreach(i = 1:length(flist), .inorder=F) %dopar% {unzip(flist[i], exdir ='./ETa Anomaly/')}
+  #flist = list.files("./ETa Anomaly/", glob2rx(paste('*','ET.tif$',sep='')),full.names = T)
+  #flist_dates = paste(gsub("^.*ma([0-9]{4}).*$", "\\1",flist,perl = T),sep='')  # Strip dates
+  #flist = flist[order(flist_dates)]  # file list in order
+  #flist_dates = flist_dates[order(flist_dates)]  # file_dates list in order
+  #flist_dates = paste('20',substr(flist_dates,1,2),'-',substr(flist_dates,3,4),'-01',sep='')
+  #flist_dates = format(strptime(flist_dates, '%Y-%m-%d'),'%Y%j')
 
   # reproject to sin
-  example2 = raster(flist[1])
-  example2 = projectRaster(example2, crs=CRS('+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs'))
+  #example2 = raster(flist[1])
+  #example2 = projectRaster(example2, crs=CRS('+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs'))
 
-  foreach(layer = 1:length(flist), .inorder=F, .errorhandling ='pass',.packages='raster') %dopar% {
-  	print(layer)
-  	layer_out = raster(flist[layer])
-  	if(proj4string(layer_out)!=proj4string(example1)){
-  		layer_out = projectRaster(layer_out, example2)
-  		writeRaster(layer_out,flist[layer],overwrite=T)
-   	}
-	return(0)
-  }  
-  endCluster()
+  #foreach(layer = 1:length(flist), .inorder=F, .errorhandling ='pass',.packages='raster') %dopar% {
+  #	print(layer)
+  #	layer_out = raster(flist[layer])
+  #	if(proj4string(layer_out)!=proj4string(example1)){
+  #		layer_out = projectRaster(layer_out, example2)
+  #		writeRaster(layer_out,flist[layer],overwrite=T)
+  # 	}
+  #	return(0)
+  #}  
+  #endCluster()
 
   # check intersection?
-  for(layer in 1:length(flist)){ print(layer)
-        print(raster(flist[layer]))
-        print(proj4string(raster(flist[layer]))=='+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs')
-        print(extent(raster(flist[layer]))== extent(raster(flist[1])))
-  }
-
-  ETA_stack = stack(flist)
-  names(ETA_stack)=flist_dates
-  save(ETA_stack,file = paste('./ETa Anomaly/ETA_stack_V',version,'.RData',sep=''))
-
-
-
-# Summarize data to enumeration areas --------------------------------------------------
-
-  Polys_sub = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasSIN_sub_agss_codes',
-                    stringsAsFactors = F)
-  Polys_sub$id = 1:dim(Polys_sub@data)[1] 
-
-  product = 'NDVI'
-
-  load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Processed Panel/ExtractRaw/',
-           product,'_Poly_Ext_sub_agss_V',version,'.RData',sep=''))
-
-  # Get planting and harvest dates
-  plantharvest =   PlantHarvestDates(start_date=dates[1],end_date=dates[2],PlantingMonth=4,
-                                   PlantingDay=1,HarvestMonth=1,HarvestDay=30)
-
-  # Get summary statistics lists
-  extr_values=Poly_Veg_Ext_sub
-  PlantHarvestTable = plantharvest
-  Quant_percentile=0.90
-  num_workers = 10
-  spline_spar = 0
-  NDVI_summary =  Annual_Summary_Functions(extr_values, PlantHarvestTable,Quant_percentile, aggregate=T, 
-                                         return_df=T,num_workers)
-
-  save(NDVI_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/NDVI_summary_V',version,sep=''))
-
-  # pull data to polygons
-  # load data
-  #setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
-  #dist_rcap = raster('./DistanceTransport/EucDist_Rcap_sin.tif')
-  #roadden = raster('./DistanceTransport/RoadDen_5km_WLRC_sin.tif')
-  #dist_pp50k = raster('./DistanceTransport/EucDist_pp50k_sin.tif')
-  #
-  # for(layer in c('dist_rcap','roadden','dist_pp50k')){
-  #       values = extract_value_point_polygon(Polys_sub,get(layer),16)
-  #       mean = do.call('rbind',lapply(values, function(x) if (!is.null(x)) colMeans(x, na.rm=TRUE) else NA ))
-  #       Polys_sub[[layer]] = as.numeric(mean)
+  #for(layer in 1:length(flist)){ print(layer)
+  #      print(raster(flist[layer]))
+  #      print(proj4string(raster(flist[layer]))=='+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs')
+  #      print(extent(raster(flist[layer]))== extent(raster(flist[1])))
   #}
 
- #writeOGR(obj=Polys_sub, dsn="/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/",
- #	 layer="EnumerationAreasSIN_sub_agss_codes_wdata", driver="ESRI Shapefile")
+  #ETA_stack = stack(flist)
+  #names(ETA_stack)=flist_dates
+  #save(ETA_stack,file = paste('./ETa Anomaly/ETA_stack_V',version,'.RData',sep=''))
+
+  
+
+
+# pull data to polygons --------------------------------------------------------
+  # load data
+  Polys_sub = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasSIN_sub_agss_codes',
+                      stringsAsFactors = F)
+  Polys_sub$id = 1:dim(Polys_sub@data)[1]
+
+  setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
+  dist_rcap = raster('./DistanceTransport/EucDist_Rcap_sin.tif')
+  roadden = raster('./DistanceTransport/RoadDen_5km_WLRC_sin.tif')
+  dist_pp50k = raster('./DistanceTransport/EucDist_pp50k_sin.tif')
+  elevation = raster('./SRTM/srtm_90m_sin2.tif')
+  
+  for(layer in c('dist_rcap','roadden','dist_pp50k','elevation')){
+         values = extract_value_point_polygon(Polys_sub,get(layer),16)
+         mean = do.call('rbind',lapply(values, function(x) if (!is.null(x)) colMeans(x, na.rm=TRUE) else NA ))
+         Polys_sub[[layer]] = as.numeric(mean)
+  }
+
+ writeOGR(obj=Polys_sub, dsn="/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/",
+ 	 layer="EnumerationAreasSIN_sub_agss_codes_wdata", driver="ESRI Shapefile",overwrite=T)
 
 
 
 # pull ETA PET data to polygons -----------------------------------
-
+  #load data
   setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
-#  load('./PET/PET_stack.RData')
-#  load('./ETa Anomaly/ETA_stack.RData')
-#  Poly_PET_Ext_sub = extract_value_point_polygon(Polys_sub,PET_stack,12)
-#  save(Poly_PET_Ext_sub,
-#        file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
-#        'Poly_PET_Ext_sub.RData',sep=''))
-#  Poly_ETA_Ext_sub = extract_value_point_polygon(Polys_sub,ETA_stack,15)
-#  save(Poly_ETA_Ext_sub,
-#        file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
-#        'Poly_ETA_Ext_sub.RData',sep=''))
+  load(paste('./PET/PET_stack_V',version,'.RData',sep=''))
+  load(paste('./ETa Anomaly/ETA_stack_V',version,'.RData',sep=''))
+  load('./Data Stacks/Rain Stacks/Rain_Stack_h21v07_h21v08_h22v07_h22v08.RData')
+  #pull to polygons 
+  Poly_PET_Ext_sub = extract_value_point_polygon(Polys_sub,PET_stack,15)
+  save(Poly_PET_Ext_sub,
+        file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+        'Poly_PET_Ext_sub_V',version,'.RData',sep=''))
+  Poly_ETA_Ext_sub = extract_value_point_polygon(Polys_sub,ETA_stack,15)
+  save(Poly_ETA_Ext_sub,
+        file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+        'Poly_ETA_Ext_sub_V',version,'.RData',sep=''))
+  # deal with CHIRPS PPT data downloaded and stacked w/ 1a-DownloadCHIRPSFTP_Rcurl.R
+  Poly_PPT_Ext_sub = extract_value_point_polygon(Polys_sub,rain_stack,15)
+  save(Poly_PPT_Ext_sub,
+        file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+        'Poly_PPT_Ext_sub_V',version,'.RData',sep=''))
 
-  load('./Outputs/Poly_PET_Ext_sub.RData')
-  load('./Outputs/Poly_ETA_Ext_sub.RData')
-  load(paste('./Outputs/NDVI_summary_V',version,sep=''))
+  #remove x2013001 from ETA because it is missing data
+  Poly_ETA_Ext_sub = lapply(1:length(Poly_ETA_Ext_sub), function(x){
+		Poly_ETA_Ext_sub[[x]][,!(names(Poly_ETA_Ext_sub[[x]]) %in% 'X2013001')]
+	}) 
+  save(Poly_ETA_Ext_sub,
+        file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+        'Poly_ETA_Ext_sub_V',version,'.RData',sep=''))
 
 
-  # Get summary statistics lists
+  # reload
+  load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+        'Poly_PET_Ext_sub_V',version,'.RData',sep=''))
+  load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+        'Poly_ETA_Ext_sub_V',version,'.RData',sep=''))
+  load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+        'Poly_PPT_Ext_sub_V',version,'.RData',sep=''))
+  load(paste('./Outputs/NDVI_summary_V',version,sep=''))  # needed for Annual_Summary_Functions_OtherData
+ 
+
+  # OTHER DATA SHOULD SPLINE SMOOTH TO MATCH DATES OF NDVI TIME SERIES
+
+
+  # Get summary statistics lists using plant harvest dates obtained from NDVI
   extr_values = Poly_PET_Ext_sub  
   Veg_Annual_Summary = NDVI_summary 
   name_prefix = 'PET'
@@ -304,6 +300,13 @@ version = 4 # updated land cover classes
   save(PET_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/PET_summary_V',version,'.Rdata',sep=''))
   save(ETA_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/ETA_summary_V',version,'.Rdata',sep=''))
 
+  extr_values= Poly_PPT_Ext_sub
+  name_prefix = 'PPT'
+  PPT_summary =  Annual_Summary_Functions_OtherData(extr_values, PlantHarvestTable, Veg_Annual_Summary,name_prefix,
+                                                  Quant_percentile,return_df,num_workers,spline_spar,aggregate)
+  save(PPT_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/PPT_summary_V',version,'.Rdata',sep=''))
+
+
 
 # Convert data to panel format --------------------------------------------
 
@@ -311,6 +314,7 @@ version = 4 # updated land cover classes
   setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
   load(paste('./Outputs/PET_summary_V3.Rdata',sep=''))
   load(paste('./Outputs/ETA_summary_V3.Rdata',sep=''))
+  load(paste('./Outputs/PPT_summary_V3.Rdata',sep=''))
   load(paste('./Outputs/NDVI_summary_V',version,sep=''))
 
   Polys_sub = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasSIN_sub_agss_codes_wdata',
@@ -467,3 +471,38 @@ version = 4 # updated land cover classes
   write.dta(output,paste('C:/Users/mmann/Dropbox/Ethiopia_Drought/Drought_Study/AgSS_Data1_2010_16_Cleaned/EA_NDVI_ET_panel_PCA_V',version,'.dta',sep=''))
   
   
+
+
+
+
+
+
+
+# Summarize data to ALL enumeration areas --------------------------------------------------
+  # this takes 3 days to process
+
+  #Polys_sub = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasSIN_sub_agss_codes',
+  #                  stringsAsFactors = F)
+  #Polys_sub$id = 1:dim(Polys_sub@data)[1]
+ #
+ #  product = 'NDVI'
+ #
+ #  load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Processed Panel/ExtractRaw/',
+ #           product,'_Poly_Ext_sub_agss_V',version,'.RData',sep=''))
+ #
+ #  # Get planting and harvest dates
+ #  plantharvest =   PlantHarvestDates(start_date=dates[1],end_date=dates[2],PlantingMonth=4,
+ #                                   PlantingDay=1,HarvestMonth=1,HarvestDay=30)
+ #
+ #  # Get summary statistics lists
+ #  extr_values=Poly_Veg_Ext_sub
+ #  PlantHarvestTable = plantharvest
+ #  Quant_percentile=0.90
+ #  num_workers = 10
+ #  spline_spar = 0
+ #  NDVI_summary =  Annual_Summary_Functions(extr_values, PlantHarvestTable,Quant_percentile, aggregate=T,
+ #                                         return_df=T,num_workers)
+ #
+ #  save(NDVI_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/NDVI_summary_V',version,sep=''))
+
+

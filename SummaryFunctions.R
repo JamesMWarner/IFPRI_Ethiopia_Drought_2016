@@ -1195,3 +1195,15 @@ arrange.vars <- function(data, vars){
     data <- data[ , out.vec]
     return(data)
 }
+
+
+
+
+ reproject_extent = function(outer_extent,from_proj_4_str,to_proj_4_str){
+        coords =list(c(outer_extent@xmin,outer_extent@ymin),c(outer_extent@xmax,outer_extent@ymax))
+        pnts = SpatialPoints(coords, proj4string=CRS(from_proj_4_str))
+        pnts = spTransform(pnts, CRS(to_proj_4_str))
+        extent(pnts)
+ }
+
+
