@@ -72,7 +72,8 @@ LC_dates = strptime( gsub("^.*.([0-9]{4}){1}[.]([0-9]{2})[.]([0-9]{1}).*$",repla
 LC_dates$mday[LC_dates$mday==1]=10
 LC_dates$mday[LC_dates$mday==2]=20
 LC_dates$mday[LC_dates$mday==2]=29
-names(rain_stack) = LC_dates
+LC_dates2 = format(LC_dates,'%Y%j')
+names(rain_stack) = LC_dates2
  
 
 dirs = '../Data Stacks/Rain Stacks/'  
