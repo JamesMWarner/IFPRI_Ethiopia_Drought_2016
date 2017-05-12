@@ -260,6 +260,20 @@ version = 4 # updated land cover classes
         file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
         'Poly_PPT_Ext_sub_V',version,'.RData',sep=''))
 
+  #fix date NO LONGER NEEDED, intrgrated into 1a-... .R
+  #Poly_PPT_Ext_sub=  lapply(1:length(Poly_PPT_Ext_sub),function(x){
+  #   	date = paste('X',format(strptime( 
+##	   gsub("^.*X([0-9]{4}.[0-9]{2}.[0-9]{2}).*$", "\\1", names(Poly_PPT_Ext_sub[[x]])),'%Y.%m.%d'),
+#	   '%Y%j'),sep='')  
+#  	names(Poly_PPT_Ext_sub[[x]])=date
+#        return(Poly_PPT_Ext_sub[[x]])
+#	})
+ save(Poly_PPT_Ext_sub,
+        file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+        'Poly_PPT_Ext_sub_V',version,'.RData',sep=''))
+
+
+
   #remove x2013001 from ETA because it is missing data
   Poly_ETA_Ext_sub = lapply(1:length(Poly_ETA_Ext_sub), function(x){
 		Poly_ETA_Ext_sub[[x]][,!(names(Poly_ETA_Ext_sub[[x]]) %in% 'X2013001')]
@@ -270,6 +284,7 @@ version = 4 # updated land cover classes
 
 
   # reload
+  setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
   load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
         'Poly_PET_Ext_sub_V',version,'.RData',sep=''))
   load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
@@ -277,7 +292,8 @@ version = 4 # updated land cover classes
   load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
         'Poly_PPT_Ext_sub_V',version,'.RData',sep=''))
   load(paste('./Outputs/NDVI_summary_V',version,sep=''))  # needed for Annual_Summary_Functions_OtherData
- 
+  load('./Data Stacks/WO Clouds Clean LC/NDVI_stack_h21v07_WO_Clouds_Clean_LC_V4.RData') # used for spline dates
+
 
   # OTHER DATA SHOULD SPLINE SMOOTH TO MATCH DATES OF NDVI TIME SERIES
 
@@ -285,25 +301,27 @@ version = 4 # updated land cover classes
   # Get summary statistics lists using plant harvest dates obtained from NDVI
   extr_values = Poly_PET_Ext_sub  
   Veg_Annual_Summary = NDVI_summary 
+  Veg_Stack = NDVI_stack_h21v07_WO_Clouds_Clean_LC # used for spline dates
   name_prefix = 'PET'
   Quant_percentile=0.90
   num_workers = 10
-  spline_spar = 0
+  spline_spar=.05 # good = 0.05
   aggregate=T
   return_df=T
-  PET_summary =  Annual_Summary_Functions_OtherData(extr_values, PlantHarvestTable, Veg_Annual_Summary,name_prefix,
-                                                  Quant_percentile,return_df,num_workers,spline_spar,aggregate)
+  PET_summary =  Annual_Summary_Functions_OtherData(extr_values, PlantHarvestTable,Veg_Stack,Veg_Annual_Summary,name_prefix,
+                                                  Quant_percentile,return_df,num_workers,aggregate,spline_spar)
+
   extr_values= Poly_ETA_Ext_sub
   name_prefix = 'ETA'
-  ETA_summary =  Annual_Summary_Functions_OtherData(extr_values, PlantHarvestTable, Veg_Annual_Summary,name_prefix,
-                                                  Quant_percentile,return_df,num_workers,spline_spar,aggregate)
+  ETA_summary =  Annual_Summary_Functions_OtherData(extr_values, PlantHarvestTable,Veg_Stack,Veg_Annual_Summary,name_prefix,
+                                                  Quant_percentile,return_df,num_workers,aggregate,spline_spar)
   save(PET_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/PET_summary_V',version,'.Rdata',sep=''))
   save(ETA_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/ETA_summary_V',version,'.Rdata',sep=''))
 
   extr_values= Poly_PPT_Ext_sub
   name_prefix = 'PPT'
-  PPT_summary =  Annual_Summary_Functions_OtherData(extr_values, PlantHarvestTable, Veg_Annual_Summary,name_prefix,
-                                                  Quant_percentile,return_df,num_workers,spline_spar,aggregate)
+  PPT_summary =  Annual_Summary_Functions_OtherData(extr_values, PlantHarvestTable, Veg_Stack,Veg_Annual_Summary,name_prefix,
+                                                  Quant_percentile,return_df,num_workers,aggregate,spline_spar)
   save(PPT_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/PPT_summary_V',version,'.Rdata',sep=''))
 
 
@@ -312,9 +330,9 @@ version = 4 # updated land cover classes
 
   # Load data
   setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
-  load(paste('./Outputs/PET_summary_V3.Rdata',sep=''))
-  load(paste('./Outputs/ETA_summary_V3.Rdata',sep=''))
-  load(paste('./Outputs/PPT_summary_V3.Rdata',sep=''))
+  load(paste('./Outputs/PET_summary_V',version,'.Rdata',sep=''))
+  load(paste('./Outputs/ETA_summary_V',version,'.Rdata',sep=''))
+  load(paste('./Outputs/PPT_summary_V',version,'.Rdata',sep=''))
   load(paste('./Outputs/NDVI_summary_V',version,sep=''))
 
   Polys_sub = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasSIN_sub_agss_codes_wdata',
@@ -322,23 +340,35 @@ version = 4 # updated land cover classes
   Polys_sub_data = Polys_sub@data
   Polys_sub_data$i = 1:dim(Polys_sub_data)[1]  # add id to join to 
 
+  # define years to include
+  year_start = 2009
+  year_end   = 2016
 
   holder_list = list()
   for(i in 1:dim(Polys_sub_data)[1]){
 	print(paste('working on row ', i))
-	holder_summary = data.frame(row = seq(2010,2016),i=i)
+	holder_summary = data.frame(row = seq(year_start,year_end),i=i)
 	holder_summary = join(holder_summary,Polys_sub_data[i,!(names(Polys_sub_data) %in% c('Remark','UK_NAME','UK_CODE',
                 'EA_ID','UK_ID','EA_CODE','W_cod_t','KK_cd_T','KK_NAME','KK_CODE'))],by=c('i'),type='left')
+        # join NDVI data
 	if(length(NDVI_summary[[i]])!=1 ){  # avoid missing values 
-   	holder_summary = join(holder_summary,NDVI_summary[[i]],by=c('i','row'),type='left')} # join shp to vegetation data 
-        if(length(PET_summary[[i]])!=1){
+   		holder_summary = join(holder_summary,NDVI_summary[[i]],by=c('i','row'),type='left')} # join shp to vegetation data 
+        # join PET data
+	if(length(PET_summary[[i]])!=1){
 	holder_summary = join(holder_summary,PET_summary[[i]][,!(names(PET_summary[[i]]) %in% c('PET_plant_dates',
 		'PET_harvest_dates','PET_A_max_Qnt',
                 'PET_A_AUC_Qnt','PET_G_mx_dates','PET_G_mx_Qnt','PET_G_AUC_Qnt','PET_T_G_Qnt'))],by=c('i','row'),type='left')}
-        if(length(ETA_summary[[i]])!=1){
+        # join ETA data
+	if(length(ETA_summary[[i]])!=1){
 	holder_summary = join(holder_summary, ETA_summary[[i]][,!(names(ETA_summary[[i]]) %in% c('ETA_plant_dates',
 		'ETA_harvest_dates','ETA_A_max_Qnt',
                 'ETA_A_AUC_Qnt','ETA_G_mx_dates','ETA_G_mx_Qnt','ETA_G_AUC_Qnt','ETA_T_G_Qnt'))],by=c('i','row'),type='left')} 
+	# join PPT data
+        if(length(PPT_summary[[i]])!=1 & class(PPT_summary[[i]])[1] =='data.frame'){
+        holder_summary = join(holder_summary, PPT_summary[[i]][,!(names(PPT_summary[[i]]) %in% c("PPT_A_mn","PPT_A_max","PPT_A_sd",
+		"PPT_G_mn","PPT_G_mx","PPT_G_AUC_Qnt","PPT_G_AUC2", "PPT_G_AUC_leading","PPT_G_AUC_trailing","PPT_G_AUC_diff_mn",
+		"PPT_G_AUC_diff_90th","PPT_T_G_Qnt","PPT_G_sd"))],by=c('i','row'),type='left')}
+        # rename to year and move to second column
 	names(holder_summary)[names(holder_summary)=='row']='Year'
 	holder_summary = arrange.vars(holder_summary, c("Year"=2))
 	holder_list[[i]] = holder_summary

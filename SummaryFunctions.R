@@ -999,15 +999,16 @@ writeRasterLustre = function(obj, obj_name_w_type ,out_path, ssd_path){
 
 
 
-Annual_Summary_Functions_OtherData = function(extr_values, PlantHarvestTable, Veg_Annual_Summary,name_prefix,
-	Quant_percentile=0.95,return_df=F,num_workers=5,spline_spar = 0,aggregate=T){
+Annual_Summary_Functions_OtherData = function(extr_values, PlantHarvestTable,Veg_Stack, Veg_Annual_Summary,name_prefix,
+	Quant_percentile=0.95,return_df=F,num_workers=5,aggregate=T,spline_spar=.05 ){
      # take in values from extract_value_point_polygon, estimates plant harvest from Veg_Annual_Summary
+     # smooths to dates from the NDVI or EVI stack
      # and create annual and global summary statistics for other datasets
      # returns a list where elements are composed of annual and growing season statistics
      # PlantHarvestTable default is table from PlantHarvestDates() for wheat, can do list(wheatPHdates, ricePHdates)
      # if aggregate=T, pixels comprising a polygon are smoothed and then the average signal is obtained, statistics are run from that
      # if return_df==T, returns data frame of summary stats for long form panel
-     # if spline_spar = 0, doesn't smooth data, as spline_spar increases smoothing decreases
+     # spline_spar = 0.05 to make sure smoothing fits points as exactly as possible (low value is less smooth)
      # iterate between spatial objects
 
 
@@ -1024,16 +1025,15 @@ Annual_Summary_Functions_OtherData = function(extr_values, PlantHarvestTable, Ve
       		names(extr_values[[i]]) = row_names
       		row.names( extr_values[[i]] ) = NULL}
       
-              # Get dates from stack names
-              dats = strptime( gsub("^.*X([0-9]+).*$", "\\1", names(extr_values[[i]])),format='%Y%j')
-              # Calculate smoothed values
-	      if(spline_spar!=0){
-                  smooth = lapply(1:dim(extr_values[[i]])[1],function(z){SplineAndOutlierRemoval(
-                  x = as.numeric(extr_values[[i]][z,]), dates=as.Date(dats),
-                  pred_dates=as.Date(dats),spline_spar)})
-	      }else{
-      	    	  smooth = lapply(1:dim(extr_values[[i]])[1],
-		  function(z) as.numeric(extr_values[[i]][z,]))	}
+         # Get dates from stack names
+         dats = strptime( gsub("^.*X([0-9]+).*$", "\\1", names(extr_values[[i]])),format='%Y%j')
+         veg_dats = strptime( gsub("^.*X([0-9]+).*$", "\\1", names(Veg_Stack)),format='%Y%j')
+
+         # Calculate smoothed values
+         smooth = lapply(1:dim(extr_values[[i]])[1],function(z){SplineAndOutlierRemoval(
+             x = as.numeric(extr_values[[i]][z,]), dates=as.Date(dats),
+             pred_dates=as.Date(veg_dats),spline_spar=spline_spar)})
+        dats = veg_dats # update with smoothed dates 
 
 	# grab plant and harvest dates from Veg_Annual_Summary      
 	if(is.na(Veg_Annual_Summary[[i]])){return(NA)}                        # return NA if no plant or harvest dates are available 
