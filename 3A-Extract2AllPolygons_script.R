@@ -38,9 +38,9 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
   products =  c('MYD13Q1')  #EVI c('MYD13Q1','MOD13Q1')  , land cover = 'MCD12Q1' for 250m and landcover ='MCD12Q2'
   location = c(9.145000, 40.489673)  # Lat Lon of a location of interest within your tiles listed above #India c(-31.467934,-5$
   tiles =   c('h21v07','h22v07','h21v08','h22v08')   # India example c('h13v12')
-  dates = c('2010-01-01','2016-03-30') # example c('year-month-day',year-month-day') c('2002-07-04','2016-02-02')
-  ftp = 'ftp://ladsweb.nascom.nasa.gov/allData/6/'    # allData/6/ for evi, /51/ for landcover
-  # allData/51/ for landcover DOESn't WORK jUST PULL FROM FTP
+  dates = c('2009-01-01','2017-03-6') # example c('year-month-day',year-month-day')
+
+  version = 4 # updated land cover classes
 
 
 
@@ -86,7 +86,7 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
 
   product = c('NDVI','EVI')[1]
 
-  out = foreach(rows= seq(580,inter_rows$length)) %do% {  
+  out = foreach(rows= seq(1,inter_rows$length)) %do% {  
         # limit size of polys to avoid memory issues
         Polys_sub = Polys[nextElem(inter_rows),]
         # extract values croped to point or polygon
@@ -108,13 +108,17 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
   # Copy files back from lustre and delete lustre
   setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Processed Panel/ExtractRaw/')
   flist = list.files("/lustre/groups/manngroup/Processed Panel/ExtractRaw/",
-         glob2rx(paste('*','.RData$',sep='')),full.names = T)
+         glob2rx(paste('*',product,'*','.RData$',sep='')),full.names = T)
   fname = list.files("/lustre/groups/manngroup/Processed Panel/ExtractRaw/",
-         glob2rx(paste('*','.RData$',sep='')),full.names = F)
+         glob2rx(paste('*',product,'.RData$',sep='')),full.names = F)
   file.copy(from=flist, to=paste(".",fname,sep='/'),
          overwrite = T, recursive = F, copy.mode = T)
   file.remove(flist)
 
+
+
+
+  # COMBINE DATA BACK FROM EXTRACT ----------------------------------------------------------------
 
   # Combine all extracted values into a single list 
   fname = list.files(".", glob2rx(paste('*','NDVI_panel__ExtractRaw.RData$',sep='')),full.names = F)

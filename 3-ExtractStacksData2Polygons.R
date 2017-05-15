@@ -379,6 +379,7 @@ version = 4 # updated land cover classes
 
   write.csv(output,paste('./Outputs/EA_NDVI_ET_panel_V',version,'.csv',sep=''))
   write.csv(output,paste('../IFPRI_Ethiopia_Drought_2016/Outputs4Pred/EA_NDVI_ET_panel_V',version,'.csv',sep=''))
+  write.dta(output,paste('../IFPRI_Ethiopia_Drought_2016/Outputs4Pred/EA_NDVI_ET_panel_V',version,'.dta',sep=''))
 
   
   

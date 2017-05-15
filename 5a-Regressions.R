@@ -19,24 +19,19 @@ library(readstata13)
 library(VSURF)
 #https://journal.r-project.org/archive/2015-2/genuer-poggi-tuleaumalot.pdf
 setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/IFPRI_Ethiopia_Drought_2016/')
-data_in = read.dta13("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_PCA_v3.dta")
+data_in = read.dta13("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v4.dta")
 
 data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
 #data_in = data_in[,1:dim(data_in)[2]]
 set.seed(2734, kind = "L'Ecuyer-CMRG")
 
-paste( names(data_in)[grepl('WHEAT',names(data_in))] , collapse=' + ')
+# list some variables
+#paste( names(data_in)[grepl('WHEAT',names(data_in))] , collapse=' + ')
 
 
+# Find factor and physical  variables -------------------------------------------------------
 
-
-
-
-# Find other wheat variables -------------------------------------------------------
-
-
-
-form0 = WHEATOPH_W ~ Year+REGIONCODE+ZONECODE+X_COORD+Y_COORD + WHEATAREA
+form0 = WHEATOPH_W ~ Year+REGIONCODE+ZONECODE+X_COORD+Y_COORD + WHEATAREA +dist_rcap+ roadden+ dist_pp50k+ elevation
 
 #vswheat0 = VSURF(form0,  data= data_in, na.action=na.omit,
 #                parallel = T, ncores = 40 , clusterType = "FORK" )  # mtry default is # Xs / 3
@@ -70,8 +65,8 @@ form1 = WHEATOPH_W ~ WHEATEXTAREA + WHEATIRRGAREA + WHEATSERRAREA + WHEATMERR1AR
 
 
 
-# Find other A_ G_  NDVI  variables -------------------------------------------------------
 
+# Find other A_ G_  NDVI  variables -------------------------------------------------------
 
 form2 = WHEATOPH_W ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  +
           G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn +
@@ -88,14 +83,15 @@ set.seed(2734, kind = "L'Ecuyer-CMRG")
 
 
 
-# Find other PET AET  variables -------------------------------------------------------
+# Find other PET AET PPT  variables -------------------------------------------------------
 
 paste( names(data_in)[grepl('AET',names(data_in))] , collapse=' + ')
 
 form3 = WHEATOPH_W ~ PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + PET_G_min + PET_G_mx + PET_G_AUC +
         PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn +
         ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +
-        ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd
+        ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_min+ PPT_A_AUC+
+	PPT_A_Qnt +  PPT_A_max_Qnt + PPT_A_AUC_Qnt + PPT_G_min + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt
 
 
 set.seed(2734, kind = "L'Ecuyer-CMRG")
@@ -105,6 +101,8 @@ set.seed(2734, kind = "L'Ecuyer-CMRG")
 #
 #
 #save(vswheat3,file = '../Data/VariableSelection/vswheat_3.RData')
+
+
 
 
 
