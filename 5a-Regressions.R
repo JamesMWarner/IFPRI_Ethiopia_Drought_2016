@@ -17,9 +17,12 @@ rm(list=ls())
 
 library(readstata13)
 library(VSURF)
+
+version = 4
+
 #https://journal.r-project.org/archive/2015-2/genuer-poggi-tuleaumalot.pdf
 setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/IFPRI_Ethiopia_Drought_2016/')
-data_in = read.dta13("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v4.dta")
+data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v",version,".dta",sep=''))
 
 data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
 #data_in = data_in[,1:dim(data_in)[2]]
@@ -33,11 +36,11 @@ set.seed(2734, kind = "L'Ecuyer-CMRG")
 
 form0 = WHEATOPH_W ~ Year+REGIONCODE+ZONECODE+X_COORD+Y_COORD + WHEATAREA +dist_rcap+ roadden+ dist_pp50k+ elevation
 
-#vswheat0 = VSURF(form0,  data= data_in, na.action=na.omit,
-#                parallel = T, ncores = 40 , clusterType = "FORK" )  # mtry default is # Xs / 3
+vswheat0 = VSURF(form0,  data= data_in, na.action=na.omit,
+                parallel = T, ncores = 40 , clusterType = "FORK" )  # mtry default is # Xs / 3
 
 
-#save(vswheat0,file = '../Data/VariableSelection/vswheat_0.RData')
+save(vswheat0,file = '../Data/VariableSelection/vswheat_0.RData')
 
 
 
@@ -47,21 +50,23 @@ form0 = WHEATOPH_W ~ Year+REGIONCODE+ZONECODE+X_COORD+Y_COORD + WHEATAREA +dist_
 
 form1 = WHEATOPH_W ~ WHEATEXTAREA + WHEATIRRGAREA + WHEATSERRAREA + WHEATMERR1AREA + WHEATMERR2AREA + WHEATMERR3AREA + WHEATMERR4AREA +
                 WHEATMERR5AREA + WHEATSEED1AREA + WHEATSEED2AREA +WHEATIMSEED +
-                  WHEATNIMSEED + WHEATDAMAGEAREA + WHEATDAMAGE_WEATHER_AREA + WHEATDAMAGE_PESTS_AREA + WHEATDAMAGE_MANAGE_AREA +  WHEATDAMAGE_OT$
-                  WHEATDAMAGE_DROUGHT_AREA + WHEATDAMAGE_DROUGHT_DUM + WHEATFERT_NATURAL_AREA + WHEATFERT_CHEMICAL_AREA + WHEATFERT_CHEMICAL_AMT$
+                  WHEATNIMSEED + WHEATDAMAGEAREA + WHEATDAMAGE_WEATHER_AREA + WHEATDAMAGE_PESTS_AREA + WHEATDAMAGE_MANAGE_AREA +  
+		  WHEATDAMAGE_OTHER_AREA +
+                  WHEATDAMAGE_DROUGHT_AREA + WHEATDAMAGE_DROUGHT_DUM + WHEATFERT_NATURAL_AREA + WHEATFERT_CHEMICAL_AREA + 
+		WHEATFERT_CHEMICAL_AMT+
                  WHEATEXTAREA_P + WHEATIRRGAREA_P + WHEATSERRAREA_P + WHEATMERR1AREA_P + WHEATMERR2AREA_P + WHEATMERR3AREA_P +
                 WHEATMERR4AREA_P +   WHEATMERR5AREA_P + WHEATSEED1AREA_P + WHEATSEED2AREA_P + WHEATIMSEED_P + WHEATNIMSEED_P +
                 WHEATDAMAGEAREA_P + WHEATDAMAGE_WEATHER_AREA_P +   WHEATDAMAGE_PESTS_AREA_P + WHEATDAMAGE_MANAGE_AREA_P +
                 WHEATDAMAGE_OTHER_AREA_P + WHEATDAMAGE_DROUGHT_AREA_P + WHEATFERT_NATURAL_AREA_P +   WHEATFERT_CHEMICAL_AREA_P +
                 WHEATFERT_CHEMICAL_AMT_P
 
-#set.seed(2734, kind = "L'Ecuyer-CMRG")
-#
-#vswheat1 = VSURF(form1,  data= data_in, na.action=na.omit,
-#                parallel = T, ncores = 40 , clusterType = "FORK" )  # mtry default is # Xs / 3
-#
-#
-#save(vswheat1,file = '../Data/VariableSelection/vswheat_1.RData')
+set.seed(2734, kind = "L'Ecuyer-CMRG")
+
+vswheat1 = VSURF(form1,  data= data_in, na.action=na.omit,
+                parallel = T, ncores = 40 , clusterType = "FORK" )  # mtry default is # Xs / 3
+
+
+save(vswheat1,file = '../Data/VariableSelection/vswheat_1.RData')
 
 
 
@@ -74,33 +79,34 @@ form2 = WHEATOPH_W ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +
 
 set.seed(2734, kind = "L'Ecuyer-CMRG")
 
-#vswheat2 = VSURF(form2,  data= data_in, na.action=na.omit,
-#                parallel = T, ncores = 30 , clusterType = "FORK" )  # mtry default is # Xs / 3
-#
-#
-#save(vswheat2,file = '../Data/VariableSelection/vswheat_2.RData')
+vswheat2 = VSURF(form2,  data= data_in, na.action=na.omit,
+                parallel = T, ncores = 30 , clusterType = "FORK" )  # mtry default is # Xs / 3
+
+
+save(vswheat2,file = '../Data/VariableSelection/vswheat_2.RData')
 
 
 
 
 # Find other PET AET PPT  variables -------------------------------------------------------
 
-paste( names(data_in)[grepl('AET',names(data_in))] , collapse=' + ')
+paste( names(data_in)[grepl('PPT',names(data_in))] , collapse=' + ')
 
 form3 = WHEATOPH_W ~ PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + PET_G_min + PET_G_mx + PET_G_AUC +
         PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn +
         ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +
-        ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_min+ PPT_A_AUC+
-	PPT_A_Qnt +  PPT_A_max_Qnt + PPT_A_AUC_Qnt + PPT_G_min + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt
+        ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd + 
+	PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing +
+	PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd
 
 
 set.seed(2734, kind = "L'Ecuyer-CMRG")
 
-#vswheat3 = VSURF(form3,  data= data_in, na.action=na.omit,
-#                parallel = T, ncores = 30 , clusterType = "FORK" )  # mtry default is # Xs / 3
-#
-#
-#save(vswheat3,file = '../Data/VariableSelection/vswheat_3.RData')
+vswheat3 = VSURF(form3,  data= data_in, na.action=na.omit,
+                parallel = T, ncores = 30 , clusterType = "FORK" )  # mtry default is # Xs / 3
+
+
+save(vswheat3,file = '../Data/VariableSelection/vswheat_3.RData')
 
 
 
@@ -108,7 +114,7 @@ set.seed(2734, kind = "L'Ecuyer-CMRG")
 
 
 # Load variables selected ---------------------------------------------------------
-
+setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/IFPRI_Ethiopia_Drought_2016/')
 load('../Data/VariableSelection/vswheat_0.RData')
 load('../Data/VariableSelection/vswheat_1.RData')
 load('../Data/VariableSelection/vswheat_2.RData')
@@ -125,37 +131,45 @@ attr(vswheat3$terms,'term.labels')[vswheat3$varselect.interp])
 
  [1] "Y_COORD"                    "X_COORD"
  [3] "ZONECODE"                   "WHEATAREA"
- [5] "REGIONCODE"                 "Year"
- [7] "WHEATNIMSEED"               "WHEATFERT_CHEMICAL_AMT"
- [9] "WHEATSEED2AREA"             "WHEATNIMSEED_P"
-[11] "WHEATFERT_CHEMICAL_AREA"    "WHEATDAMAGEAREA_P"
-[13] "WHEATFERT_CHEMICAL_AMT_P"   "WHEATSERRAREA"
-[15] "WHEATDAMAGEAREA"            "WHEATMERR4AREA"
-[17] "WHEATFERT_CHEMICAL_AREA_P"  "WHEATDAMAGE_WEATHER_AREA_P"
-[19] "WHEATMERR1AREA"             "WHEATEXTAREA"
-[21] "WHEATDAMAGE_WEATHER_AREA"   "WHEATFERT_NATURAL_AREA"
-[23] "WHEATIMSEED"                "WHEATFERT_NATURAL_AREA_P"
-[25] "WHEATSEED1AREA"             "WHEATIMSEED_P"
-[27] "WHEATSERRAREA_P"            "WHEATSEED2AREA_P"
-[29] "WHEATSEED1AREA_P"           "WHEATMERR4AREA_P"
-[31] "WHEATDAMAGE_PESTS_AREA"     "WHEATEXTAREA_P"
-[33] "WHEATMERR1AREA_P"           "WHEATDAMAGE_DROUGHT_AREA_P"
-[35] "WHEATMERR5AREA"             "WHEATDAMAGE_DROUGHT_AREA"
-[37] "WHEATMERR5AREA_P"           "G_AUC_Qnt"
-[39] "G_mx"                       "A_max"
-[41] "A_Qnt"                      "A_max_Qnt"
-[43] "A_mn"                       "G_AUC"
-[45] "G_AUC2"                     "G_Qnt"
-[47] "A_AUC"                      "G_mn"
-[49] "G_mx_Qnt"                   "T_G_Qnt"
-[51] "G_min"                      "A_AUC_Qnt"
-[53] "ETA_G_AUC_diff_mn"          "PET_G_mn"
-[55] "PET_G_sd"                   "PET_A_max"
-[57] "PET_A_sd"                   "PET_G_AUC_trailing"
-[59] "ETA_G_AUC_diff_90th"        "ETA_G_mx"
-[61] "ETA_G_Qnt"                  "PET_A_AUC"
-[63] "ETA_G_sd"                   "PET_A_mn"
-[65] "ETA_A_sd"                   "ETA_G_AUC2"
+ [5] "elevation"                  "dist_rcap"
+ [7] "dist_pp50k"                 "Year"
+ [9] "WHEATNIMSEED"               "WHEATFERT_CHEMICAL_AMT"
+[11] "WHEATSEED2AREA"             "WHEATDAMAGEAREA_P"
+[13] "WHEATFERT_CHEMICAL_AREA"    "WHEATFERT_CHEMICAL_AMT_P"
+[15] "WHEATNIMSEED_P"             "WHEATSERRAREA"
+[17] "WHEATDAMAGE_WEATHER_AREA_P" "WHEATDAMAGEAREA"
+[19] "WHEATMERR4AREA"             "WHEATFERT_CHEMICAL_AREA_P"
+[21] "WHEATDAMAGE_WEATHER_AREA"   "WHEATEXTAREA"
+[23] "WHEATMERR1AREA"             "WHEATFERT_NATURAL_AREA"
+[25] "WHEATFERT_NATURAL_AREA_P"   "WHEATIMSEED"
+[27] "WHEATSERRAREA_P"            "WHEATSEED1AREA"
+[29] "WHEATEXTAREA_P"             "WHEATIMSEED_P"
+[31] "WHEATDAMAGE_DROUGHT_AREA_P" "WHEATMERR1AREA_P"
+[33] "WHEATSEED1AREA_P"           "WHEATMERR4AREA_P"
+[35] "G_mx"                       "A_max"
+[37] "A_Qnt"                      "G_Qnt"
+[39] "G_AUC2"                     "G_AUC"
+[41] "G_mn"                       "G_AUC_Qnt"
+[43] "A_AUC"                      "A_mn"
+[45] "A_AUC_Qnt"                  "G_min"
+[47] "A_max_Qnt"                  "T_G_Qnt"
+[49] "G_mx_Qnt"                   "PPT_G_AUC_Qnt"
+[51] "PPT_G_AUC2"                 "PPT_G_Qnt"
+[53] "PPT_G_AUC"                  "PPT_G_mx_Qnt"
+[55] "PPT_A_max"                  "PPT_G_mx"
+[57] "PET_G_sd"                   "PPT_A_mn"
+[59] "PPT_G_sd"                   "PPT_T_G_Qnt"
+[61] "PET_G_AUC_trailing"         "PET_A_sd"
+[63] "PPT_G_mn"                   "PPT_A_sd"
+[65] "ETA_G_Qnt"                  "PET_G_AUC2"
+[67] "PET_G_AUC"                  "PET_G_Qnt"
+[69] "PET_G_mn"                   "PPT_G_AUC_diff_mn"
+[71] "ETA_G_mn"                   "ETA_A_Qnt"
+[73] "ETA_A_max"                  "PPT_G_AUC_leading"
+[75] "PET_G_AUC_diff_mn"          "ETA_A_AUC"
+[77] "ETA_A_sd"                   "PET_A_mn"
+[79] "PET_A_AUC"                  "ETA_G_mx"
+[81] "PET_G_min"                  "PET_A_min"
 
 
 
@@ -169,21 +183,21 @@ attr(vswheat2$terms,'term.labels')[vswheat2$varselect.pred],
 attr(vswheat3$terms,'term.labels')[vswheat3$varselect.pred])
 
 
- [1] "WHEATNIMSEED"               "WHEATFERT_CHEMICAL_AMT"
- [3] "WHEATSEED2AREA"             "WHEATNIMSEED_P"
- [5] "WHEATFERT_CHEMICAL_AREA"    "WHEATDAMAGEAREA_P"
- [7] "WHEATFERT_CHEMICAL_AMT_P"   "WHEATSERRAREA"
- [9] "WHEATEXTAREA"               "WHEATFERT_NATURAL_AREA"
-[11] "WHEATIMSEED"                "WHEATMERR4AREA_P"
-[13] "WHEATDAMAGE_PESTS_AREA"     "WHEATEXTAREA_P"
-[15] "WHEATMERR1AREA_P"           "WHEATDAMAGE_DROUGHT_AREA_P"
-[17] "WHEATMERR5AREA_P"           "G_AUC_Qnt"
-[19] "A_max_Qnt"                  "A_mn"
-[21] "G_AUC"                      "G_mx_Qnt"
-[23] "T_G_Qnt"                    "A_AUC_Qnt"
-[25] "ETA_G_AUC_diff_mn"          "PET_G_mn"
-[27] "PET_G_sd"                   "PET_A_max"
-[29] "PET_A_sd"
+ [1] "Y_COORD"                 "X_COORD"
+ [3] "ZONECODE"                "Year"
+ [5] "WHEATNIMSEED"            "WHEATFERT_CHEMICAL_AMT"
+ [7] "WHEATSEED2AREA"          "WHEATDAMAGEAREA_P"
+ [9] "WHEATFERT_CHEMICAL_AREA" "G_mx"
+[11] "A_Qnt"                   "G_Qnt"
+[13] "G_AUC2"                  "G_mn"
+[15] "G_AUC_Qnt"               "A_AUC"
+[17] "A_mn"                    "A_AUC_Qnt"
+[19] "G_min"                   "A_max_Qnt"
+[21] "T_G_Qnt"                 "G_mx_Qnt"
+[23] "PPT_G_AUC_Qnt"           "PPT_G_mx_Qnt"
+[25] "PPT_A_max"               "PET_G_sd"
+[27] "PPT_T_G_Qnt"             "PET_G_Qnt"
+[29] "PET_G_min"
 
 
 
@@ -195,7 +209,7 @@ attr(vswheat3$terms,'term.labels')[vswheat3$varselect.pred])
   library(readstata13)
   library(e1071) 
 
-  setwd('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_Code/Outputs4Pred/')
+  setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/IFPRI_Ethiopia_Drought_2016/Outputs4Pred/')
   
   
   load('../../Data/VariableSelection/vswheat_0.RData')
@@ -205,7 +219,7 @@ attr(vswheat3$terms,'term.labels')[vswheat3$varselect.pred])
   
   
   
-  data_in = read.dta13("./AgSS_2010_15_Compiled_panel_merged_clean_PCA_v3.dta")
+  data_in = read.dta13("./AgSS_2010_15_Compiled_panel_merged_clean_v4.dta")
   data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
   
   form_EA = paste(paste(

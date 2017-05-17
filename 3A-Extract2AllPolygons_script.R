@@ -1,9 +1,22 @@
 
 
+# Run the following in bash before starting R
+if [ -e $HOME/.Renviron ]; then cp $HOME/.Renviron $HOME/.Renviron.bkp; fi
+if [ ! -d $HOME/.Rtmp ] ; then mkdir $HOME/.Rtmp; fi
+echo "TMP='$HOME/.Rtmp'" > $HOME/.Renviron
+
+module load proj.4/4.8.0
+module load gdal/gcc/1.11
+module load R/3.1.1
+module load gcc/4.9.0
+R
+
+
+
 rm(list=ls())
 #source('R:\\Mann Research\\IFPRI_Ethiopia_Drought_2016\\IFPRI_Ethiopia_Drought_Code\\ModisDownload.R')
 source('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/IFPRI_Ethiopia_Drought_2016/SummaryFunctions.R')
-
+# R/3.0.2 seems to work maybe
 
 
 

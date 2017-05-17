@@ -365,9 +365,9 @@ version = 4 # updated land cover classes
                 'ETA_A_AUC_Qnt','ETA_G_mx_dates','ETA_G_mx_Qnt','ETA_G_AUC_Qnt','ETA_T_G_Qnt'))],by=c('i','row'),type='left')} 
 	# join PPT data
         if(length(PPT_summary[[i]])!=1 & class(PPT_summary[[i]])[1] =='data.frame'){
-        holder_summary = join(holder_summary, PPT_summary[[i]][,!(names(PPT_summary[[i]]) %in% c("PPT_A_mn","PPT_A_max","PPT_A_sd",
-		"PPT_G_mn","PPT_G_mx","PPT_G_AUC_Qnt","PPT_G_AUC2", "PPT_G_AUC_leading","PPT_G_AUC_trailing","PPT_G_AUC_diff_mn",
-		"PPT_G_AUC_diff_90th","PPT_T_G_Qnt","PPT_G_sd"))],by=c('i','row'),type='left')}
+        holder_summary = join(holder_summary,
+	    PPT_summary[[i]][,!(names(PPT_summary[[i]]) %in% c('PPT_plant_dates','PPT_harvest_dates','PPT_A_min','PPT_A_AUC','PPT_A_Qnt',
+		 'PPT_A_max_Qnt','PPT_A_AUC_Qnt','PPT_G_min','PPT_G_AUC PPT_G_Qnt',' PPT_G_mx_Qnt'))],by=c('i','row'),type='left')  }
         # rename to year and move to second column
 	names(holder_summary)[names(holder_summary)=='row']='Year'
 	holder_summary = arrange.vars(holder_summary, c("Year"=2))
