@@ -70,7 +70,6 @@ save(vswheat1,file = '../Data/VariableSelection/vswheat_1.RData')
 
 
 
-
 # Find other A_ G_  NDVI  variables -------------------------------------------------------
 
 form2 = WHEATOPH_W ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  +
@@ -84,7 +83,6 @@ vswheat2 = VSURF(form2,  data= data_in, na.action=na.omit,
 
 
 save(vswheat2,file = '../Data/VariableSelection/vswheat_2.RData')
-
 
 
 
@@ -110,6 +108,38 @@ save(vswheat3,file = '../Data/VariableSelection/vswheat_3.RData')
 
 
 
+# Find ALL  variables -------------------------------------------------------
+
+
+
+form4 = WHEATOPH_W ~ Year+REGIONCODE+ZONECODE+X_COORD+Y_COORD + WHEATAREA +dist_rcap+ roadden+ dist_pp50k+ elevation+
+ 	WHEATEXTAREA + WHEATIRRGAREA + WHEATSERRAREA + WHEATMERR1AREA + WHEATMERR2AREA + WHEATMERR3AREA + WHEATMERR4AREA +
+        WHEATMERR5AREA + WHEATSEED1AREA + WHEATSEED2AREA +WHEATIMSEED + WHEATNIMSEED + WHEATDAMAGEAREA + WHEATDAMAGE_WEATHER_AREA + 
+	WHEATDAMAGE_PESTS_AREA + WHEATDAMAGE_MANAGE_AREA + WHEATDAMAGE_OTHER_AREA + WHEATDAMAGE_DROUGHT_AREA + 
+	WHEATDAMAGE_DROUGHT_DUM + WHEATFERT_NATURAL_AREA + WHEATFERT_CHEMICAL_AREA +  WHEATFERT_CHEMICAL_AMT+
+        WHEATEXTAREA_P + WHEATIRRGAREA_P + WHEATSERRAREA_P + WHEATMERR1AREA_P + WHEATMERR2AREA_P + WHEATMERR3AREA_P +
+        WHEATMERR4AREA_P +   WHEATMERR5AREA_P + WHEATSEED1AREA_P + WHEATSEED2AREA_P + WHEATIMSEED_P + WHEATNIMSEED_P +
+        WHEATDAMAGEAREA_P + WHEATDAMAGE_WEATHER_AREA_P +   WHEATDAMAGE_PESTS_AREA_P + WHEATDAMAGE_MANAGE_AREA_P +
+        WHEATDAMAGE_OTHER_AREA_P + WHEATDAMAGE_DROUGHT_AREA_P + WHEATFERT_NATURAL_AREA_P +   WHEATFERT_CHEMICAL_AREA_P +
+        WHEATFERT_CHEMICAL_AMT_P + A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  +
+        G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn +
+        G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
+	PET_G_min + PET_G_mx + PET_G_AUC +
+        PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn +
+        ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +
+        ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +
+        PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing +
+        PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd
+
+
+set.seed(2734, kind = "L'Ecuyer-CMRG")
+
+vswheat4 = VSURF(form4,  data= data_in, na.action=na.omit,
+                parallel = T, ncores = 30 , clusterType = "FORK" )  # mtry default is # Xs / 3
+
+
+save(vswheat4,file = '../Data/VariableSelection/vswheat_4.RData')
+
 
 
 
@@ -119,6 +149,53 @@ load('../Data/VariableSelection/vswheat_0.RData')
 load('../Data/VariableSelection/vswheat_1.RData')
 load('../Data/VariableSelection/vswheat_2.RData')
 load('../Data/VariableSelection/vswheat_3.RData')
+load('../Data/VariableSelection/vswheat_4.RData')
+
+
+
+# 4 - ALL variables - get names of selected variables at interpretation phase of variables selection
+
+attr(vswheat4$terms,'term.labels')[vswheat4$varselect.interp]
+
+ [1] "WHEATFERT_CHEMICAL_AMT"     "WHEATDAMAGEAREA_P"
+ [3] "WHEATFERT_CHEMICAL_AREA"    "WHEATNIMSEED"
+ [5] "G_mx"                       "A_max"
+ [7] "WHEATFERT_CHEMICAL_AMT_P"   "Y_COORD"
+ [9] "WHEATAREA"                  "A_Qnt"
+[11] "WHEATDAMAGE_WEATHER_AREA_P" "G_Qnt"
+[13] "WHEATSEED2AREA"             "Year"
+[15] "WHEATNIMSEED_P"             "X_COORD"
+[17] "PPT_G_Qnt"                  "PPT_G_sd"
+[19] "PPT_G_mx_Qnt"               "PPT_A_max"
+[21] "PPT_G_mx"                   "WHEATFERT_CHEMICAL_AREA_P"
+[23] "PPT_G_AUC_Qnt"              "T_G_Qnt"
+[25] "A_max_Qnt"                  "PPT_T_G_Qnt"
+[27] "PPT_A_sd"                   "G_mx_Qnt"
+[29] "PPT_G_AUC2"                 "PPT_G_AUC"
+[31] "WHEATEXTAREA"               "WHEATDAMAGEAREA"
+[33] "ZONECODE"                   "elevation"
+[35] "G_sd"                       "G_AUC_Qnt"
+[37] "G_mn"                       "A_sd"
+[39] "PET_G_sd"
+
+
+# prediction phase
+attr(vswheat4$terms,'term.labels')[vswheat4$varselect.pred]
+
+ [1] "WHEATFERT_CHEMICAL_AMT"   "WHEATDAMAGEAREA_P"
+ [3] "WHEATFERT_CHEMICAL_AREA"  "WHEATNIMSEED"
+ [5] "G_mx"                     "WHEATFERT_CHEMICAL_AMT_P"
+ [7] "Y_COORD"                  "WHEATAREA"
+ [9] "Year"                     "WHEATNIMSEED_P"
+[11] "X_COORD"                  "PPT_G_Qnt"
+[13] "PPT_G_mx_Qnt"             "PPT_G_AUC_Qnt"
+[15] "T_G_Qnt"                  "A_max_Qnt"
+[17] "PPT_T_G_Qnt"              "ZONECODE"
+[19] "elevation"                "G_AUC_Qnt"
+[21] "PET_G_sd"
+
+
+
 
 
 # get names of selected variables at interpretation phase of variables selection
