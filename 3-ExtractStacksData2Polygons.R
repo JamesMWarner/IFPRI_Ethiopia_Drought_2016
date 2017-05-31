@@ -213,7 +213,22 @@ version = 4 # updated land cover classes
   #names(ETA_stack)=flist_dates
   #save(ETA_stack,file = paste('./ETa Anomaly/ETA_stack_V',version,'.RData',sep=''))
 
+
+
+
+  #deal with soil water holding capacity  http://www.isric.org/documents/document-type/isric-report-201502-root-zone-plant-available-water-holding-capacity-sub
+ 
+  # reproject to sin
+  setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
+  #soil = raster('./SoilWaterCapacity/af_agg_ERZD_TAWCpF23mm__M_1km.tif')
+  #soil = projectRaster(soil, crs=CRS('+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs'))
+  #writeRaster(soil,'./SoilWaterCapacity/af_agg_ERZD_TAWCpF23mm__M_1km_sin.tif')
+  soil = raster('./SoilWaterCapacity/af_agg_ERZD_TAWCpF23mm__M_1km_sin.tif')
+
   
+
+
+
 
 
 # pull data to polygons --------------------------------------------------------
@@ -227,8 +242,10 @@ version = 4 # updated land cover classes
   roadden = raster('./DistanceTransport/RoadDen_5km_WLRC_sin.tif')
   dist_pp50k = raster('./DistanceTransport/EucDist_pp50k_sin.tif')
   elevation = raster('./SRTM/srtm_90m_sin2.tif')
+  soil_TAWC = raster('./SoilWaterCapacity/af_agg_ERZD_TAWCpF23mm__M_1km_sin.tif')
   
-  for(layer in c('dist_rcap','roadden','dist_pp50k','elevation')){
+
+  for(layer in c('dist_rcap','roadden','dist_pp50k','elevation','soil_TAWC')){
          values = extract_value_point_polygon(Polys_sub,get(layer),16)
          mean = do.call('rbind',lapply(values, function(x) if (!is.null(x)) colMeans(x, na.rm=TRUE) else NA ))
          Polys_sub[[layer]] = as.numeric(mean)
@@ -294,8 +311,6 @@ version = 4 # updated land cover classes
   load(paste('./Outputs/NDVI_summary_V',version,sep=''))  # needed for Annual_Summary_Functions_OtherData
   load('./Data Stacks/WO Clouds Clean LC/NDVI_stack_h21v07_WO_Clouds_Clean_LC_V4.RData') # used for spline dates
 
-
-  # OTHER DATA SHOULD SPLINE SMOOTH TO MATCH DATES OF NDVI TIME SERIES
 
 
   # Get summary statistics lists using plant harvest dates obtained from NDVI
