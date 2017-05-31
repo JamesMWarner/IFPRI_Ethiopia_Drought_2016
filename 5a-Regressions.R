@@ -34,7 +34,7 @@ set.seed(2734, kind = "L'Ecuyer-CMRG")
 
 # Find factor and physical  variables -------------------------------------------------------
 
-form0 = WHEATOPH_W ~ Year+REGIONCODE+ZONECODE+X_COORD+Y_COORD + WHEATAREA +dist_rcap+ roadden+ dist_pp50k+ elevation
+form0 = WHEATOPH_W ~ Year+REGIONCODE+ZONECODE+X_COORD+Y_COORD + WHEATAREA +dist_rcap+ roadden+ dist_pp50k+ elevation+soil_TAWC
 
 vswheat0 = VSURF(form0,  data= data_in, na.action=na.omit,
                 parallel = T, ncores = 40 , clusterType = "FORK" )  # mtry default is # Xs / 3
@@ -129,7 +129,7 @@ form4 = WHEATOPH_W ~ Year+REGIONCODE+ZONECODE+X_COORD+Y_COORD + WHEATAREA +dist_
         ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +
         ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +
         PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing +
-        PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd
+        PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+soil_TAWC
 
 
 set.seed(2734, kind = "L'Ecuyer-CMRG")
@@ -157,42 +157,50 @@ load('../Data/VariableSelection/vswheat_4.RData')
 
 attr(vswheat4$terms,'term.labels')[vswheat4$varselect.interp]
 
- [1] "WHEATFERT_CHEMICAL_AMT"     "WHEATDAMAGEAREA_P"
+[1] "WHEATFERT_CHEMICAL_AMT"     "WHEATDAMAGEAREA_P"
  [3] "WHEATFERT_CHEMICAL_AREA"    "WHEATNIMSEED"
  [5] "G_mx"                       "A_max"
  [7] "WHEATFERT_CHEMICAL_AMT_P"   "Y_COORD"
- [9] "WHEATAREA"                  "A_Qnt"
+ [9] "A_Qnt"                      "WHEATAREA"
 [11] "WHEATDAMAGE_WEATHER_AREA_P" "G_Qnt"
 [13] "WHEATSEED2AREA"             "Year"
-[15] "WHEATNIMSEED_P"             "X_COORD"
-[17] "PPT_G_Qnt"                  "PPT_G_sd"
-[19] "PPT_G_mx_Qnt"               "PPT_A_max"
-[21] "PPT_G_mx"                   "WHEATFERT_CHEMICAL_AREA_P"
-[23] "PPT_G_AUC_Qnt"              "T_G_Qnt"
-[25] "A_max_Qnt"                  "PPT_T_G_Qnt"
+[15] "WHEATNIMSEED_P"             "PPT_G_Qnt"
+[17] "PPT_G_sd"                   "X_COORD"
+[19] "PPT_A_max"                  "PPT_G_mx"
+[21] "PPT_G_mx_Qnt"               "WHEATFERT_CHEMICAL_AREA_P"
+[23] "PPT_G_AUC_Qnt"              "PPT_T_G_Qnt"
+[25] "A_max_Qnt"                  "T_G_Qnt"
 [27] "PPT_A_sd"                   "G_mx_Qnt"
-[29] "PPT_G_AUC2"                 "PPT_G_AUC"
-[31] "WHEATEXTAREA"               "WHEATDAMAGEAREA"
-[33] "ZONECODE"                   "elevation"
+[29] "PPT_G_AUC"                  "PPT_G_AUC2"
+[31] "WHEATEXTAREA"               "ZONECODE"
+[33] "WHEATDAMAGEAREA"            "elevation"
 [35] "G_sd"                       "G_AUC_Qnt"
-[37] "G_mn"                       "A_sd"
-[39] "PET_G_sd"
+[37] "A_sd"                       "G_mn"
+[39] "A_AUC_Qnt"                  "PET_G_sd"
+[41] "G_AUC2"                     "G_AUC"
+[43] "A_mn"                       "PPT_A_mn"
+[45] "WHEATSERRAREA"              "PPT_G_mn"
+[47] "WHEATDAMAGE_WEATHER_AREA"   "dist_rcap"
+[49] "WHEATMERR4AREA"             "PET_G_AUC_leading"
+[51] "PET_G_mn"                   "PET_A_sd"
 
 
 # prediction phase
 attr(vswheat4$terms,'term.labels')[vswheat4$varselect.pred]
 
- [1] "WHEATFERT_CHEMICAL_AMT"   "WHEATDAMAGEAREA_P"
- [3] "WHEATFERT_CHEMICAL_AREA"  "WHEATNIMSEED"
- [5] "G_mx"                     "WHEATFERT_CHEMICAL_AMT_P"
- [7] "Y_COORD"                  "WHEATAREA"
- [9] "Year"                     "WHEATNIMSEED_P"
-[11] "X_COORD"                  "PPT_G_Qnt"
-[13] "PPT_G_mx_Qnt"             "PPT_G_AUC_Qnt"
-[15] "T_G_Qnt"                  "A_max_Qnt"
-[17] "PPT_T_G_Qnt"              "ZONECODE"
-[19] "elevation"                "G_AUC_Qnt"
-[21] "PET_G_sd"
+ [1] "WHEATFERT_CHEMICAL_AMT"    "WHEATDAMAGEAREA_P"
+ [3] "WHEATFERT_CHEMICAL_AREA"   "WHEATNIMSEED"
+ [5] "G_mx"                      "WHEATFERT_CHEMICAL_AMT_P"
+ [7] "Y_COORD"                   "WHEATAREA"
+ [9] "Year"                      "WHEATNIMSEED_P"
+[11] "PPT_G_Qnt"                 "PPT_G_sd"
+[13] "X_COORD"                   "PPT_G_mx_Qnt"
+[15] "WHEATFERT_CHEMICAL_AREA_P" "PPT_G_AUC_Qnt"
+[17] "PPT_T_G_Qnt"               "A_max_Qnt"
+[19] "T_G_Qnt"                   "ZONECODE"
+[21] "elevation"                 "PET_G_sd"
+[23] "dist_rcap"                 "PET_G_mn"
+
 
 
 
