@@ -134,6 +134,7 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
   # COMBINE DATA BACK FROM EXTRACT ----------------------------------------------------------------
 
   # Combine all extracted values into a single list 
+  setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Processed Panel/ExtractRaw/')
   fname = list.files(".", glob2rx(paste('*','NDVI_panel__ExtractRaw.RData$',sep='')),full.names = F)
   nums = unlist(regmatches(fname, gregexpr("[0-9]+", fname)))
   fname = fname[order(as.numeric( nums))]  # put in order
@@ -153,6 +154,7 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
 
 
   # Summary Functions --------------------------------------------------------
+ 
   setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Processed Panel/ExtractRaw/')
   product = 'NDVI'
   load(paste('../Processed Panel/ExtractRaw_Combined_AllEAs/','AllEAs_',product,'_panel_ExtractRaw.RData',sep='') )
@@ -170,7 +172,7 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
   extr_values = Poly_Veg_Ext
   PlantHarvestTable = plantharvest
   Quant_percentile = 0.90
-  num_workers = 10
+  num_workers = 1
   spline_spar = 0
 
   x = 1:length(extr_values)
