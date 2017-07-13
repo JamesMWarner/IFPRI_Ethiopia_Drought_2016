@@ -1,6 +1,3 @@
-
-
-# 
 # # Run the following in bash before starting R
 # if [ -e $HOME/.Renviron ]; then cp $HOME/.Renviron $HOME/.Renviron.bkp; fi
 # if [ ! -d $HOME/.Rtmp ] ; then mkdir $HOME/.Rtmp; fi
@@ -25,6 +22,7 @@ library(rgdal)
 library(grid)
 library(gridExtra)
 library(plotly)
+library(plyr)
 
 # Set up parameters -------------------------------------------------------
  
@@ -33,7 +31,7 @@ library(plotly)
 # Visualize stacked histograms of damage by type -------------------------------------
 
 setwd('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_Code/Outputs4Pred/')
-agss = read.dta13('./AgSS_2010_15_Compiled_panel_merged_clean_PCA_v3.dta') 
+agss = read.dta13('./AgSS_2010_15_Compiled_panel_merged_clean_PCA_v4.dta') 
 
 agss= agss[agss$REGIONCODE != 2,] # Drop afar
 
@@ -206,11 +204,11 @@ dev.off()
 #   -------------------------------------
 
 setwd('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_Code/Outputs4Pred/')
-agss = read.dta13('./AgSS_2010_15_Compiled_panel_merged_clean_PCA_v3.dta') 
-
+agss = read.dta13('./AgSS_2010_15_Compiled_panel_merged_clean_PCA_v4.dta') 
+names(agss)
 agss= agss[agss$REGIONCODE != 2,] # Drop afar
 
-agss2 = agss[,c('A_PC1_v2','G_PC1_v2','WHEATEXTAREA_P','WHEATDAMAGEAREA_P','WHEATOPH_W','WHEATDAMAGE_WEATHER_AREA_P','REGIONCODE')]
+agss2 = agss #[,c('WHEATEXTAREA_P','WHEATDAMAGEAREA_P','WHEATOPH_W','WHEATDAMAGE_WEATHER_AREA_P','REGIONCODE')]
 agss2 = na.omit(agss2)
 agss2$REGIONCODE = factor(agss2$REGIONCODE) 
 
@@ -228,25 +226,56 @@ chart_link
  
 
 
+# plot of regression 
+library(rockchalk)
+
+
+## regression with quadratic;
+
+m3 <- lm(WHEATOPH_W ~ poly(elevation,2) + WHEATDAMAGE_WEATHER_AREA_P +G_mx + PPT_G_AUC, data = agss)
+summary(m3)
+
+plotPlane(m3, plotx1 = "elevation", plotx2 = "WHEATDAMAGE_WEATHER_AREA_P", drawArrows = F, x1lab = "Elevation", x2lab = "Weather Damage", ylab = "Wheat OPH")
+
+plotPlane(m3, plotx1 = "elevation", plotx2 = "PPT_G_AUC", drawArrows = F, x1lab = "Elevation", x2lab = "Precip", ylab = "Wheat OPH",plotPoints = F,)
+
 
 
 # Spatial Plots -----------------------------------------------------------
 library(plyr)
 
 setwd('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_Code/Outputs4Pred/')
-agss = read.dta13('./AgSS_2010_15_Compiled_panel_merged_clean_PCA_v3.dta') 
+agss = read.dta13('./AgSS_2010_15_Compiled_panel_merged_clean_PCA_v4.dta') 
 
-setwd('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/Data/AdminBoundaries/')
-eas = readOGR(dsn=".", layer="ETH_adm3_UTM")
+# setwd('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/Data/AdminBoundaries/')
+# eas = readOGR(dsn=".", layer="ETH_adm3_UTM")
+# eas@data$id = rownames(eas@data)
+# eas.points = fortify(eas, region="id")
+# eas.df = join(eas.points, eas@data, by="id")
+#   
+# eas@data$id = rownames(eas@data)
+# eas.points = fortify(eas, region="id")
+# eas.df = join(eas.points, eas@data, by="id")
+# eas.df$WOREDACODE = eas.df$ID_3  # rename for join
+# eas.df$MYID = eas.df$ID_3  # rename for join
+
+
+setwd('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/Data/EnumerationAreas/')
+eas = readOGR(dsn=".", layer="EnumerationAreasSIN_sub_agss_codes_wdata")
 eas@data$id = rownames(eas@data)
 eas.points = fortify(eas, region="id")
 eas.df = join(eas.points, eas@data, by="id")
-  
-eas@data$id = rownames(eas@data)
-eas.points = fortify(eas, region="id")
-eas.df = join(eas.points, eas@data, by="id")
-eas.df$WOREDACODE = eas.df$ID_3  # rename for join
-eas.df$MYID = eas.df$ID_3  # rename for join
+
+
+
+
+ggplot(eas.df) + 
+  aes(long,lat,group=id,fill=dist_rcap,colour=dist_rcap) + 
+  geom_polygon() +
+  geom_path(color="white") +
+  coord_equal()
+
+
 
 # ggplot(eas.df) + 
 #   aes(long,lat,group=id,fill=NULL) + 
@@ -269,7 +298,7 @@ summary(eas.df$WHEATDAMAGE_DROUGHT_AREA_P)
 
 
 ggplot(eas.df) + 
-  aes(long,lat,group=id,fill=WHEATEXTAREA_P) + 
+  aes(long,lat,group=id,fill=WHEATDAMAGE_DROUGHT_AREA_P,colour=) + 
   geom_polygon() +
   geom_path(color="white") +
   coord_equal()
@@ -278,3 +307,88 @@ ggplot(eas.df) +
   scale_fill_brewer("eas Ecoregion")
 
 
+  
+  
+  
+  
+  
+
+# Rawgraphs  --------------------------------------------------------------
+  
+  # Export data
+  library(readstata13)
+  library(plyr)
+  raw = read.dta13('R:\\Mann_Research\\IFPRI_Ethiopia_Drought_2016\\IFPRI_Ethiopia_Drought_Code\\Outputs4Pred\\AgSS_2010_15_Compiled_panel_merged_clean_PCA_v4.dta')
+  subsets = raw[,names(raw) %in% c('Year','REGIONCODE','RK_NAME','ZONECODE','WOREDACODE','WHEATAREA','WHEATOUTPUT','WHEATOPH_W','WHEATDAMAGEAREA_P','WHEATDAMAGE_DROUGHT_AREA_P')]  
+  head(subsets)
+  
+  name = read.dta13('C:\\Users\\mmann\\Dropbox\\Ethiopia_Drought\\Drought_Study\\AgSS_Data1_2010_16_Cleaned\\EA_NDVI_ET_panel_V4.dta') 
+  name = name[,names(name) %in% c('Z_CODE','Z_NAME','W_NAME','W_CODE')]
+  names(name) = c('ZONENAME','ZONECODE','WOREDANAME','WOREDACODE')
+  name = subset(name,!duplicated(paste(name$WOREDACODE,name$ZONECODE,sep='_')))
+  head(name)
+  
+  subset_out = na.omit(join(name,subsets,type='inner'))
+  subset_out$Year = paste('01-01-',subset_out$Year,sep='')  #MM-DD- YYYY
+  rm(list=c('raw','subsets','name'))
+  write.csv(subset_out,'R:\\Mann_Research\\IFPRI_Ethiopia_Drought_2016\\IFPRI_Ethiopia_Drought_Code\\Outputs4Pred\\EA_NDVI_ET_panel_PCA_V4 AgSS - Raw.csv',row.names = F)
+  
+   
+  # Total Wheat output
+  # aggregate the mean value of bottom 15 zones
+  num_zones = 40
+  length(unique(subset_out$ZONECODE))
+  zone_sum_ouput   = ddply(subset_out, .(ZONENAME,Year), summarise, sum_WHEATOUTPUT = sum(WHEATOUTPUT), mn_WHEATOPH_W= mean(WHEATOPH_W))
+
+  # find bottom 30 
+  subset_bottom_sum = ddply(zone_sum_ouput, c("ZONENAME"), summarise, sum_WHEATOUTPUT = sum(sum_WHEATOUTPUT)) # sumarize by zone
+  subset_bottom_sum   = subset_bottom_sum[order(subset_bottom_sum$sum_WHEATOUTPUT,decreasing = F),]
+  lowest_output_names = subset_bottom_sum[1:num_zones,'ZONENAME'] # find bottom names 
+  subset_bottom     = zone_sum_ouput[zone_sum_ouput$ZONENAME %in% lowest_output_names,]
+  subset_bottom = ddply(subset_bottom, c("Year"), summarise, sum_WHEATOUTPUT = sum(sum_WHEATOUTPUT)) # total  by year
+  subset_bottom_sum = data.frame(ZONENAME=paste('Bottom',num_zones,'Zones',sep=' '),Year=subset_bottom$Year,sum_WHEATOUTPUT=subset_bottom$sum_WHEATOUTPUT)
+  
+  # get top and combine  
+  subset_top       = zone_sum_ouput[!(zone_sum_ouput$ZONENAME %in% lowest_output_names),]
+  subset_combine   = rbind(subset_top[,c('ZONENAME','Year','sum_WHEATOUTPUT')],subset_bottom_sum)
+  subset_combine$ZONENAME = tools::toTitleCase(tolower(subset_combine$ZONENAME))
+  
+  write.csv(subset_combine,paste('R:\\Mann_Research\\IFPRI_Ethiopia_Drought_2016\\IFPRI_Ethiopia_Drought_Code\\Outputs4Pred\\EA_NDVI_ET_panel_PCA_V4 bottom',
+                                 num_zones,'Zone Output - Raw.csv', sep=' '),row.names = F)  # use in rawgraph.io   (from documents folder in desktop)
+  
+  sum(subset_combine[subset_combine$Year=="01-01-2010" & subset_combine$ZONENAME != 'Bottom 40 Zones','sum_WHEATOUTPUT'])
+  
+  # # OPH ################################
+  # zone_sum_ouput   = zone_sum_ouput[order(zone_sum_ouput$mn_WHEATOPH_W,decreasing = F),]
+  # lowest_oph_names = zone_sum_ouput[1:30,'ZONENAME']
+  # # find bottom 30 
+  # subset_bottom     = subset_out[subset_out$ZONENAME %in% lowest_oph_names,]
+  # subset_bottom_sum = ddply(subset_bottom, c("Year"), summarise, mn_WHEATOPH_W = mean(WHEATOPH_W))
+  # subset_bottom_sum = data.frame(ZONENAME='Bottom 30 Zones',Year=subset_bottom_sum$Year,mn_WHEATOPH_W=subset_bottom_sum$mn_WHEATOPH_W)
+  # # get top and combine  
+  # subset_top       = zone_sum_ouput[!(zone_sum_ouput$ZONENAME %in% lowest_oph_names),]
+  # subset_combine   = rbind(subset_top[,c('ZONENAME','Year','mn_WHEATOPH_W')],subset_bottom_sum)
+  # 
+  # write.csv(subset_combine,'R:\\Mann_Research\\IFPRI_Ethiopia_Drought_2016\\IFPRI_Ethiopia_Drought_Code\\Outputs4Pred\\EA_NDVI_ET_panel_PCA_V4 bottom 30 Zone OPH - Raw.csv',row.names = F)
+  # 
+  
+  
+  
+# get rawgraphs working
+  
+#  https://github.com/densitydesign/raw/
+  
+$ cd  C:\Users\mmann\Documents\raw
+$ python -m SimpleHTTPServer 4000
+  
+# paste in:
+   
+  R:\Mann_Research\IFPRI_Ethiopia_Drought_2016\IFPRI_Ethiopia_Drought_Code\Outputs4Pred\EA_NDVI_ET_panel_PCA_V3 AgSS - Raw.csv  
+  
+  
+  
+  
+  
+  
+  
+  
