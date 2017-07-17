@@ -128,7 +128,7 @@ version = 4 # updated land cover classes
 
 
 # prepare other data ---------------------------------------
-  
+  library(polyclip)
   # reproject transport variables
   setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/DistanceTransport/')
   example = proj4string(raster('../LandUseClassifications/NDVI_stack_h21v07_smooth_lc_svm_mn.tif'))
@@ -138,7 +138,21 @@ version = 4 # updated land cover classes
   #roadden = projectRaster(roadden,crs=crs( example), filename = './RoadDen_5km_WLRC_sin.tif',overwrite=T)
   #dist_pp50k = raster('EucDist_pp50k.tif')
   #dist_pp50k = projectRaster(dist_pp50k, crs=crs(example), filename = './EucDist_pp50k_sin.tif',overwrite=T)
-  
+  # pull most agroecological area of greatest area to EAs
+  agro_eco = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/WLRC_Data_Original/','Agroecology',
+                      stringsAsFactors = F)
+  agro_eco =  spTransform(agro_eco, CRS("+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs'"))
+  Polys_sub = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasSIN_sub_agss_codes',
+                      stringsAsFactors = F)
+  # prepare for polyclip
+  agro_eco_poly = lapply(agro_eco@polygons, function(z) list(x= z@Polygons[[1]]@coords[,1],y=z@Polygons[[1]]@coords[,2]))
+  polys_sub_poly = lapply(Polys_sub@polygons, function(z) list(x= z@Polygons[[1]]@coords[,1],y=z@Polygons[[1]]@coords[,2]))
+  #https://cran.r-project.org/web/packages/polyclip/polyclip.pdf
+  agro_eco_polys_sub = polyclip(agro_eco_poly, polys_sub_poly,op='intersection')
+
+  #module load R/3.3.3
+
+
 
   # deal with PET  (untar bil files and place into /PET/Unzip folder)
   # get extents
@@ -352,6 +366,8 @@ version = 4 # updated land cover classes
 
   Polys_sub = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasSIN_sub_agss_codes_wdata',
                     stringsAsFactors = F)
+  # calculate area of eas in hectares
+  Polys_sub$Area_Ha = sapply(Polys_sub@polygons, function(x) x@Polygons[[1]]@area*0.0001)
   Polys_sub_data = Polys_sub@data
   Polys_sub_data$i = 1:dim(Polys_sub_data)[1]  # add id to join to 
 
@@ -397,6 +413,13 @@ version = 4 # updated land cover classes
   write.dta(output,paste('../IFPRI_Ethiopia_Drought_2016/Outputs4Pred/EA_NDVI_ET_panel_V',version,'.dta',sep=''))
 
   
+
+
+
+
+
+#########################  not using pca anymore  ############################################
+##############################################################################################
   
   
   # Create PCA values for annual grwoing and etapet values--------------------------------------------
