@@ -1,3 +1,4 @@
+# the file takes stack outputs from 2 - Stack Files.R and extracts data to EA polygons
 
 # Run the following in bash before starting R
 if [ -e $HOME/.Renviron ]; then cp $HOME/.Renviron $HOME/.Renviron.bkp; fi
@@ -37,50 +38,6 @@ library(foreign)
 
 functions_in = lsf.str()
 lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # byte code compile all functions http://adv-r.had.co.nz/Prof$
-
-
-# the file takes stack outputs from 2 - Stack Files.R and extracts data to EA polygons
-
-# Run the following in bash before starting R
-if [ -e $HOME/.Renviron ]; then cp $HOME/.Renviron $HOME/.Renviron.bkp; fi
-if [ ! -d $HOME/.Rtmp ] ; then mkdir $HOME/.Rtmp; fi
-echo "TMP='$HOME/.Rtmp'" > $HOME/.Renviron
-
-module load proj.4/4.8.0
-module load gdal/gcc/1.11 
-module load R/3.1.1
-module load gcc/4.9.0
-R
-
-rm(list=ls())
-#source('R:\\Mann Research\\IFPRI_Ethiopia_Drought_2016\\IFPRI_Ethiopia_Drought_Code\\ModisDownload.R')
-source('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/IFPRI_Ethiopia_Drought_2016/SummaryFunctions.R')
-# R/3.0.2 seems to work maybe
-
-
-library(raster)
-library(rgdal)
-library(sp)
-library(maptools)
-#library(rts)
-library(gdalUtils)
-library(foreach)
-library(doParallel)
-library(compiler)
-library(plyr)
-library(foreign)
-
-#cl <- makeCluster(32)
-#registerDoParallel(cl)
-
-
-# Compile Functions ---------------------------------------------------------------
-
-
-functions_in = lsf.str()
-lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # byte code compile all functions http://adv-r.had.co.nz/Profil$
-
-
 
 
 # Set up parameters -------------------------------------------------------
@@ -128,8 +85,7 @@ version = 4 # updated land cover classes
 
 
 # prepare other data ---------------------------------------
-  library(polyclip)
-  # reproject transport variables
+   # reproject transport variables
   setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/DistanceTransport/')
   example = proj4string(raster('../LandUseClassifications/NDVI_stack_h21v07_smooth_lc_svm_mn.tif'))
   #dist_rcap = raster('EucDist_Rcap.tif')
@@ -138,22 +94,28 @@ version = 4 # updated land cover classes
   #roadden = projectRaster(roadden,crs=crs( example), filename = './RoadDen_5km_WLRC_sin.tif',overwrite=T)
   #dist_pp50k = raster('EucDist_pp50k.tif')
   #dist_pp50k = projectRaster(dist_pp50k, crs=crs(example), filename = './EucDist_pp50k_sin.tif',overwrite=T)
-  # pull most agroecological area of greatest area to EAs
-  agro_eco = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/WLRC_Data_Original/','Agroecology',
+  # pull most agroecological area of greatest area to EAs https://gis.stackexchange.com/questions/140504/extracting-intersection-areas-in-r
+  agro_eco = readOGR('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/Data/WLRC_Data_Original','Agroecology',
                       stringsAsFactors = F)
-  agro_eco =  spTransform(agro_eco, CRS("+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs'"))
-  Polys_sub = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasSIN_sub_agss_codes',
+  agro_eco =  spTransform(agro_eco, CRS('+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_def'))
+  Polys_sub = readOGR('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/Data/EnumerationAreas','EnumerationAreasSIN_sub_agss_codes',
                       stringsAsFactors = F)
-  # prepare for polyclip
-  agro_eco_poly = lapply(agro_eco@polygons, function(z) list(x= z@Polygons[[1]]@coords[,1],y=z@Polygons[[1]]@coords[,2]))
-  polys_sub_poly = lapply(Polys_sub@polygons, function(z) list(x= z@Polygons[[1]]@coords[,1],y=z@Polygons[[1]]@coords[,2]))
-  #https://cran.r-project.org/web/packages/polyclip/polyclip.pdf
-  agro_eco_polys_sub = polyclip(agro_eco_poly, polys_sub_poly,op='intersection') # calculate intersection of coordinates
-  # not working lengths are different
-  lapply(1:length(agro_eco_polys_sub), function(z) Polygons( Polygon(agro_eco_polys_sub[[z]])) ,ID =paste(Polys_sub$EA_cd_m[z]) )) 
-
-
-
+  Polys_sub =  spTransform(Polys_sub, CRS('+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_def')) # correct minor difference between crss
+  agro_eco_Polys_sub = intersect(agro_eco,Polys_sub) # creates multiple features for each EA with the ag zone
+   # calculate area of union eas in hectares
+  agro_eco_Polys_sub$Area_Ha = sapply(agro_eco_Polys_sub@polygons, function(x) x@Polygons[[1]]@area*0.0001)
+  agro_eco_Polys_sub_max = ddply(agro_eco_Polys_sub@data[,c('EA_cd_m','Area_Ha','Terminolog')], .(EA_cd_m), function(x) x[which.max(x$Area_Ha),]) # find poly with the max area
+  names(agro_eco_Polys_sub_max)[3]='Agr_Eco'
+  # Join data bank
+  Polys_sub@data = join(Polys_sub@data, agro_eco_Polys_sub_max[,c('EA_cd_m','Agr_Eco')] , by='EA_cd_m' )
+  # add area of ea 
+  Polys_sub$Area_Ha = sapply(Polys_sub@polygons, function(x) x@Polygons[[1]]@area*0.0001)
+  
+  writeOGR(obj=Polys_sub, dsn="R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/Data/EnumerationAreas",
+           layer="EnumerationAreasSIN_sub_agss_codes", driver="ESRI Shapefile",overwrite=T,layer_options = "RESIZE=YES")
+  
+        
+   
 
 
   # deal with PET  (untar bil files and place into /PET/Unzip folder)
