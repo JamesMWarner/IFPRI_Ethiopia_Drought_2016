@@ -148,9 +148,11 @@ version = 4 # updated land cover classes
   agro_eco_poly = lapply(agro_eco@polygons, function(z) list(x= z@Polygons[[1]]@coords[,1],y=z@Polygons[[1]]@coords[,2]))
   polys_sub_poly = lapply(Polys_sub@polygons, function(z) list(x= z@Polygons[[1]]@coords[,1],y=z@Polygons[[1]]@coords[,2]))
   #https://cran.r-project.org/web/packages/polyclip/polyclip.pdf
-  agro_eco_polys_sub = polyclip(agro_eco_poly, polys_sub_poly,op='intersection')
+  agro_eco_polys_sub = polyclip(agro_eco_poly, polys_sub_poly,op='intersection') # calculate intersection of coordinates
+  # not working lengths are different
+  lapply(1:length(agro_eco_polys_sub), function(z) Polygons( Polygon(agro_eco_polys_sub[[z]])) ,ID =paste(Polys_sub$EA_cd_m[z]) )) 
 
-  #module load R/3.3.3
+
 
 
 
