@@ -95,24 +95,24 @@ version = 4 # updated land cover classes
   #dist_pp50k = raster('EucDist_pp50k.tif')
   #dist_pp50k = projectRaster(dist_pp50k, crs=crs(example), filename = './EucDist_pp50k_sin.tif',overwrite=T)
   # pull most agroecological area of greatest area to EAs https://gis.stackexchange.com/questions/140504/extracting-intersection-areas-in-r
-  agro_eco = readOGR('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/Data/WLRC_Data_Original','Agroecology',
-                      stringsAsFactors = F)
-  agro_eco =  spTransform(agro_eco, CRS('+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_def'))
-  Polys_sub = readOGR('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/Data/EnumerationAreas','EnumerationAreasSIN_sub_agss_codes',
-                      stringsAsFactors = F)
-  Polys_sub =  spTransform(Polys_sub, CRS('+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_def')) # correct minor difference between crss
-  agro_eco_Polys_sub = intersect(agro_eco,Polys_sub) # creates multiple features for each EA with the ag zone
-   # calculate area of union eas in hectares
-  agro_eco_Polys_sub$Area_Ha = sapply(agro_eco_Polys_sub@polygons, function(x) x@Polygons[[1]]@area*0.0001)
-  agro_eco_Polys_sub_max = ddply(agro_eco_Polys_sub@data[,c('EA_cd_m','Area_Ha','Terminolog')], .(EA_cd_m), function(x) x[which.max(x$Area_Ha),]) # find poly with the max area
-  names(agro_eco_Polys_sub_max)[3]='Agr_Eco'
-  # Join data bank
-  Polys_sub@data = join(Polys_sub@data, agro_eco_Polys_sub_max[,c('EA_cd_m','Agr_Eco')] , by='EA_cd_m' )
-  # add area of ea 
-  Polys_sub$Area_Ha = sapply(Polys_sub@polygons, function(x) x@Polygons[[1]]@area*0.0001)
-  
-  writeOGR(obj=Polys_sub, dsn="R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/Data/EnumerationAreas",
-           layer="EnumerationAreasSIN_sub_agss_codes", driver="ESRI Shapefile",overwrite=T,layer_options = "RESIZE=YES")
+  #agro_eco = readOGR('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/Data/WLRC_Data_Original','Agroecology',
+  #                    stringsAsFactors = F)
+  #agro_eco =  spTransform(agro_eco, CRS('+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_def'))
+  #Polys_sub = readOGR('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/Data/EnumerationAreas','EnumerationAreasSIN_sub_agss_codes',
+  #                    stringsAsFactors = F)
+  #Polys_sub =  spTransform(Polys_sub, CRS('+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_def')) # correct minor difference between crss
+  #agro_eco_Polys_sub = intersect(agro_eco,Polys_sub) # creates multiple features for each EA with the ag zone
+  # # calculate area of union eas in hectares
+  #agro_eco_Polys_sub$Area_Ha = sapply(agro_eco_Polys_sub@polygons, function(x) x@Polygons[[1]]@area*0.0001)
+  #agro_eco_Polys_sub_max = ddply(agro_eco_Polys_sub@data[,c('EA_cd_m','Area_Ha','Terminolog')], .(EA_cd_m), function(x) x[which.max(x$Area_Ha),]) # find poly with the max area
+  #names(agro_eco_Polys_sub_max)[3]='Agr_Eco'
+  ## Join data bank
+  #Polys_sub@data = join(Polys_sub@data, agro_eco_Polys_sub_max[,c('EA_cd_m','Agr_Eco')] , by='EA_cd_m' )
+  ## add area of ea 
+  #Polys_sub$Area_Ha = sapply(Polys_sub@polygons, function(x) x@Polygons[[1]]@area*0.0001)
+  #
+  #writeOGR(obj=Polys_sub, dsn="R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/Data/EnumerationAreas",
+  #         layer="EnumerationAreasSIN_sub_agss_codes", driver="ESRI Shapefile",overwrite=T,layer_options = "RESIZE=YES")
   
         
    
@@ -235,26 +235,26 @@ version = 4 # updated land cover classes
 
 
 # pull ETA PET data to polygons -----------------------------------
-  #load data
-  setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
-  load(paste('./PET/PET_stack_V',version,'.RData',sep=''))
-  load(paste('./ETa Anomaly/ETA_stack_V',version,'.RData',sep=''))
-  load('./Data Stacks/Rain Stacks/Rain_Stack_h21v07_h21v08_h22v07_h22v08.RData')
-  #pull to polygons 
-  Poly_PET_Ext_sub = extract_value_point_polygon(Polys_sub,PET_stack,15)
-  save(Poly_PET_Ext_sub,
-        file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
-        'Poly_PET_Ext_sub_V',version,'.RData',sep=''))
-  Poly_ETA_Ext_sub = extract_value_point_polygon(Polys_sub,ETA_stack,15)
-  save(Poly_ETA_Ext_sub,
-        file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
-        'Poly_ETA_Ext_sub_V',version,'.RData',sep=''))
-  # deal with CHIRPS PPT data downloaded and stacked w/ 1a-DownloadCHIRPSFTP_Rcurl.R
-  Poly_PPT_Ext_sub = extract_value_point_polygon(Polys_sub,rain_stack,15)
-  save(Poly_PPT_Ext_sub,
-        file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
-        'Poly_PPT_Ext_sub_V',version,'.RData',sep=''))
-
+  ##load data
+  #setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
+  #load(paste('./PET/PET_stack_V',version,'.RData',sep=''))
+  #load(paste('./ETa Anomaly/ETA_stack_V',version,'.RData',sep=''))
+  #load('./Data Stacks/Rain Stacks/Rain_Stack_h21v07_h21v08_h22v07_h22v08.RData')
+  ##pull to polygons 
+  #Poly_PET_Ext_sub = extract_value_point_polygon(Polys_sub,PET_stack,15)
+  #save(Poly_PET_Ext_sub,
+  #      file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+  #      'Poly_PET_Ext_sub_V',version,'.RData',sep=''))
+  #Poly_ETA_Ext_sub = extract_value_point_polygon(Polys_sub,ETA_stack,15)
+  #save(Poly_ETA_Ext_sub,
+  #      file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+  #      'Poly_ETA_Ext_sub_V',version,'.RData',sep=''))
+  ## deal with CHIRPS PPT data downloaded and stacked w/ 1a-DownloadCHIRPSFTP_Rcurl.R
+  #Poly_PPT_Ext_sub = extract_value_point_polygon(Polys_sub,rain_stack,15)
+  #save(Poly_PPT_Ext_sub,
+  #      file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+  #      'Poly_PPT_Ext_sub_V',version,'.RData',sep=''))
+#
   #fix date NO LONGER NEEDED, intrgrated into 1a-... .R
   #Poly_PPT_Ext_sub=  lapply(1:length(Poly_PPT_Ext_sub),function(x){
   #   	date = paste('X',format(strptime( 
@@ -263,59 +263,58 @@ version = 4 # updated land cover classes
 #  	names(Poly_PPT_Ext_sub[[x]])=date
 #        return(Poly_PPT_Ext_sub[[x]])
 #	})
- save(Poly_PPT_Ext_sub,
-        file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
-        'Poly_PPT_Ext_sub_V',version,'.RData',sep=''))
+ #save(Poly_PPT_Ext_sub,
+ #       file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+ #       'Poly_PPT_Ext_sub_V',version,'.RData',sep=''))
 
 
 
   #remove x2013001 from ETA because it is missing data
-  Poly_ETA_Ext_sub = lapply(1:length(Poly_ETA_Ext_sub), function(x){
-		Poly_ETA_Ext_sub[[x]][,!(names(Poly_ETA_Ext_sub[[x]]) %in% 'X2013001')]
-	}) 
-  save(Poly_ETA_Ext_sub,
-        file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
-        'Poly_ETA_Ext_sub_V',version,'.RData',sep=''))
+  #Poly_ETA_Ext_sub = lapply(1:length(Poly_ETA_Ext_sub), function(x){
+#		Poly_ETA_Ext_sub[[x]][,!(names(Poly_ETA_Ext_sub[[x]]) %in% 'X2013001')]
+#	}) 
+#  save(Poly_ETA_Ext_sub,
+#        file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+#        'Poly_ETA_Ext_sub_V',version,'.RData',sep=''))
 
 
-  # reload
-  setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
-  load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
-        'Poly_PET_Ext_sub_V',version,'.RData',sep=''))
-  load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
-        'Poly_ETA_Ext_sub_V',version,'.RData',sep=''))
-  load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
-        'Poly_PPT_Ext_sub_V',version,'.RData',sep=''))
-  load(paste('./Outputs/NDVI_summary_V',version,sep=''))  # needed for Annual_Summary_Functions_OtherData
-  load('./Data Stacks/WO Clouds Clean LC/NDVI_stack_h21v07_WO_Clouds_Clean_LC_V4.RData') # used for spline dates
-
-
-
-  # Get summary statistics lists using plant harvest dates obtained from NDVI
-  extr_values = Poly_PET_Ext_sub  
-  Veg_Annual_Summary = NDVI_summary 
-  Veg_Stack = NDVI_stack_h21v07_WO_Clouds_Clean_LC # used for spline dates
-  name_prefix = 'PET'
-  Quant_percentile=0.90
-  num_workers = 10
-  spline_spar=.05 # good = 0.05
-  aggregate=T
-  return_df=T
-  PET_summary =  Annual_Summary_Functions_OtherData(extr_values, PlantHarvestTable,Veg_Stack,Veg_Annual_Summary,name_prefix,
-                                                  Quant_percentile,return_df,num_workers,aggregate,spline_spar)
-
-  extr_values= Poly_ETA_Ext_sub
-  name_prefix = 'ETA'
-  ETA_summary =  Annual_Summary_Functions_OtherData(extr_values, PlantHarvestTable,Veg_Stack,Veg_Annual_Summary,name_prefix,
-                                                  Quant_percentile,return_df,num_workers,aggregate,spline_spar)
-  save(PET_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/PET_summary_V',version,'.Rdata',sep=''))
-  save(ETA_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/ETA_summary_V',version,'.Rdata',sep=''))
-
-  extr_values= Poly_PPT_Ext_sub
-  name_prefix = 'PPT'
-  PPT_summary =  Annual_Summary_Functions_OtherData(extr_values, PlantHarvestTable, Veg_Stack,Veg_Annual_Summary,name_prefix,
-                                                  Quant_percentile,return_df,num_workers,aggregate,spline_spar)
-  save(PPT_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/PPT_summary_V',version,'.Rdata',sep=''))
+ # # reload and summarize by NDVI timing 
+ # setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
+ # load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+ #       'Poly_PET_Ext_sub_V',version,'.RData',sep=''))
+ # load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+ #       'Poly_ETA_Ext_sub_V',version,'.RData',sep=''))
+ # load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+ #       'Poly_PPT_Ext_sub_V',version,'.RData',sep=''))
+ # load(paste('./Outputs/NDVI_summary_V',version,sep=''))  # needed for Annual_Summary_Functions_OtherData
+ # load('./Data Stacks/WO Clouds Clean LC/NDVI_stack_h21v07_WO_Clouds_Clean_LC_V4.RData') # used for spline dates
+#
+#
+#  # Get summary statistics lists using plant harvest dates obtained from NDVI
+#  extr_values = Poly_PET_Ext_sub  
+#  Veg_Annual_Summary = NDVI_summary 
+#  Veg_Stack = NDVI_stack_h21v07_WO_Clouds_Clean_LC # used for spline dates
+#  name_prefix = 'PET'
+#  Quant_percentile=0.90
+#  num_workers = 10
+#  spline_spar=.05 # good = 0.05
+#  aggregate=T
+#  return_df=T
+#  PET_summary =  Annual_Summary_Functions_OtherData(extr_values, PlantHarvestTable,Veg_Stack,Veg_Annual_Summary,name_prefix,
+#                                                  Quant_percentile,return_df,num_workers,aggregate,spline_spar)
+#
+#  extr_values= Poly_ETA_Ext_sub
+#  name_prefix = 'ETA'
+#  ETA_summary =  Annual_Summary_Functions_OtherData(extr_values, PlantHarvestTable,Veg_Stack,Veg_Annual_Summary,name_prefix,
+#                                                  Quant_percentile,return_df,num_workers,aggregate,spline_spar)
+#  save(PET_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/PET_summary_V',version,'.Rdata',sep=''))
+#  save(ETA_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/ETA_summary_V',version,'.Rdata',sep=''))
+#
+#  extr_values= Poly_PPT_Ext_sub
+#  name_prefix = 'PPT'
+#  PPT_summary =  Annual_Summary_Functions_OtherData(extr_values, PlantHarvestTable, Veg_Stack,Veg_Annual_Summary,name_prefix,
+#                                                  Quant_percentile,return_df,num_workers,aggregate,spline_spar)
+#  save(PPT_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/PPT_summary_V',version,'.Rdata',sep=''))
 
 
 
