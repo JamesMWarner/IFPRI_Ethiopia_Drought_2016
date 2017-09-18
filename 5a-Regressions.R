@@ -7,7 +7,7 @@ echo "TMP='$HOME/.Rtmp'" > $HOME/.Renviron
 
 module load proj.4/4.8.0
 module load gdal/gcc/1.11
-module load R/3.1.1
+module load R/3.3.3
 module load gcc/4.9.0
 R
 
@@ -41,6 +41,8 @@ vswheat0 = VSURF(form0,  data= data_in, na.action=na.omit,
 
 
 save(vswheat0,file = '../Data/VariableSelection/vswheat_0.RData')
+
+
 
 
 
@@ -286,6 +288,91 @@ attr(vswheat3$terms,'term.labels')[vswheat3$varselect.pred])
 
 
 
+
+
+
+
+# Find ALL MAIZE  variables -------------------------------------------------------
+
+
+
+form4_maz = MAIZEOPH_W ~ Year+REGIONCODE+ZONECODE+X_COORD+Y_COORD + MAIZEAREA +dist_rcap+ roadden+ dist_pp50k+ elevation+
+        MAIZEEXTAREA + MAIZEIRRGAREA + MAIZESERRAREA + MAIZEMERR1AREA + MAIZEMERR2AREA + MAIZEMERR3AREA + MAIZEMERR4AREA +
+        MAIZEMERR5AREA + MAIZESEED1AREA + MAIZESEED2AREA + MAIZEIMSEED + MAIZENIMSEED + MAIZEDAMAGEAREA + MAIZEDAMAGE_WEATHER_AREA +
+        MAIZEDAMAGE_PESTS_AREA + MAIZEDAMAGE_MANAGE_AREA + MAIZEDAMAGE_OTHER_AREA + MAIZEDAMAGE_DROUGHT_AREA +
+        MAIZEDAMAGE_DROUGHT_DUM + MAIZEFERT_NATURAL_AREA + MAIZEFERT_CHEMICAL_AREA +  MAIZEFERT_CHEMICAL_AMT+
+        MAIZEEXTAREA_P + MAIZEIRRGAREA_P + MAIZESERRAREA_P + MAIZEMERR1AREA_P + MAIZEMERR2AREA_P + MAIZEMERR3AREA_P +
+        MAIZEMERR4AREA_P + MAIZEMERR5AREA_P + MAIZESEED1AREA_P + MAIZESEED2AREA_P + MAIZEIMSEED_P + MAIZENIMSEED_P +
+        MAIZEDAMAGEAREA_P + MAIZEDAMAGE_WEATHER_AREA_P + MAIZEDAMAGE_PESTS_AREA_P + MAIZEDAMAGE_MANAGE_AREA_P +
+        MAIZEDAMAGE_OTHER_AREA_P + MAIZEDAMAGE_DROUGHT_AREA_P + MAIZEFERT_NATURAL_AREA_P + MAIZEFERT_CHEMICAL_AREA_P +
+        MAIZEFERT_CHEMICAL_AMT_P + A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  +
+        G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn +
+        G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn +
+        PET_G_min + PET_G_mx + PET_G_AUC +
+        PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn +
+        ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +
+        ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +
+        PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing +
+        PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+soil_TAWC
+
+
+set.seed(2734, kind = "L'Ecuyer-CMRG")
+
+vsmaize4 = VSURF(form4_maz,  data= data_in, na.action=na.omit,
+                parallel = T, ncores = 15 , clusterType = "FORK" )  # mtry default is # Xs / 3
+
+save(vsmaize4,file = '../Data/VariableSelection/vsmaize_4.RData')
+
+
+
+# Find ALL BARLEY variables -------------------------------------------------------
+
+
+
+form4_bar = BARLEYOPH_W ~ Year+REGIONCODE+ZONECODE+X_COORD+Y_COORD + BARLEYAREA +dist_rcap+ roadden+ dist_pp50k+ elevation+
+        BARLEYEXTAREA + BARLEYIRRGAREA + BARLEYSERRAREA + BARLEYMERR1AREA + BARLEYMERR2AREA + BARLEYMERR3AREA + BARLEYMERR4AREA +
+        BARLEYMERR5AREA + BARLEYSEED1AREA + BARLEYSEED2AREA + BARLEYIMSEED + BARLEYNIMSEED + BARLEYDAMAGEAREA + BARLEYDAMAGE_WEATHER_AREA +
+        BARLEYDAMAGE_PESTS_AREA + BARLEYDAMAGE_MANAGE_AREA + BARLEYDAMAGE_OTHER_AREA + BARLEYDAMAGE_DROUGHT_AREA +
+        BARLEYDAMAGE_DROUGHT_DUM + BARLEYFERT_NATURAL_AREA + BARLEYFERT_CHEMICAL_AREA +  BARLEYFERT_CHEMICAL_AMT+
+        BARLEYEXTAREA_P + BARLEYIRRGAREA_P + BARLEYSERRAREA_P + BARLEYMERR1AREA_P + BARLEYMERR2AREA_P + BARLEYMERR3AREA_P +
+        BARLEYMERR4AREA_P + BARLEYMERR5AREA_P + BARLEYSEED1AREA_P + BARLEYSEED2AREA_P + BARLEYIMSEED_P + BARLEYNIMSEED_P +
+        BARLEYDAMAGEAREA_P + BARLEYDAMAGE_WEATHER_AREA_P + BARLEYDAMAGE_PESTS_AREA_P + BARLEYDAMAGE_MANAGE_AREA_P +
+        BARLEYDAMAGE_OTHER_AREA_P + BARLEYDAMAGE_DROUGHT_AREA_P + BARLEYFERT_NATURAL_AREA_P + BARLEYFERT_CHEMICAL_AREA_P +
+        BARLEYFERT_CHEMICAL_AMT_P + A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  +
+        G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn +
+        G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn +
+        PET_G_min + PET_G_mx + PET_G_AUC +
+        PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn +
+        ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +
+        ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +
+        PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing +
+        PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+soil_TAWC
+
+
+set.seed(2734, kind = "L'Ecuyer-CMRG")
+
+vsbarley4 = VSURF(form4_bar,  data= data_in, na.action=na.omit,
+                parallel = T, ncores = 15 , clusterType = "FORK" )  # mtry default is # Xs / 3
+
+save(vsbarley4,file = '../Data/VariableSelection/vsbarley_4.RData')
+
+attr(vsbarley4$terms,'term.labels')[vsbarley4$varselect.pred]
+
+
+
+  # formula
+  form_1_bar = paste(attr(vsbarley4$terms,'term.labels')[vsbarley4$varselect.pred], collapse='+')
+  form_1_bar = as.formula(paste('BARLEYOPH_W ~',form_1_bar,sep=' '))
+#  training_1_bar = na.omit(model.frame(form_1_bar,data_in))
+
+
+
+
+
+
+
+
+
 # Machine Learning Alternatives -------------------------------------------
 
   
@@ -296,33 +383,34 @@ attr(vswheat3$terms,'term.labels')[vswheat3$varselect.pred])
 
   setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/IFPRI_Ethiopia_Drought_2016/Outputs4Pred/')
   
-  
+  # load variable selections
   load('../../Data/VariableSelection/vswheat_0.RData')
   load('../../Data/VariableSelection/vswheat_1.RData')
   load('../../Data/VariableSelection/vswheat_2.RData')
   load('../../Data/VariableSelection/vswheat_3.RData')
   
   
-  
+  # read data
   data_in = read.dta13("./AgSS_2010_15_Compiled_panel_merged_clean_v4.dta")
   data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
   
-  form_EA = paste(paste(
+  # declare forms
+  form_EA_1 = paste(paste(
     c(attr(vswheat0$terms,'term.labels')[vswheat0$varselect.interp],
       attr(vswheat1$terms,'term.labels')[vswheat1$varselect.interp],
       attr(vswheat2$terms,'term.labels')[vswheat2$varselect.interp],
       attr(vswheat3$terms,'term.labels')[vswheat3$varselect.interp]), collapse='+'),'+EACODE')
   
-  form = paste( c(attr(vswheat0$terms,'term.labels')[vswheat0$varselect.interp],
+  form_1 = paste( c(attr(vswheat0$terms,'term.labels')[vswheat0$varselect.interp],
       attr(vswheat1$terms,'term.labels')[vswheat1$varselect.interp],
       attr(vswheat2$terms,'term.labels')[vswheat2$varselect.interp],
       attr(vswheat3$terms,'term.labels')[vswheat3$varselect.interp]), collapse='+')
   
   # formula  
-  form_EA = as.formula(paste('WHEATOPH_W ~',form_EA,sep=' '))
+  form_EA = as.formula(paste('WHEATOPH_W ~',form_EA_1,sep=' '))
   training_EA = na.omit(model.frame(form_EA,data_in))
   
-  form = as.formula(paste('WHEATOPH_W ~',form,sep=' '))
+  form = as.formula(paste('WHEATOPH_W ~',form_1,sep=' '))
   training = na.omit(model.frame(form,data_in))
 
 
@@ -343,25 +431,100 @@ attr(vswheat3$terms,'term.labels')[vswheat3$varselect.pred])
   
   # Tuned regression 
   svr_tuned <- tune(svm, form,  data = data_in,
-                     ranges = list(epsilon = seq(0,1,0.1), cost = 2^(2:9)))
+                     ranges = list(epsilon = seq(0,2,0.25), cost = seq(.1,10,0.25)))
+  svr_tuned$best.model
   print(svr_tuned)
   plot(svr_tuned)
   save(svr_tuned, file = './svr_tuned.RData')
+  load('./svr_tuned.RData')
 
-  summary((predict(svr_tuned$best.model)- training$WHEATOPH_W))
+  predict(svr_tuned$best.model)
+  summary(svr_tuned$best.model$residuals)
  
+
+
+
+
+
+
+
 #### Panel Regression 
+
+  # remove EA with less than 4 observations
+  library(dplyr)
+  counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(MAIZEOPH_W))) %>% filter(non_na_count<4))
+  data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
+  
+  # define as panel data
   library(plm)
   data_in_plm <- pdata.frame(data_in, index=c("EACODE","Year"),  row.names=TRUE)
   
-  wht.re <- plm(form, data = data_in_plm, model = "random")
+
+  wht.re <- plm(form_EA, data = data_in_plm, model = "random")
   summary(wht.re)
   summary(wht.re$residuals)
   
   
   
+ # formula MAIZE
+  form_EA_maz = as.formula(paste('MAIZEOPH_W ~',form_EA_1,sep=' '))
+  training_EA_maz = na.omit(model.frame(form_EA_maz,data_in))
+
+  form_maz = as.formula(paste('MAIZEOPH_W ~',form_1,sep=' '))
+  training_maz = na.omit(model.frame(form_maz,data_in))
+
+  maz.re <- plm(form_EA_maz, data = data_in_plm, model = "random")
+  summary(maz.re)
+  summary(maz.re$residuals)
+
+
+ # formula BARLEY
+  data_in_plm$BARLEYOPH_W_l1 = lag(data_in_plm$BARLEYOPH_W,1)
+  form_1_bar = paste(attr(vsbarley4$terms,'term.labels')[vsbarley4$varselect.pred], collapse='+')
+  form_1_bar = as.formula(paste('(BARLEYOPH_W) ~',form_1_bar,sep=' '))
+
+  form_1_bar_w = paste(c(attr(vsbarley4$terms,'term.labels')[vsbarley4$varselect.pred],'lag(data_in_plm$BARLEYOPH_W,1)',"factor(W_CODE)"), collapse='+')
+  form_1_bar_w = as.formula(paste('(BARLEYOPH_W) ~',form_1_bar_w,sep=' '))
+
+  form_1_bar_z = paste(c(attr(vsbarley4$terms,'term.labels')[vsbarley4$varselect.pred],'lag(data_in_plm$BARLEYOPH_W,1)',"factor(Z_CODE)"), collapse='+')
+  form_1_bar_z = as.formula(paste('(BARLEYOPH_W) ~',form_1_bar_z,sep=' '))
+
+
+  bar.re <- plm(form_1_bar_z, data = data_in_plm, model = "random")
+  summary(bar.re)
+  summary(bar.re$residuals)
+
+
+ # formula TEFF
+  form_EA_tef = as.formula(paste('TEFFOPH_W ~',form_EA_1,sep=' '))
+  training_EA_tef = na.omit(model.frame(form_EA_tef,data_in))
+
+  form_tef = as.formula(paste('TEFFOPH_W ~',form_1,sep=' '))
+  training_tef = na.omit(model.frame(form_tef,data_in))
+
+  tef.re <- plm(form_tef, data = data_in_plm, model = "random")
+  summary(tef.re)
+  summary(tef.re$residuals)
+
+
+
+ # formula SORGHUM
+  form_EA_sor = as.formula(paste('SORGHUMOPH_W ~',form_EA_1,sep=' '))
+  training_EA_sor = na.omit(model.frame(form_EA_sor,data_in))
+
+  form_sor = as.formula(paste('SORGHUMOPH_W ~',form_1,sep=' '))
+  training_sor = na.omit(model.frame(form_sor,data_in))
+
+  sor.re <- plm(form_sor, data = data_in_plm, model = "random")
+  summary(sor.re)
+  summary(sor.re$residuals)
+
+
+
+
   
-  
+
+
 #### RPART - regresion trees (tunable with e1071)
   library(rpart)
   
