@@ -395,7 +395,7 @@ save(vsteff4,file = '../Data/VariableSelection/vsteff_4.RData')
   svr_tuned$best.model
   print(svr_tuned)
   plot(svr_tuned)
-  save(svr_tuned, file = './svr_tuned.RData')
+  save(svr_tuned, file = '../Data/Models/svr_tuned_wht.RData')
   load('./svr_tuned.RData')
 
   predict(svr_tuned$best.model)
@@ -421,14 +421,27 @@ save(vsteff4,file = '../Data/VariableSelection/vsteff_4.RData')
   # impute missing values
   set.seed(222)
   data_in.imputed <- rfImpute(form_1_wht_z, data_in[!is.na(data_in$WHEATOPH_W),])
-  save(data_in.imputed,file = '../Data/VariableSelection/data_in_wht.imputed.RData')
+  save(data_in.imputed,file = '../Data/Models/data_in_wht.imputed.RData')
 
   # estimate forest
   #names(data_in.imputed)[names(data_in.imputed)=='factor(Z_CODE)'] = 'Z_CODE'
   set.seed(1341)
   wht.rf <- randomForest(form_1_wht_z, data_in.imputed)
+  varImpPlot(wht.rf)
+  save(wht.rf,file = '../Data/Models/wht.rf.RData')
 
-  
+
+
+## CTREES 
+
+  # Conditional Inference Tree for Kyphosis
+  library(party)
+  ctree_wht <- ctree(form_1_wht_z, data=data_in.imputed)
+  plot(ctree_wht, main="Conditional Inference Tree for Kyphosis")
+
+
+  summary((predict(ctree_wht,data_in.imputed)- data_in.imputed$WHEATOPH_W))
+
 
 
 #### RPART - regresion trees (tunable with e1071)
@@ -446,10 +459,51 @@ save(vsteff4,file = '../Data/VariableSelection/vsteff_4.RData')
                     tunecontrol=tune.control(sampling='cross',cross=3,performances=T,nrepeat=5,best.model=T,))
   
   save(svm_tuned,
-       file = '/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/LandUseClassifications/svm_model_tuned_mnsdmx_newtrain_more.RData')
+       file = '../Data/Models/svm_model_tuned_mnsdmx_newtrain_more.RData')
   load('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/LandUseClassifications/svm_model_tuned_mnsdmx_newtrain_more.RData')
   
   svm_tuned$best.model
   table(predict(svm_tuned$best.model), NDVI_smooth$Class[rowSums(is.na( NDVI_smooth)) ==0])  # table with missing data removed
   plot(svm_tuned)
+
+
+
+
+http://www.statmethods.net/advstats/cart.html
+# Regression Tree Example
+library(rpart)
+
+# grow tree 
+fit <- rpart(Mileage~Price + Country + Reliability + Type, 
+   method="anova", data=cu.summary)
+
+printcp(fit) # display the results 
+plotcp(fit) # visualize cross-validation results 
+summary(fit) # detailed summary of splits
+
+# create additional plots 
+par(mfrow=c(1,2)) # two plots on one page 
+rsq.rpart(fit) # visualize cross-validation results  	
+
+# plot tree 
+plot(fit, uniform=TRUE, 
+  	main="Regression Tree for Mileage ")
+text(fit, use.n=TRUE, all=TRUE, cex=.8)
+
+# create attractive postcript plot of tree 
+post(fit, file = "c:/tree2.ps", 
+  	title = "Regression Tree for Mileage ")
+
+click to view
+
+# prune the tree 
+pfit<- prune(fit, cp=0.01160389) # from cptable   
+
+# plot the pruned tree 
+plot(pfit, uniform=TRUE, 
+  	main="Pruned Regression Tree for Mileage")
+text(pfit, use.n=TRUE, all=TRUE, cex=.8)
+post(pfit, file = "c:/ptree2.ps", 
+  	title = "Pruned Regression Tree for Mileage")
+
 
