@@ -30,10 +30,10 @@ library(plyr)
 
 # Visualize stacked histograms of damage by type -------------------------------------
 
-setwd('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_Code/Outputs4Pred/')
+setwd('Documents/IFPRI_Ethiopia_Drought_2016/Outputs4Pred/')
 agss = read.dta13('./AgSS_2010_15_Compiled_panel_merged_clean_PCA_v4.dta') 
 
-agss= agss[agss$REGIONCODE != 2,] # Drop afar
+#agss= agss[agss$REGIONCODE != 2,] # Drop afar
 
 #WHEATDAMAGE_WEATHER_AREA_P,
 damage = aggregate( cbind(WHEATDAMAGE_PESTS_AREA_P,WHEATDAMAGE_MANAGE_AREA_P,WHEATDAMAGE_OTHER_AREA_P,WHEATDAMAGE_DROUGHT_AREA_P) 
