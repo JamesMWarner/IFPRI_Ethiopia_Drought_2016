@@ -51,11 +51,6 @@ Appendix_Function_number =1
 Formula_number = 1
 ```
 
-
-
-_Text based on plos sample manuscript, see [http://journals.plos.org/ploscompbiol/s/latex](http://journals.plos.org/ploscompbiol/s/latex)_
-
-
 #Introduction
 The ability to monitor and predict crop yields in developing countries is critical to the successful adaptation to changes in our climate. Increased temperatures and variability has already been linked to losses in maize and wheat yields (-3.8 and 5.5% respectively)and crop prices globally [@Lobell616]. Although much effort has been placed on modeling the spatial distribution of these shifts, less effort has been placed on how yields vary across space and time [@Ray2015]. Advances in remote sensing provide  avenues to monitor agricultural crop health at high spatial and temporal resolution. However, our ability to monitor changes in plant productivity is still limited in the more complex environments common to many developing countries [@Mann2015]. 
 
@@ -212,7 +207,7 @@ We can see from Figure `r Figure_number` three time series for the major regions
 
 *Figure `r paste(Figure_number)`: Drought in one graph *
 
-```{r, echo=FALSE, fig.height=9, fig.width=8, message=FALSE, warning=FALSE}
+```{r Drought in one graph figure, echo=FALSE, fig.height=9, fig.width=8, message=FALSE, warning=FALSE}
 #grid.arrange(B,A,C,ncol=1,heights=c(.25,.25,.50))
 grid.arrange(A,B3,C,ncol=1,heights=c(.25,.25,.50))
 Figure_number =Figure_number+1 
