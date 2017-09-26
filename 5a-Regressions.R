@@ -190,6 +190,46 @@ save(vsteff4,file = '../Data/VariableSelection/vsteff_4.RData')
 
 
 
+# Find ALL SORGHUM variables -------------------------------------------------------
+
+
+
+form4_tef = SORGHUMOPH_W ~ Year+REGIONCODE+ZONECODE+X_COORD+Y_COORD + SORGHUMAREA +dist_rcap+ roadden+ dist_pp50k+ elevation+
+        SORGHUMEXTAREA + SORGHUMIRRGAREA + SORGHUMSERRAREA + SORGHUMMERR1AREA + SORGHUMMERR2AREA + SORGHUMMERR3AREA + SORGHUMMERR4AREA +
+        SORGHUMMERR5AREA + SORGHUMSEED1AREA + SORGHUMSEED2AREA + SORGHUMIMSEED + SORGHUMNIMSEED + SORGHUMDAMAGEAREA + SORGHUMDAMAGE_WEATHER_AREA +
+        SORGHUMDAMAGE_PESTS_AREA + SORGHUMDAMAGE_MANAGE_AREA + SORGHUMDAMAGE_OTHER_AREA + SORGHUMDAMAGE_DROUGHT_AREA +
+        SORGHUMDAMAGE_DROUGHT_DUM + SORGHUMFERT_NATURAL_AREA + SORGHUMFERT_CHEMICAL_AREA +  SORGHUMFERT_CHEMICAL_AMT+
+        SORGHUMEXTAREA_P + SORGHUMIRRGAREA_P + SORGHUMSERRAREA_P + SORGHUMMERR1AREA_P + SORGHUMMERR2AREA_P + SORGHUMMERR3AREA_P +
+        SORGHUMMERR4AREA_P + SORGHUMMERR5AREA_P + SORGHUMSEED1AREA_P + SORGHUMSEED2AREA_P + SORGHUMIMSEED_P + SORGHUMNIMSEED_P +
+        SORGHUMDAMAGEAREA_P + SORGHUMDAMAGE_WEATHER_AREA_P + SORGHUMDAMAGE_PESTS_AREA_P + SORGHUMDAMAGE_MANAGE_AREA_P +
+        SORGHUMDAMAGE_OTHER_AREA_P + SORGHUMDAMAGE_DROUGHT_AREA_P + SORGHUMFERT_NATURAL_AREA_P + SORGHUMFERT_CHEMICAL_AREA_P +
+        SORGHUMFERT_CHEMICAL_AMT_P + A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  +
+        G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn +
+        G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn +
+        PET_G_min + PET_G_mx + PET_G_AUC +
+        PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn +
+        ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +
+        ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +
+        PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing +
+        PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+soil_TAWC
+
+
+set.seed(2734, kind = "L'Ecuyer-CMRG")
+
+vssorghum4 = VSURF(form4_sor,  data= data_in, na.action=na.omit,
+                parallel = T, ncores = 15 , clusterType = "FORK" )  # mtry default is # Xs / 3
+
+save(vssorghum4,file = '../Data/VariableSelection/vssorghum_4.RData')
+
+
+
+
+
+
+
+
+
+
 
 #### Panel Regression ----------------------------------------------------
 
@@ -314,19 +354,73 @@ save(vsteff4,file = '../Data/VariableSelection/vsteff_4.RData')
 
 
  # formula TEFF
-  form_EA_tef = as.formula(paste('TEFFOPH_W ~',form_EA_1,sep=' '))
-  training_EA_tef = na.omit(model.frame(form_EA_tef,data_in))
+  setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/IFPRI_Ethiopia_Drought_2016/')
+  data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v",version,".dta",sep=''))
+  data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
 
-  form_tef = as.formula(paste('TEFFOPH_W ~',form_1,sep=' '))
-  training_tef = na.omit(model.frame(form_tef,data_in))
+  # remove EA with less than 4 observations
+  library(dplyr)
+  counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(TEFFOPH_W))) %>% filter(non_na_count<4))
+  data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
 
-  tef.re <- plm(form_tef, data = data_in_plm, model = "random")
+  # define as panel data
+  library(plm)
+  data_in_plm <- pdata.frame(data_in, index=c("EACODE","Year"),  row.names=TRUE)
+
+  load('../Data/VariableSelection/vsteff_4.RData')
+  form_1_tef = paste(attr(vsteff4$terms,'term.labels')[vsteff4$varselect.pred], collapse='+')
+  form_1_tef = as.formula(paste('TEFFOPH_W ~',form_1_tef,sep=' '))
+
+  form_1_tef_w = paste(c(attr(vsteff4$terms,'term.labels')[vsteff4$varselect.pred],'lag(data_in_plm$TEFFOPH_W,1)',
+                "factor(W_CODE)"), collapse='+')
+  form_1_tef_w = as.formula(paste('TEFFOPH_W ~',form_1_tef_w,sep=' '))
+
+  form_1_tef_z = paste(c(attr(vsteff4$terms,'term.labels')[vsteff4$varselect.pred],'lag(data_in_plm$TEFFOPH_W,1)',
+                "factor(Z_CODE)"), collapse='+')
+  form_1_tef_z = as.formula(paste('TEFFOPH_W ~',form_1_tef_z,sep=' '))
+
+  tef.re <- plm(form_1_tef_z, data = data_in_plm, model = "random")
   summary(tef.re)
-  summary(tef.re$residuals)
+
 
 
 
  # formula SORGHUM
+  setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/IFPRI_Ethiopia_Drought_2016/')
+  data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v",version,".dta",sep=''))
+  data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
+
+  # remove EA with less than 4 observations
+  library(dplyr)
+  counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(SORGHUMOPH_W))) %>% filter(non_na_count<4))
+  data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
+
+  # define as panel data
+  library(plm)
+  data_in_plm <- pdata.frame(data_in, index=c("EACODE","Year"),  row.names=TRUE)
+
+  load('../Data/VariableSelection/vssorghum_4.RData')
+  form_1_sor = paste(attr(vssorghum4$terms,'term.labels')[vssorghum4$varselect.pred], collapse='+')
+  form_1_sor = as.formula(paste('SORGHUMOPH_W ~',form_1_sor,sep=' '))
+
+  form_1_sor_w = paste(c(attr(vssorghumf4$terms,'term.labels')[vssorghum4$varselect.pred],'lag(data_in_plm$SORGHUMOPH_W,1)',
+               	"factor(W_CODE)"), collapse='+')
+  form_1_sor_w = as.formula(paste('SORGHUMOPH_W ~',form_1_sor_w,sep=' '))
+
+  form_1_sor_z = paste(c(attr(vssorghum4$terms,'term.labels')[vssorghum4$varselect.pred],'lag(data_in_plm$SORGHUMOPH_W,1)',
+                "factor(Z_CODE)"), collapse='+')
+  form_1_sor_z = as.formula(paste('SORGHUMOPH_W ~',form_1_sor_z,sep=' '))
+
+  sor.re <- plm(form_1_sor_z, data = data_in_plm, model = "random")
+  summary(sor.re)
+
+
+
+
+
+
+
+
   form_EA_sor = as.formula(paste('SORGHUMOPH_W ~',form_EA_1,sep=' '))
   training_EA_sor = na.omit(model.frame(form_EA_sor,data_in))
 
@@ -336,6 +430,7 @@ save(vsteff4,file = '../Data/VariableSelection/vsteff_4.RData')
   sor.re <- plm(form_sor, data = data_in_plm, model = "random")
   summary(sor.re)
   summary(sor.re$residuals)
+
 
 
 
