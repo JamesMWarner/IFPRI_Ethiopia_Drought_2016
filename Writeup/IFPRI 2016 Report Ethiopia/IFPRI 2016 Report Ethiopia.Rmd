@@ -1,0 +1,231 @@
+---
+title: Modeling impacts of drought on wheat and barley in Ethiopia
+author:
+  - name: Michael Mann
+    email: mmann1123@gwu.edu
+    affiliation: The George Washington University  
+    corresponding: mmann1123@gwu.edu
+  - name: James Warner
+    email: bob@example.com
+    affiliation: International Food Policy Research Institute
+address:
+  - code: The George Washington University
+    address: Department of Geography, Street, Washington, DC 20052
+  - code: IFPRI
+    address: Department, Street, Addis Abbaba, Ethiopia 
+abstract: |
+  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur eget porta erat. Morbi consectetur est vel gravida pretium. Suspendisse ut dui eu ante cursus gravida non sed sem. Nullam sapien tellus, commodo id velit id, eleifend volutpat quam. Phasellus mauris velit, dapibus finibus elementum vel, pulvinar non tellus. Nunc pellentesque pretium diam, quis maximus dolor faucibus id. Nunc convallis sodales ante, ut ullamcorper est egestas vitae. Nam sit amet enim ultrices, ultrices elit pulvinar, volutpat risus.
+  
+author_summary: |
+  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur eget porta erat. Morbi consectetur est vel gravida pretium. Suspendisse ut dui eu ante cursus gravida non sed sem. Nullam sapien tellus, commodo id velit id, eleifend volutpat quam. Phasellus mauris velit, dapibus finibus elementum vel, pulvinar non tellus. Nunc pellentesque pretium diam, quis maximus dolor faucibus id. Nunc convallis sodales ante, ut ullamcorper est egestas vitae. Nam sit amet enim ultrices, ultrices elit pulvinar, volutpat risus.
+
+bibliography: mybibfile.bib
+output:  rticles::plos_article #word_document  #   rticles::elsevier_article 
+csl: plos.csl
+---
+
+```{r, include=FALSE}
+#install Tex for latex  Windows: MiKTeX (Complete) - http://miktex.org/2.9/setup Mac OS X: TexLive 2013 (Full) - http://tug.org/mactex/ Linux: #sudo apt-get install texlive-full system 
+#library(rticles) for knitter templates
+#create rmarkdown from template then switch output: rticles::plos_article to output: word_document   
+# bibliography will be grabed from bibliography: mybibfile.bib
+rm(list=ls())
+
+library(raster)
+library(sp)
+library(maptools)
+library(ggplot2)
+library(readstata13)
+library(reshape)
+library(rgdal)
+library(grid)
+library(gridExtra)
+library(plotly)
+library(plyr)
+
+# set up numbering for figures/graphs etc
+Table_number = 1
+Figure_number = 1
+Appendix_Table_number =1
+Appendix_Function_number =1
+Formula_number = 1
+```
+
+#Introduction
+The ability to monitor and predict crop yields in developing countries is critical to the successful adaptation to changes in our climate. Increased temperatures and variability has already been linked to losses in maize and wheat yields (-3.8 and 5.5% respectively)and crop prices globally [@Lobell616]. Although much effort has been placed on modeling the spatial distribution of these shifts, less effort has been placed on how yields vary across space and time [@Ray2015]. Advances in remote sensing provide  avenues to monitor agricultural crop health at high spatial and temporal resolution. However, our ability to monitor changes in plant productivity is still limited in the more complex environments common to many developing countries [@Mann2015]. 
+
+Remote sensing based efforts to characterize the extent, cultivation practices, and productivity of global croplands has a long history. In fact, agricultural monitoring motivated much of the earliest work in remote sensing for example NASA's LACIE and AgRISTARS programs in the 1970s and 1980s and [@macdonald1980global, @hatfield1983remote, @NASA1984,@pinter2003agricultural]). Since then, substantial progress has been made in mapping cropland extent, crop types, irrigation status, cropping intensity, and productivity from remotely sensed imagery. For example, the MODIS Land Cover Product MCD12Q1 [@friedl2002global, @friedl2010modis] provides operationally produced, global scale maps of agriculture and agricultural-natural mosaics at an annual time step and 500 m spatial resolution from 2001-present. A finer resolution (~30 m) dataset is available for the conterminous United States which maps the annual extent and type for over 250 crops using primarily Landsat imagery: the Cropland Data Layer [@nass2003usda. These are but two prominent examples out of a broad literature documenting a wide variety of efforts to map cropland extent and type from remotely sensed imagery  [@lobell2004cropland, @xiao2006mapping, @thenkabail2007spectral, @ramankutty2008farming, @wardlow2008large, @biradar2011quantifying]. Remotely sensed imagery has also been employed to map irrigated areas [@thenkabail2009global, @portmann2010mirca2000], and cropping frequency/intensity [@biradar2011quantifying, @gray2014mapping, @li2014mapping].
+
+Initial efforts (e.g. LACIE and AgRISTARS) primarily utilized remotely sensed imagery to characterize the spatial extent and growth stage of crops, but relied on models driven chiefly by meteorological information to predict crop yield [@idso1977remote, @doraiswamy2003crop]. However, the biophysical link between canopy spectral reflectance and net primary production has long been established [@tucker1986satellite]; indicating that satellite measurements could play a role in determining crop yield directly. Indeed, early experimental work confirmed the usefulness of spectral measurements in predicting LAI and intercepted PAR in crops [@daughtry1983spectral, @asrar1984estimating, @clevers1997simplified], a result that was later extended to satellite measurements of spectral reflectance [@tucker1980relationship, @groten1993ndvi, @bartholome1988radiometric]. Spectral measurements typically explain variability in LAI and intercepted PAR better than crop yields because a variety of factors other than net primary production (e.g. weather during critical crop growth stages) influence yield. Nevertheless, a wide number of studies have documented highly explanatory empirical relationships between satellite measures such as NDVI (in many forms: growing season maximum and mean, seasonally integrated, etc.) and yields for a variety of crops, particularly at regional scales [@rasmussen1992assessment, @benedetti1993use, @funk2009phenologically, @becker2010generalized, @becker2010monitoring, @mkhabela2011crop]. Because certain crop growth stages are particularly critical for final yield [@butler2015variations], improved results are often seen when remotely sensed data are used to characterize crop phenology [@bolton2013forecasting]. More recently, methods for forecasting yields with remotely sensed variables at the field scale have been explored [@lobell2015scalable, @gao2017toward]. In addition to establishing a direct relationship between satellite measurements and crop yield, combining these observations with model output, through formal or ad hoc data assimilation techniques has also been demonstrated [@mo2005prediction, @moriondo2007simple, @de2007crop].
+
+The main objectives of this paper is to _________________. In particular, we will focus on the application of ___________________. We also created and present a suite of algorithms used to extract, summarize, and organize remotely sensed data and prepare it for spatiotemporal analysis. 
+
+##Drought meets distribution
+Spured by a long history of monsoon failures across the Sahel, forecasters and aid teams axiciously watched eastern Africa at the onset of a significant El Nino event in late 2014.  Below average rainfalls in 2015-17 across the low lying pastoral communities and South Eastern Ethiopia triggered an international effort to provide food aid to roughly 8.5 million people in the summer of 2017 [@reliefweb2017, @reliefweb_2017b]. The understated response from the Ethiopian government has lead to accusations that the government is downplaying the severity of the drought as early as 2016 [@schemm_2016, @schemm_2017]. Despite the reality of a severe and crippling drought in food insecure low lying  areas, there is little sign of food shortages nationally, with a recent study observing no significant change in grain prices throughout the country ((((@________)))). The lack of a price response would indicate that while food insecure areas were hit heavily by water shortages largely effecting livestock, leaving the highland areas largely unaffected or triggering only minor losses. Despite international concern, conditions up until the 2016-2017 growing season may have been largely handled by domestic resources and trade flows, therefore requiring shifts in distribution rather than a large-scale interational intervention.
+
+Looking at the example of wheat production for the top 15 producing zones (Figure: `r paste(Figure_number)`), we can see that total output has remained steady or increased in the majority of top performing zones. This can be seen by the increase in total production from 49,500 (?00s quintiles) in 2010 to 64,209 in the 2015 planting season. Additionally, we can see that the total production of each zone (as indicated by the width of each bar) generally increases over time, or remains relatively constant. Moreover we can see that the rank of regions (as indicated by the plot order, bottom being lowest rank, top being highest rank) remains surprisingly steady dispite the exogenous shock of drought begining in the 2015 planing season. 
+
+\newpage
+
+*Figure `r paste(Figure_number)`: Total Wheat output of top 15 producing zones`r Figure_number =Figure_number+1 `*
+
+`r `![](/home/mmann1123/Documents/IFPRI_Ethiopia_Drought_2016/Visualizations/Wheat_Output_bottom40_rm_acd_v2.jpg)
+
+ 
+```{r Drought in One Graph, include=F}
+# Figure DROUGHT IN ONE GRAPH 
+# Visualize stacked histograms of damage by type -------------------------------------
+
+setwd('~/Documents/IFPRI_Ethiopia_Drought_2016/Outputs4Pred/')
+agss = read.dta13('./AgSS_2010_15_Compiled_panel_merged_clean_PCA_v4.dta') 
+
+#agss= agss[agss$REGIONCODE != 2,] # Drop afar
+
+#WHEATDAMAGE_WEATHER_AREA_P,
+
+damage = aggregate( cbind(WHEATDAMAGE_PESTS_AREA_P,WHEATDAMAGE_MANAGE_AREA_P,WHEATDAMAGE_OTHER_AREA_P,WHEATDAMAGE_DROUGHT_AREA_P) ~ REGIONCODE+Year, FUN = sum ,data=agss)
+ 
+names(damage) = c('Region','Year','Pests','Manage','Other','Drought')
+damage <- melt(damage, id=c("Region","Year"))
+damage$regionyear = paste(damage$Region,damage$Year,sep='')
+damage$Region[damage$Region==1]='Tigray'
+damage$Region[damage$Region==3]='Amhara'
+damage$Region[damage$Region==2]='Afar'
+damage$Region[damage$Region==4]='Oromia'
+damage$Region[damage$Region==5]='Somali'
+damage$Region[damage$Region==6]='Benishangul'
+damage$Region[damage$Region==7]='SNNP'
+
+damage$Region = factor(damage$Region)
+damage$Region = ordered(damage$Region, levels = c("Afar", "Benishangul", "Tigray",'SNNP','Amhara','Oromia'))
+names(damage)[names(damage)=='variable'] = 'Type'
+
+#ggplot(data=damage,aes(x = Year, y = value, colour=Region, fill=variable, group=regionyear)) +geom_bar(stat = "identity",position="dodge")
+
+
+A = ggplot(data=damage,aes(x = Year, y = value,  fill=Type, group=Region)) +
+  geom_bar(stat = "identity",position="stack",aes(alpha=0.8))+ scale_alpha(guide = 'none')+ 
+  scale_fill_brewer(palette = "Set1",direction = -1)+
+  facet_grid(.~(Region))+ylab('% of Planted Area Damaged')+ theme(axis.text.x = element_text(angle = 90))
+
+# Visualize crop area by region -------------------------------------
+
+  area = aggregate( cbind(WHEATAREA,MAIZEAREA,BARLEYAREA,SORGHUMAREA,TEFFAREA) 
+                    ~ REGIONCODE+Year, FUN = sum ,data=agss)
+  
+  names(area) = c('Region','Year','Wheat','Maize','Barley','Sorghum','Teff')
+  area = melt(area, id=c("Region","Year"))
+  area$regionyear = paste(area$Region,damage$Year,sep='')
+  area$Region[area$Region==1]='Tigray'
+  area$Region[area$Region==3]='Amhara'
+  area$Region[area$Region==2]='Afar'
+  area$Region[area$Region==4]='Oromia'
+  area$Region[area$Region==5]='Somali'
+  area$Region[area$Region==6]='Benishangul'
+  area$Region[area$Region==7]='SNNP'
+  names(area)[names(area)=='variable'] = 'Crop'
+  
+  area$Region = ordered(area$Region, levels = c("Afar", "Benishangul", "Tigray",'SNNP','Amhara','Oromia'))
+  area$value = area$value / 100  #scale
+  
+  B = ggplot(data=area,aes(x = Year, y = value,  fill=Crop, group=Region)) +
+    geom_bar(stat = "identity",position="stack",alpha=0.8 )+ scale_alpha(guide = 'none')+facet_grid(.~(Region))+ylab('Hectares of Crop (100s)')+
+    theme(axis.text.x = element_text(angle = 90))
+
+#  find proportion of total area for each crop by year  ------------------
+  total_area = aggregate(value~Year, data = area,FUN=sum)
+  names(total_area)[names(total_area)=='value']='Total_Area'
+  crop_year_area = aggregate(value~Crop+Year, data = area,FUN=sum)
+  names(crop_year_area)[names(crop_year_area)=='value']='crop_year_area'
+  area2 = join(crop_year_area,total_area,by ='Year')
+  area2$PerCropYear = area2$crop_year_area / area2$Total_Area *100
+  
+  
+  B2= ggplot(data=area2,aes(x = Year, y = PerCropYear,  colour=Crop,alpha=0.8)) +
+    geom_line( size=2 ) +ylab('% of Area Planted')+ scale_alpha(guide = 'none')+
+    theme(axis.text.x = element_text(angle = 90))
+
+#  find proportion of total area for each crop by year and Region -------------------
+  Total_Area_Region = aggregate(value~Year+Region, data = area,FUN=sum)
+  names(Total_Area_Region)[names(Total_Area_Region)=='value']='Total_Area_Region'
+  
+  
+  crop_year_area_region = aggregate(value~Crop+Year+Region, data = area,FUN=sum)
+  names(crop_year_area_region)[names(crop_year_area_region)=='value']='crop_year_area_region'
+  area3 = join(Total_Area_Region,crop_year_area_region,by =c('Year','Region'))
+  area3$PerCropYear = area3$crop_year_area_region / area3$Total_Area_Region *100
+  
+  
+  B3 =  ggplot(data=area3,aes(x = Year, y = PerCropYear,  colour=Crop,alpha=0.8)) +
+    geom_line( size=2 )+ scale_alpha(guide = 'none') + 
+    ylab('% of Area Planted')+facet_grid(.~Region)+ theme(axis.text.x = element_text(angle = 90))
+
+# Visualize crop area by region -------------------------------------
+#WHEATDAMAGE_WEATHER_AREA_P,
+oph = aggregate( cbind(WHEATOPH_W,MAIZEOPH_W,BARLEYOPH_W,SORGHUMOPH_W,TEFFOPH_W) 
+                  ~ REGIONCODE+Year, FUN = median ,data=agss)
+
+names(oph) = c('Region','Year','Wheat','Maize','Barley','Sorghum','Teff')
+oph = melt(oph, id=c("Region","Year"))
+oph$regionyear = paste(oph$Region,damage$Year,sep='')
+oph$Region[oph$Region==1]='Tigray'
+oph$Region[oph$Region==3]='Amhara'
+oph$Region[oph$Region==2]='Afar'
+oph$Region[oph$Region==4]='Oromia'
+oph$Region[oph$Region==5]='Somali'
+oph$Region[oph$Region==6]='Benishangul'
+oph$Region[oph$Region==7]='SNNP'
+names(oph)[names(oph)=='variable'] = 'Crop'
+
+oph$Region = ordered(oph$Region, levels = c("Afar", "Benishangul", "Tigray",'SNNP','Amhara','Oromia'))
+ 
+C=ggplot(data=oph,aes(x = Year, y = value,  fill=Crop, group=Region,alpha=0.8)) +
+  geom_bar(stat = "identity",position="stack" )+ scale_alpha(guide = 'none')+
+  facet_grid(Crop~Region)+ylab('Median Output Per Hectare')+ 
+  scale_y_continuous(breaks=c(10, 20,30, 40))+ 
+  theme(axis.text.x = element_text(angle = 90))
+
+# version 1
+#pdf("../Visualizations/DroughtIn1Graph.pdf", width = 8, height = 11) # Open a new pdf file
+# grid.arrange(B,A,C,ncol=1,heights=c(.25,.25,.50))
+#dev.off()
+#grid.arrange(A,B2,C,ncol=1,heights=c(.25,.25,.50))
+
+
+# write out pdf of figure 
+figurepath = paste("~/Documents/IFPRI_Ethiopia_Drought_2016/Writeup/Figure_",Figure_number,"_DroughtIn1Graph.pdf",sep='')
+if(file.exists(figurepath)){file.remove(figurepath)}
+pdf(figurepath, width = 8, height = 11) # Open a new pdf file
+grid.arrange(B,A,C,ncol=1,heights=c(.25,.25,.50))
+# grid.arrange(A,B3,C,ncol=1,heights=c(.25,.25,.50))
+dev.off()
+
+```
+We can see from Figure `r Figure_number` three time series for the major regions depicting the drought, in the top panel (a) the percentage of planted area damaged by damage type, the middle panel (b) the percentage of area planted in each major crop, in the bottom panel (c) median output per hectare (OPH) in quintiles for each major crop. Although we see a marked spike in reports of drought damage in the 2015 planting season (covering harvest in 2016), we see a few important responses. First, we see that although slight, farmers increased the percentage of area planted in drought tolerant crops such as maize and sorghum. Second, we see that although some regions saw declines in median output per hectare, these losses are largely offset by gains in other crops or by the steady increase in OPH since 2010. 
+
+\newpage
+
+*Figure `r paste(Figure_number)`: Drought in one graph *
+
+```{r Drought in one graph figure, echo=FALSE, fig.height=9, fig.width=8, message=FALSE, warning=FALSE}
+#grid.arrange(B,A,C,ncol=1,heights=c(.25,.25,.50))
+grid.arrange(A,B3,C,ncol=1,heights=c(.25,.25,.50))
+Figure_number =Figure_number+1 
+```
+
+```{r Trade Flows,include=F}
+# pdf inserted from Ethiopia Flow - Data v3.R in the H:/../Projects/Ethiopia Flow Maps/  folder
+```
+\pagebreak
+
+*Figure `r paste(Figure_number)`: Aggregate commodity trade flows `r Figure_number =Figure_number+1 `*
+   
+`r `![](/home/mmann1123/Documents/IFPRI_Ethiopia_Drought_2016/Writeup/ggplot_grey_legend_import_arrows3.png)
+
+ 
+
+
+
+
+
+# References {#references .unnumbered}
