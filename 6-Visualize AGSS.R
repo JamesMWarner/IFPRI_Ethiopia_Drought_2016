@@ -244,7 +244,6 @@ plotPlane(m3, plotx1 = "elevation", plotx2 = "PPT_G_AUC", drawArrows = F, x1lab 
 # Spatial Plots -----------------------------------------------------------
 library(plyr)
 
-setwd('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_Code/Outputs4Pred/')
 agss = read.dta13('./AgSS_2010_15_Compiled_panel_merged_clean_PCA_v4.dta') 
 
 # setwd('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/Data/AdminBoundaries/')

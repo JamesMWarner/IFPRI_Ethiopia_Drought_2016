@@ -20,7 +20,7 @@ author_summary: |
   Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur eget porta erat. Morbi consectetur est vel gravida pretium. Suspendisse ut dui eu ante cursus gravida non sed sem. Nullam sapien tellus, commodo id velit id, eleifend volutpat quam. Phasellus mauris velit, dapibus finibus elementum vel, pulvinar non tellus. Nunc pellentesque pretium diam, quis maximus dolor faucibus id. Nunc convallis sodales ante, ut ullamcorper est egestas vitae. Nam sit amet enim ultrices, ultrices elit pulvinar, volutpat risus.
 
 bibliography: mybibfile.bib
-output:  rticles::plos_article #word_document  #   rticles::elsevier_article 
+output:  rticles::elsevier_article   #rticles::plos_article #word_document  #    
 csl: plos.csl
 ---
 
@@ -67,10 +67,9 @@ Looking at the example of wheat production for the top 15 producing zones (Figur
 
 \newpage
 
-*Figure `r paste(Figure_number)`: Total Wheat output of top 15 producing zones`r Figure_number =Figure_number+1 `*
+*Figure `r paste(Figure_number)`: Total wheat output of top 15 producing zones in tons`r Figure_number =Figure_number+1 `*
 
 `r `![](/home/mmann1123/Documents/IFPRI_Ethiopia_Drought_2016/Visualizations/Wheat_Output_bottom40_rm_acd_v2.jpg)
-
  
 ```{r Drought in One Graph, include=F}
 # Figure DROUGHT IN ONE GRAPH 
@@ -79,7 +78,7 @@ Looking at the example of wheat production for the top 15 producing zones (Figur
 setwd('~/Documents/IFPRI_Ethiopia_Drought_2016/Outputs4Pred/')
 agss = read.dta13('./AgSS_2010_15_Compiled_panel_merged_clean_PCA_v4.dta') 
 
-#agss= agss[agss$REGIONCODE != 2,] # Drop afar
+agss= agss[agss$REGIONCODE != 2,] # Drop afar
 
 #WHEATDAMAGE_WEATHER_AREA_P,
 
@@ -126,7 +125,8 @@ A = ggplot(data=damage,aes(x = Year, y = value,  fill=Type, group=Region)) +
   names(area)[names(area)=='variable'] = 'Crop'
   
   area$Region = ordered(area$Region, levels = c("Afar", "Benishangul", "Tigray",'SNNP','Amhara','Oromia'))
-  area$value = area$value / 100  #scale
+  area$value = area$value / 100  #scale 
+
   
   B = ggplot(data=area,aes(x = Year, y = value,  fill=Crop, group=Region)) +
     geom_bar(stat = "identity",position="stack",alpha=0.8 )+ scale_alpha(guide = 'none')+facet_grid(.~(Region))+ylab('Hectares of Crop (100s)')+
@@ -218,14 +218,17 @@ Figure_number =Figure_number+1
 ```
 \pagebreak
 
-*Figure `r paste(Figure_number)`: Aggregate commodity trade flows `r Figure_number =Figure_number+1 `*
-   
-`r `![](/home/mmann1123/Documents/IFPRI_Ethiopia_Drought_2016/Writeup/ggplot_grey_legend_import_arrows3.png)
+Moreover Ethiopia has rapidly improved its ability to mitigate food insecurity through trade flows. International and intranational trade has likely been improved by the rapid development of the paved road network, and with the opening of the Ethiopia-Djibouti electric railway line in 2016 improving trade with this red sea port. Even in 2011, for the case of wheat, we can see how imports and internal trade flows move wheat from surplus areas to defict areas. In Figure `r paste(Figure_number)`, we see large international imports as well as comprehensive internal trade flows at the zonal level. 
 
+*Figure `r paste(Figure_number)`: 2011 aggregate wheat trade flows at the zonal level`r Figure_number =Figure_number+1 `*
+   
+`r `![](/home/mmann1123/Documents/IFPRI_Ethiopia_Drought_2016/Writeup/ggplot_grey_legend_import.png)
+
+Although far from perfect we should acknowledge substantial improvements in Ethiopia's ability to mitigate and respond to localized drought. 
  
 
 
 
 
 
-# References {#references .unnumbered}
+# References {#references}
