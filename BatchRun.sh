@@ -6,9 +6,9 @@
 
 # single node in the "short or defq" partition
 #SBATCH -N 1
-#SBATCH -p short,gpu
+#SBATCH -p defq
 #SBATCH -D /groups/manngroup/IFPRI_Ethiopia_Dought_2016/IFPRI_Ethiopia_Drought_2016
-#SBATCH -t 4-00:00:00
+#SBATCH -t 7-00:00:00
 #SBATCH --mail-user=mmann1123@gwu.edu
 #SBATCH --mail-type=ALL
 
@@ -19,10 +19,10 @@ echo "TMP='$HOME/.Rtmp'" > $HOME/.Renviron
 
 module load proj.4/4.8.0
 module load gdal/gcc/1.11
-module load R/3.1.1
+module load R/3.3.3
 module load gcc/4.9.0
 
-srun R CMD BATCH ./scriptextract_selectEAs.R
+srun R CMD BATCH ./scriptvselect_sor.R
 
 
 
