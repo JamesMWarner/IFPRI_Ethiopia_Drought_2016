@@ -63,7 +63,63 @@ The main objectives of this paper is to _________________. In particular, we wil
 ##Drought meets distribution
 Spured by a long history of monsoon failures across the Sahel, forecasters and aid teams axiciously watched eastern Africa at the onset of a significant El Nino event in late 2014.  Below average rainfalls in 2015-17 across the low lying pastoral communities and South Eastern Ethiopia triggered an international effort to provide food aid to roughly 8.5 million people in the summer of 2017 [@reliefweb2017, @reliefweb_2017b]. The understated response from the Ethiopian government has lead to accusations that the government is downplaying the severity of the drought as early as 2016 [@schemm_2016, @schemm_2017]. Despite the reality of a severe and crippling drought in food insecure low lying  areas, there is little sign of food shortages nationally, with a recent study observing no significant change in grain prices throughout the country ((((@________)))). The lack of a price response would indicate that while food insecure areas were hit heavily by water shortages largely effecting livestock, leaving the highland areas largely unaffected or triggering only minor losses. Despite international concern, conditions up until the 2016-2017 growing season may have been largely handled by domestic resources and trade flows, therefore requiring shifts in distribution rather than a large-scale interational intervention.
 
-Looking at the example of wheat production for the top 15 producing zones (Figure: `r paste(Figure_number)`), we can see that total output has remained steady or increased in the majority of top performing zones. This can be seen by the increase in total production from 49,500 (?00s quintiles) in 2010 to 64,209 in the 2015 planting season. Additionally, we can see that the total production of each zone (as indicated by the width of each bar) generally increases over time, or remains relatively constant. Moreover we can see that the rank of regions (as indicated by the plot order, bottom being lowest rank, top being highest rank) remains surprisingly steady dispite the exogenous shock of drought begining in the 2015 planing season. 
+Looking at Figure `r paste(Figure_number)` we can see the spatiotemporal patterns of rainfall across Ethiopia. The top panel (a) reports the median total rain fall per 10 day period during each month (mm). Here we can see the onset of the heavy rains during the Meher growing season, and the decline near harvest in October. In panels (b) and (c) we can see the deviation from this norm for the years 2015 and 2016 (in mm). Here the only striking shortfall is July in 2015 and patchy isolated declines through August that year. 2016 by comparison shows indications of generally above average rainfall. That being said we can also get a feeling of the spatial heterogeneity of fainfall over time. Both years show small areas that interchange between being above or below average. It should be pointed out that the erradic nature of these rains might point to the importance of the timing of these rains, with rainfall being more important during critical growth stages like germination and ripening. Therefore Ethiopia, like many rainfall dependent countries has and will continue to be be prone to isolated yield losses.  
+
+*Figure `r paste(Figure_number)`: Median rainfall per 10 day period 2009-2015 compared to 2015 and 2016`r Figure_number =Figure_number+1 `*
+```{r Precipitation ,fig.height=12,fig.width=5}
+# Spatial Plots -----------------------------------------------------------
+library(rasterVis)
+library(gridExtra)
+# Drought Plots
+setwd('R://Mann_Research//IFPRI_Ethiopia_Drought_2016')
+
+# ppt = stack(list.files('./Data/CHIRPS/','*.tif$',full.names = T))
+# 
+# idx = c(seq(as.Date("2009/1/1"), as.Date("2017/3/1"), "month"),seq(as.Date("2009/1/11"), as.Date("2017/3/11"), "month"),
+#         seq(as.Date("2009/1/20"), as.Date("2017/3/20"), "month"))  # mimic Dekadal (10 days, 10 days, remainder)
+# idx =sort(idx)
+# ppt = setZ(ppt, idx)
+# names(ppt) = idx
+# 
+# # get monthly median ppt through 2015 
+# CHIRPS units total mm rain per 10 day period 
+
+# Monthppt = stackApply(ppt[[1:252]], format(idx[1:252],'%m'), fun = median)
+# names(Monthppt) = month.abb
+# save(Monthppt, file = 'R:\\Mann_Research\\IFPRI_Ethiopia_Drought_2016\\IFPRI_Ethiopia_Drought_Code\\Writeup\\IFPRI 2016 Report Ethiopia\\Monthppt.R')
+load('R:\\Mann_Research\\IFPRI_Ethiopia_Drought_2016\\IFPRI_Ethiopia_Drought_Code\\Writeup\\IFPRI 2016 Report Ethiopia\\Monthppt.R') 
+
+my.at <- seq(-10, 200, 10)
+pptA = levelplot(Monthppt,at=my.at,layout=c(3, 4),par.settings=c(RdBuTheme()),scales=list(),main='(a) Median 2009-2015')
+
+#get 2015 median ppt
+# Monthppt2015C = stackApply(ppt[[ grep('2015',names(ppt))]], format(idx[grep('2015',idx)],'%m'), fun = median)
+# names(Monthppt2015C) = month.abb
+#  save(Monthppt2015C, file = 'R:\\Mann_Research\\IFPRI_Ethiopia_Drought_2016\\IFPRI_Ethiopia_Drought_Code\\Writeup\\IFPRI 2016 Report Ethiopia\\Monthppt2015C.R')
+load('R:\\Mann_Research\\IFPRI_Ethiopia_Drought_2016\\IFPRI_Ethiopia_Drought_Code\\Writeup\\IFPRI 2016 Report Ethiopia\\Monthppt2015C.R')
+pptD = levelplot(Monthppt2015C,at=my.at,layout=c(3, 4),par.settings=RdBuTheme(), main='2015')
+
+# get 2016 median ppt
+# Monthppt2016C = stackApply(ppt[[ grep('2016',names(ppt))]], format(idx[grep('2016',idx)],'%m'), fun = median)
+# names(Monthppt2016C) = month.abb
+# save(Monthppt2016C, file = 'R:\\Mann_Research\\IFPRI_Ethiopia_Drought_2016\\IFPRI_Ethiopia_Drought_Code\\Writeup\\IFPRI 2016 Report Ethiopia\\Monthppt2016C.R')
+load('R:\\Mann_Research\\IFPRI_Ethiopia_Drought_2016\\IFPRI_Ethiopia_Drought_Code\\Writeup\\IFPRI 2016 Report Ethiopia\\Monthppt2016C.R')
+pptC = levelplot(Monthppt2016C,at=my.at,layout=c(3, 4),par.settings=RdBuTheme(), main='2016')
+
+pptchange2016 =(Monthppt2016C - Monthppt)
+my.at2 <- seq(-100, 100, 5)
+pptE = levelplot(pptchange2016,at=my.at2,layout=c(3, 4),par.settings=RdBuTheme(), main='(c) 2016 Deviation') #
+
+pptchange2015 =(Monthppt2015C - Monthppt)
+pptF = levelplot(pptchange2015,at=my.at2,layout=c(3, 4),par.settings=RdBuTheme(), main='(b) 2015 Deviation') #
+
+#pdf(figurepath, width = 8, height = 11) # Open a new pdf file
+grid.arrange(pptA,pptF,pptE,ncol=1,heights=c(.33,.33,.33))
+
+```
+
+
+Looking at the example of wheat production for the top 15 producing zones (Figure: `r paste(Figure_number)`), we can see that total output has remained steady or increased in the majority of top performing zones. This can be seen by the increase in total production from 49,500 (?00s quintiles) in 2010 to 64,209 in the 2015 planting season. Additionally, we can see that the total production of each zone (as indicated by the width of each bar) generally increases over time, or remains relatively constant. Moreover we can see that the rank of regions (as indicated by the plot order, bottom being lowest rank, top being highest rank) remains surprisingly steady dispite the exogenous shock of drought begining in the 2015 planting season. 
 
 \newpage
 
@@ -75,7 +131,7 @@ Looking at the example of wheat production for the top 15 producing zones (Figur
 # Figure DROUGHT IN ONE GRAPH 
 # Visualize stacked histograms of damage by type -------------------------------------
 
-setwd('~/Documents/IFPRI_Ethiopia_Drought_2016/Outputs4Pred/')
+setwd('R:\\Mann_Research\\IFPRI_Ethiopia_Drought_2016\\IFPRI_Ethiopia_Drought_Code/Outputs4Pred/')
 agss = read.dta13('./AgSS_2010_15_Compiled_panel_merged_clean_PCA_v4.dta') 
 
 agss= agss[agss$REGIONCODE != 2,] # Drop afar
@@ -193,7 +249,7 @@ C=ggplot(data=oph,aes(x = Year, y = value,  fill=Crop, group=Region,alpha=0.8)) 
 
 
 # write out pdf of figure 
-figurepath = paste("~/Documents/IFPRI_Ethiopia_Drought_2016/Writeup/Figure_",Figure_number,"_DroughtIn1Graph.pdf",sep='')
+figurepath = paste("R:\\Mann_Research\\IFPRI_Ethiopia_Drought_2016\\IFPRI_Ethiopia_Drought_Code/Writeup//Figure_",Figure_number,"_DroughtIn1Graph.pdf",sep='')
 if(file.exists(figurepath)){file.remove(figurepath)}
 pdf(figurepath, width = 8, height = 11) # Open a new pdf file
 grid.arrange(B,A,C,ncol=1,heights=c(.25,.25,.50))
@@ -227,6 +283,7 @@ Moreover Ethiopia has rapidly improved its ability to mitigate food insecurity t
 Although far from perfect we should acknowledge substantial improvements in Ethiopia's ability to mitigate and respond to localized drought. 
  
 
+# Methods
 
 
 

@@ -242,9 +242,77 @@ plotPlane(m3, plotx1 = "elevation", plotx2 = "PPT_G_AUC", drawArrows = F, x1lab 
 
 
 # Spatial Plots -----------------------------------------------------------
-library(plyr)
+library(rasterVis)
+library(gridExtra)
+# Drought Plots
+setwd('R://Mann_Research//IFPRI_Ethiopia_Drought_2016')
 
-agss = read.dta13('./AgSS_2010_15_Compiled_panel_merged_clean_PCA_v4.dta') 
+ppt = stack(list.files('./Data/CHIRPS/','*.tif$',full.names = T))
+ 
+idx = c(seq(as.Date("2009/1/1"), as.Date("2017/3/1"), "month"),seq(as.Date("2009/1/11"), as.Date("2017/3/11"), "month"),
+        seq(as.Date("2009/1/20"), as.Date("2017/3/20"), "month"))  # mimic Dekadal (10 days, 10 days, remainder)
+idx =sort(idx)
+ppt = setZ(ppt, idx)
+names(ppt) = idx
+
+# get monthly median ppt through 2015 
+Monthppt = stackApply(ppt[[1:252]], format(idx[1:252],'%m'), fun = median)
+names(Monthppt) = month.abb
+ 
+my.at <- seq(-10, 200, 10)
+pptA = levelplot(Monthppt,at=my.at,layout=c(3, 4),par.settings=c(RdBuTheme()),scales=list(),main='Median 2009-2015')
+plot(pptA)
+
+names(ppt)
+Monthppt2016 = stackApply(ppt[[c("X2016.07.01", "X2016.07.11" ,"X2016.07.20", "X2016.08.01", "X2016.08.11", "X2016.08.20",
+                                 "X2016.09.01", "X2016.09.11" ,"X2016.09.20")]], format(idx[grep('2016',idx)][19:27],'%m'), fun = median)
+names(Monthppt2016) = c('Jul 2016','Aug 2016','Sep 2016')
+pptB = levelplot(Monthppt2016,at=my.at,layout=c(3, 1),par.settings=RdBuTheme())
+
+Monthppt2016C = stackApply(ppt[[ grep('2016',names(ppt))]], format(idx[grep('2016',idx)],'%m'), fun = median)
+names(Monthppt2016C) = month.abb
+pptC = levelplot(Monthppt2016C,at=my.at,layout=c(3, 4),par.settings=RdBuTheme(), main='2016')
+plot(pptC)
+
+pdf(figurepath, width = 8, height = 11) # Open a new pdf file
+windows(width = 10)
+grid.arrange(pptA,pptC,ncol=2)#,heights=c(.75,.25))
+
+# 
+#setwd('R://Mann_Research//IFPRI_Ethiopia_Drought_2016')
+
+# get boundary
+# et <- getData("GADM", country="ET", level=0)
+# et <- spTransform(et, CRS('+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs'))
+# 
+# for(i in list.files('./Data/ETa Anomaly/','*.tif$',full.names = T)){
+#   a = raster(i)
+#   a <- crop(eta16,  a)
+#   writeRaster(a,paste('./Data/ETa Anomaly/Cropped/',basename(i),sep=''))  
+# }
+# a = raster('./Data/ETa Anomaly/Cropped/ma1010.modisSSEBopET.tif')
+# plot(a)
+# 
+# eta = stack(list.files('./Data/ETa Anomaly/','*.tif$',full.names = T)[1:72],)
+# eta16 = stack(list.files('./Data/ETa Anomaly/','^.*ma16.*.tif$',full.names = T)[7:10])
+# 
+# idx = seq(as.Date("2016/7/1"), as.Date("2016/10/1"), "month")
+# eta16 = setZ(eta16, idx)
+# 
+# 
+# # crop 
+# eta16_clip <- crop(eta16,  et)
+# 
+# # rasterVis
+# windows()
+# levelplot(eta16_clip)
+
+
+
+# Polygon plots
+library(plyr)
+setwd('Z://Mann_Research//IFPRI_Ethiopia_Drought_2016')
+agss = read.dta13('./IFPRI_Ethiopia_Drought_Code/Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_PCA_v4.dta') 
 
 # setwd('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/Data/AdminBoundaries/')
 # eas = readOGR(dsn=".", layer="ETH_adm3_UTM")
@@ -259,8 +327,7 @@ agss = read.dta13('./AgSS_2010_15_Compiled_panel_merged_clean_PCA_v4.dta')
 # eas.df$MYID = eas.df$ID_3  # rename for join
 
 
-setwd('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/Data/EnumerationAreas/')
-eas = readOGR(dsn=".", layer="EnumerationAreasSIN_sub_agss_codes_wdata")
+eas = readOGR(dsn="./Data/EnumerationAreas", layer="EnumerationAreasSIN_sub_agss_codes_wdata")
 eas@data$id = rownames(eas@data)
 eas.points = fortify(eas, region="id")
 eas.df = join(eas.points, eas@data, by="id")

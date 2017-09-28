@@ -1,167 +1,152 @@
-% Template for PLoS
-% Version 3.4 January 2017
-\documentclass[10pt,letterpaper]{article}
-\usepackage[top=0.85in,left=2.75in,footskip=0.75in]{geometry}
-
-% amsmath and amssymb packages, useful for mathematical formulas and symbols
-\usepackage{amsmath,amssymb}
-
-% Use adjustwidth environment to exceed column width (see example table in text)
-\usepackage{changepage}
-
-% Use Unicode characters when possible
-\usepackage[utf8x]{inputenc}
-
-% textcomp package and marvosym package for additional characters
-\usepackage{textcomp,marvosym}
-
-% cite package, to clean up citations in the main text. Do not remove.
-% \usepackage{cite}
-
-% Use nameref to cite supporting information files (see Supporting Information section for more info)
-\usepackage{nameref,hyperref}
-
-% line numbers
-\usepackage[right]{lineno}
-
-% ligatures disabled
-\usepackage{microtype}
-\DisableLigatures[f]{encoding = *, family = * }
-
-% color can be used to apply background shading to table cells only
-\usepackage[table]{xcolor}
-
-% array package and thick rules for tables
-\usepackage{array}
-
-% create "+" rule type for thick vertical lines
-\newcolumntype{+}{!{\vrule width 2pt}}
-
-% create \thickcline for thick horizontal lines of variable length
-\newlength\savedwidth
-\newcommand\thickcline[1]{%
-  \noalign{\global\savedwidth\arrayrulewidth\global\arrayrulewidth 2pt}%
-  \cline{#1}%
-  \noalign{\vskip\arrayrulewidth}%
-  \noalign{\global\arrayrulewidth\savedwidth}%
-}
-
-% \thickhline command for thick horizontal lines that span the table
-\newcommand\thickhline{\noalign{\global\savedwidth\arrayrulewidth\global\arrayrulewidth 2pt}%
-\hline
-\noalign{\global\arrayrulewidth\savedwidth}}
-
-
-% Remove comment for double spacing
-%\usepackage{setspace} 
-%\doublespacing
-
-% Text layout
-\raggedright
-\setlength{\parindent}{0.5cm}
-\textwidth 5.25in 
-\textheight 8.75in
-
-% Bold the 'Figure #' in the caption and separate it from the title/caption with a period
-% Captions will be left justified
-\usepackage[aboveskip=1pt,labelfont=bf,labelsep=period,justification=raggedright,singlelinecheck=off]{caption}
-\renewcommand{\figurename}{Fig}
-
-% Use the PLoS provided BiBTeX style
-% \bibliographystyle{plos2015}
-
-% Remove brackets from numbering in List of References
-\makeatletter
-\renewcommand{\@biblabel}[1]{\quad#1.}
-\makeatother
-
-% Leave date blank
-\date{}
-
-% Header and Footer with logo
-\usepackage{lastpage,fancyhdr,graphicx}
-\usepackage{epstopdf}
-\pagestyle{myheadings}
-\pagestyle{fancy}
-\fancyhf{}
-\setlength{\headheight}{27.023pt}
-\lhead{\includegraphics[width=2.0in]{PLOS-submission.eps}}
-\rfoot{\thepage/\pageref{LastPage}}
-\renewcommand{\footrule}{\hrule height 2pt \vspace{2mm}}
-\fancyheadoffset[L]{2.25in}
-\fancyfootoffset[L]{2.25in}
-\lfoot{\sf PLOS}
-
-%% Include all macros below
-\newcommand{\lorem}{{\bf LOREM}}
-\newcommand{\ipsum}{{\bf IPSUM}}
-
-
-
-
-
-\usepackage{forarray}
-\usepackage{xstring}
-\newcommand{\getIndex}[2]{
-  \ForEach{,}{\IfEq{#1}{\thislevelitem}{\number\thislevelcount\ExitForEach}{}}{#2}
-}
-
-\setcounter{secnumdepth}{0}
-
-\newcommand{\getAff}[1]{
-  \getIndex{#1}{The George Washington University,IFPRI}
-}
-
+\documentclass[]{elsarticle} %review=doublespace preprint=single 5p=2 column
+%%% Begin My package additions %%%%%%%%%%%%%%%%%%%
+\usepackage[hyphens]{url}
+\usepackage{lineno} % add
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 
+\bibliographystyle{elsarticle-harv}
+\biboptions{sort&compress} % For natbib
+\usepackage{graphicx}
+\usepackage{booktabs} % book-quality tables
+%% Redefines the elsarticle footer
+%\makeatletter
+%\def\ps@pprintTitle{%
+% \let\@oddhead\@empty
+% \let\@evenhead\@empty
+% \def\@oddfoot{\it \hfill\today}%
+% \let\@evenfoot\@oddfoot}
+%\makeatother
+
+% A modified page layout
+\textwidth 6.75in
+\oddsidemargin -0.15in
+\evensidemargin -0.15in
+\textheight 9in
+\topmargin -0.5in
+%%%%%%%%%%%%%%%% end my additions to header
+
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \usepackage{fontspec}
+  \ifxetex
+    \usepackage{xltxtra,xunicode}
+  \fi
+  \defaultfontfeatures{Mapping=tex-text,Scale=MatchLowercase}
+  \newcommand{\euro}{€}
+\fi
+% use microtype if available
+\IfFileExists{microtype.sty}{\usepackage{microtype}}{}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{{#1}}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{{#1}}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{{#1}}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{{#1}}}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{{#1}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{{#1}}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{{#1}}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{{#1}}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{{#1}}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{{#1}}}
+\newcommand{\ImportTok}[1]{{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{{#1}}}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{{#1}}}}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{{#1}}}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{{#1}}}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{{#1}}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{{#1}}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{{#1}}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{{#1}}}}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{{#1}}}}
+\newcommand{\BuiltInTok}[1]{{#1}}
+\newcommand{\ExtensionTok}[1]{{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{{#1}}}
+\newcommand{\RegionMarkerTok}[1]{{#1}}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{{#1}}}}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{{#1}}}}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{{#1}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{{#1}}}}
+\newcommand{\NormalTok}[1]{{#1}}
+\usepackage{graphicx}
+% We will generate all images so they have a width \maxwidth. This means
+% that they will get their normal width if they fit onto the page, but
+% are scaled down if they would overflow the margins.
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth
+\else\Gin@nat@width\fi}
+\makeatother
+\let\Oldincludegraphics\includegraphics
+\renewcommand{\includegraphics}[1]{\Oldincludegraphics[width=\maxwidth]{#1}}
+\ifxetex
+  \usepackage[setpagesize=false, % page size defined by xetex
+              unicode=false, % unicode breaks when used with xetex
+              xetex]{hyperref}
+\else
+  \usepackage[unicode=true]{hyperref}
+\fi
+\hypersetup{breaklinks=true,
+            bookmarks=true,
+            pdfauthor={},
+            pdftitle={Modeling impacts of drought on wheat and barley in Ethiopia},
+            colorlinks=true,
+            urlcolor=blue,
+            linkcolor=magenta,
+            pdfborder={0 0 0}}
+\urlstyle{same}  % don't use monospace font for urls
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\setcounter{secnumdepth}{0}
+% Pandoc toggle for numbering sections (defaults to be off)
+\setcounter{secnumdepth}{0}
+% Pandoc header
+
+
+\usepackage[nomarkers]{endfloat}
+
 \begin{document}
-\vspace*{0.2in}
+\begin{frontmatter}
 
-% Title must be 250 characters or less.
-\begin{flushleft}
-{\Large
-\textbf\newline{Modeling impacts of drought on wheat and barley in Ethiopia} % Please use "sentence case" for title and headings (capitalize only the first word in a title (or heading), the first word in a subtitle (or subheading), and any proper nouns).
-}
-\newline
-\\
-Michael Mann\textsuperscript{\getAff{The George Washington University}}\textsuperscript{*},
-James Warner\textsuperscript{\getAff{International Food Policy Research Institute}}\\
-\bigskip
-\textbf{\getAff{The George Washington University}}Department of Geography, Street, Washington, DC 20052\\
-\textbf{\getAff{IFPRI}}Department, Street, Addis Abbaba, Ethiopia\\
-\bigskip
-* Corresponding author: mmann1123@gwu.edu\\
-\end{flushleft}
-% Please keep the abstract below 300 words
-\section*{Abstract}
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur eget
-porta erat. Morbi consectetur est vel gravida pretium. Suspendisse ut
-dui eu ante cursus gravida non sed sem. Nullam sapien tellus, commodo id
-velit id, eleifend volutpat quam. Phasellus mauris velit, dapibus
-finibus elementum vel, pulvinar non tellus. Nunc pellentesque pretium
-diam, quis maximus dolor faucibus id. Nunc convallis sodales ante, ut
-ullamcorper est egestas vitae. Nam sit amet enim ultrices, ultrices elit
-pulvinar, volutpat risus.
-
-% Please keep the Author Summary between 150 and 200 words
-% Use first person. PLOS ONE authors please skip this step. 
-% Author Summary not valid for PLOS ONE submissions.   
-\section*{Author summary}
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur eget
-porta erat. Morbi consectetur est vel gravida pretium. Suspendisse ut
-dui eu ante cursus gravida non sed sem. Nullam sapien tellus, commodo id
-velit id, eleifend volutpat quam. Phasellus mauris velit, dapibus
-finibus elementum vel, pulvinar non tellus. Nunc pellentesque pretium
-diam, quis maximus dolor faucibus id. Nunc convallis sodales ante, ut
-ullamcorper est egestas vitae. Nam sit amet enim ultrices, ultrices elit
-pulvinar, volutpat risus.
-
-\linenumbers
-
-% Use "Eq" instead of "Equation" for equation citations.
-\emph{Text based on plos sample manuscript, see
-\url{http://journals.plos.org/ploscompbiol/s/latex}}
+  \title{Modeling impacts of drought on wheat and barley in Ethiopia}
+    \author[The George Washington University]{Michael Mann}
+   \ead{mmann1123@gwu.edu} 
+  
+    \author[International Food Policy Research Institute]{James Warner}
+   \ead{bob@example.com} 
+  
+      \address[The George Washington University]{Department of Geography, Street, Washington, DC 20052}
+    \address[IFPRI]{Department, Street, Addis Abbaba, Ethiopia}
+  
+  \begin{abstract}
+  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur eget
+  porta erat. Morbi consectetur est vel gravida pretium. Suspendisse ut
+  dui eu ante cursus gravida non sed sem. Nullam sapien tellus, commodo id
+  velit id, eleifend volutpat quam. Phasellus mauris velit, dapibus
+  finibus elementum vel, pulvinar non tellus. Nunc pellentesque pretium
+  diam, quis maximus dolor faucibus id. Nunc convallis sodales ante, ut
+  ullamcorper est egestas vitae. Nam sit amet enim ultrices, ultrices elit
+  pulvinar, volutpat risus.
+  \end{abstract}
+  
+ \end{frontmatter}
 
 \section{Introduction}\label{introduction}
 
@@ -253,6 +238,77 @@ up until the 2016-2017 growing season may have been largely handled by
 domestic resources and trade flows, therefore requiring shifts in
 distribution rather than a large-scale interational intervention.
 
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Spatial Plots -----------------------------------------------------------}
+\KeywordTok{library}\NormalTok{(rasterVis)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: package 'rasterVis' was built under R version 3.3.3
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: lattice
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: latticeExtra
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: RColorBrewer
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## Attaching package: 'latticeExtra'
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from 'package:ggplot2':
+## 
+##     layer
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(gridExtra)}
+\CommentTok{# Drought Plots}
+\KeywordTok{setwd}\NormalTok{(}\StringTok{'R://Mann_Research//IFPRI_Ethiopia_Drought_2016'}\NormalTok{)}
+
+\CommentTok{# ppt = stack(list.files('./Data/CHIRPS/','*.tif$',full.names = T))}
+\CommentTok{#  }
+\CommentTok{# idx = c(seq(as.Date("2009/1/1"), as.Date("2017/3/1"), "month"),seq(as.Date("2009/1/11"), as.Date("2017/3/11"), "month"),}
+\CommentTok{#         seq(as.Date("2009/1/20"), as.Date("2017/3/20"), "month"))  # mimic Dekadal (10 days, 10 days, remainder)}
+\CommentTok{# idx =sort(idx)}
+\CommentTok{# ppt = setZ(ppt, idx)}
+\CommentTok{# names(ppt) = idx}
+\CommentTok{# }
+\CommentTok{# # get monthly median ppt through 2015 }
+\CommentTok{# Monthppt = stackApply(ppt[[1:252]], format(idx[1:252],'%m'), fun = median)}
+\CommentTok{# names(Monthppt) = month.abb}
+\CommentTok{#save(Monthppt, file = 'R:\textbackslash{}\textbackslash{}Mann_Research\textbackslash{}\textbackslash{}IFPRI_Ethiopia_Drought_2016\textbackslash{}\textbackslash{}IFPRI_Ethiopia_Drought_Code\textbackslash{}\textbackslash{}Writeup\textbackslash{}\textbackslash{}IFPRI 2016 Report Ethiopia\textbackslash{}\textbackslash{}Monthppt.R')}
+\KeywordTok{load}\NormalTok{(}\StringTok{'R:}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{Mann_Research}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{IFPRI_Ethiopia_Drought_2016}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{IFPRI_Ethiopia_Drought_Code}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{Writeup}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{IFPRI 2016 Report Ethiopia}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{Monthppt.R'}\NormalTok{) }
+
+\NormalTok{my.at <-}\StringTok{ }\KeywordTok{seq}\NormalTok{(-}\DecValTok{10}\NormalTok{, }\DecValTok{200}\NormalTok{, }\DecValTok{10}\NormalTok{)}
+\NormalTok{pptA =}\StringTok{ }\KeywordTok{levelplot}\NormalTok{(Monthppt,}\DataTypeTok{at=}\NormalTok{my.at,}\DataTypeTok{layout=}\KeywordTok{c}\NormalTok{(}\DecValTok{3}\NormalTok{, }\DecValTok{4}\NormalTok{),}\DataTypeTok{par.settings=}\KeywordTok{c}\NormalTok{(}\KeywordTok{RdBuTheme}\NormalTok{()),}\DataTypeTok{scales=}\KeywordTok{list}\NormalTok{(),}\DataTypeTok{main=}\StringTok{'Median 2009-2015'}\NormalTok{)}
+
+\CommentTok{# get 2016 median ppt}
+\CommentTok{#Monthppt2016C = stackApply(ppt[[ grep('2016',names(ppt))]], format(idx[grep('2016',idx)],'%m'), fun = median)}
+\CommentTok{#names(Monthppt2016C) = month.abb}
+\CommentTok{#save(Monthppt2016C, file = 'R:\textbackslash{}\textbackslash{}Mann_Research\textbackslash{}\textbackslash{}IFPRI_Ethiopia_Drought_2016\textbackslash{}\textbackslash{}IFPRI_Ethiopia_Drought_Code\textbackslash{}\textbackslash{}Writeup\textbackslash{}\textbackslash{}IFPRI 2016 Report Ethiopia\textbackslash{}\textbackslash{}Monthppt2016C.R')}
+\KeywordTok{load}\NormalTok{(}\StringTok{'R:}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{Mann_Research}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{IFPRI_Ethiopia_Drought_2016}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{IFPRI_Ethiopia_Drought_Code}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{Writeup}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{IFPRI 2016 Report Ethiopia}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{Monthppt2016C.R'}\NormalTok{)}
+\NormalTok{pptC =}\StringTok{ }\KeywordTok{levelplot}\NormalTok{(Monthppt2016C,}\DataTypeTok{at=}\NormalTok{my.at,}\DataTypeTok{layout=}\KeywordTok{c}\NormalTok{(}\DecValTok{3}\NormalTok{, }\DecValTok{4}\NormalTok{),}\DataTypeTok{par.settings=}\KeywordTok{RdBuTheme}\NormalTok{(), }\DataTypeTok{main=}\StringTok{'2016'}\NormalTok{)}
+
+\CommentTok{#pdf(figurepath, width = 8, height = 11) # Open a new pdf file}
+\KeywordTok{grid.arrange}\NormalTok{(pptA,pptC,}\DataTypeTok{ncol=}\DecValTok{2}\NormalTok{)}\CommentTok{#,heights=c(.75,.25))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{IFPRI_2016_Report_Ethiopia_files/figure-latex/unnamed-chunk-2-1.pdf}
+
 Looking at the example of wheat production for the top 15 producing
 zones (Figure: 1), we can see that total output has remained steady or
 increased in the majority of top performing zones. This can be seen by
@@ -267,7 +323,7 @@ planing season.
 
 \newpage
 
-\emph{Figure 1: Total Wheat output of top 15 producing zones}
+\emph{Figure 1: Total wheat output of top 15 producing zones in tons}
 
 \texttt{r}\includegraphics{/home/mmann1123/Documents/IFPRI_Ethiopia_Drought_2016/Visualizations/Wheat_Output_bottom40_rm_acd_v2.jpg}
 
@@ -288,13 +344,26 @@ increase in OPH since 2010.
 
 \emph{Figure 2: Drought in one graph }
 
-\includegraphics{IFPRI_2016_Report_Ethiopia_files/figure-latex/unnamed-chunk-2-1.pdf}
+\includegraphics{IFPRI_2016_Report_Ethiopia_files/figure-latex/Drought in one graph figure-1.pdf}
 
 \pagebreak
 
-\emph{Figure 3: Aggregate commodity trade flows }
+Moreover Ethiopia has rapidly improved its ability to mitigate food
+insecurity through trade flows. International and intranational trade
+has likely been improved by the rapid development of the paved road
+network, and with the opening of the Ethiopia-Djibouti electric railway
+line in 2016 improving trade with this red sea port. Even in 2011, for
+the case of wheat, we can see how imports and internal trade flows move
+wheat from surplus areas to defict areas. In Figure 3, we see large
+international imports as well as comprehensive internal trade flows at
+the zonal level.
 
-\texttt{r}\includegraphics{/home/mmann1123/Documents/IFPRI_Ethiopia_Drought_2016/Writeup/ggplot_grey_legend_import_arrows3.png}
+\emph{Figure 3: 2011 aggregate wheat trade flows at the zonal level}
+
+\texttt{r}\includegraphics{/home/mmann1123/Documents/IFPRI_Ethiopia_Drought_2016/Writeup/ggplot_grey_legend_import.png}
+
+Although far from perfect we should acknowledge substantial improvements
+in Ethiopia's ability to mitigate and respond to localized drought.
 
 \section*{References}\label{references}
 \addcontentsline{toc}{section}{References}
@@ -551,8 +620,6 @@ unnoticed. {[}Internet{]}. The Washington Post. WP Company; 2017.
 Available:
 \url{https://www.washingtonpost.com/news/worldviews/wp/2017/05/01/ethiopia-is-facing-a-killer-drought-but-its-going-almost-unnoticed/?utm_term=.ad44d46b0631}
 
-\nolinenumbers
-
-
 \end{document}
+
 
