@@ -20,7 +20,8 @@ author_summary: |
   Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur eget porta erat. Morbi consectetur est vel gravida pretium. Suspendisse ut dui eu ante cursus gravida non sed sem. Nullam sapien tellus, commodo id velit id, eleifend volutpat quam. Phasellus mauris velit, dapibus finibus elementum vel, pulvinar non tellus. Nunc pellentesque pretium diam, quis maximus dolor faucibus id. Nunc convallis sodales ante, ut ullamcorper est egestas vitae. Nam sit amet enim ultrices, ultrices elit pulvinar, volutpat risus.
 
 bibliography: mybibfile.bib
-output:  rticles::elsevier_article   #rticles::plos_article #word_document  #    
+output: rticles::elsevier_article # word_document #   #rticles::plos_article
+latex_engine: xelatex
 csl: plos.csl
 ---
 
@@ -42,6 +43,10 @@ library(grid)
 library(gridExtra)
 library(plotly)
 library(plyr)
+library(plm)
+library(dplyr)
+library(splines)
+library(stargazer)
 
 # set up numbering for figures/graphs etc
 Table_number = 1
@@ -49,6 +54,7 @@ Figure_number = 1
 Appendix_Table_number =1
 Appendix_Function_number =1
 Formula_number = 1
+Foot_number = 1
 ```
 
 #Introduction
@@ -66,7 +72,7 @@ Spured by a long history of monsoon failures across the Sahel, forecasters and a
 Looking at Figure `r paste(Figure_number)` we can see the spatiotemporal patterns of rainfall across Ethiopia. The top panel (a) reports the median total rain fall per 10 day period during each month (mm). Here we can see the onset of the heavy rains during the Meher growing season, and the decline near harvest in October. In panels (b) and (c) we can see the deviation from this norm for the years 2015 and 2016 (in mm). Here the only striking shortfall is July in 2015 and patchy isolated declines through August that year. 2016 by comparison shows indications of generally above average rainfall. That being said we can also get a feeling of the spatial heterogeneity of fainfall over time. Both years show small areas that interchange between being above or below average. It should be pointed out that the erradic nature of these rains might point to the importance of the timing of these rains, with rainfall being more important during critical growth stages like germination and ripening. Therefore Ethiopia, like many rainfall dependent countries has and will continue to be be prone to isolated yield losses.  
 
 *Figure `r paste(Figure_number)`: Median rainfall per 10 day period 2009-2015 compared to 2015 and 2016`r Figure_number =Figure_number+1 `*
-```{r Precipitation ,fig.height=12,fig.width=5}
+```{r Precipitation, echo=FALSE, fig.height=12, fig.width=5, message=FALSE, warning=FALSE}
 # Spatial Plots -----------------------------------------------------------
 library(rasterVis)
 library(gridExtra)
@@ -282,9 +288,294 @@ Moreover Ethiopia has rapidly improved its ability to mitigate food insecurity t
 
 Although far from perfect we should acknowledge substantial improvements in Ethiopia's ability to mitigate and respond to localized drought. 
  
-
 # Methods
+## Data Sources
+### Survey data - Agricultural Sample Survey Dat (2009/2010-2015/2016)
+Survey data was obtained from Ethiopia's Central Statistical Agency's (CSA) Agricultural Sample Survey (AgSS) and was chosen for its annual collection, spatial coverage, and unique sampling structure through these six crop years. The AgSS is an annually collected government administered large-scale survey tasked with measuring agricultural production in Ethiopia at the zonal level [^`r paste(Foot_number)`].  The survey interviews approximately 45,000 farmers per year on a range of farm management questions covering some basic demographics of the household as well as a range of questions concerning planting, harvesting and selling at the plot level.  Typically, about 20 farm households are randomly sampled from small local village-level areas of approximately 200 households (the sub-kebele level). On average, based on population, approximately five of these sample areas exist at the kebele-level administration area. Although the figures vary widely, sub-kebeles are meant to approximate about 200 households per unit and the average kebele has around 1,000 households each. From this sampling frame, a random selection of about 2,200 sub-kebeles are chosen as a representative sub-sample for zonal level production projections of major agricultural production areas. Population weights are then applied to project agricultural production at the zonal level. For this study, we construct a panel data set over the six crop seasons identified because approximately 75% of the same sub-kebeles were sampled by CSA over the six meher crop seasons of interest. This effectively builds a base of five relatively favorable crop seasons, from 2010 to 2014, and allows for the drought effects of 2015-2016 as a study in contrast in terms of this significant weather event.  The sample is with replacement and therefore representative of the sub-kebele but not a true panel because the same farmers were not chosen. In addition, no sampling weights are applied because we have omitted approximately 25% of the sample and are generally most interested in the localized effects.  
 
+[^`r paste(Foot_number);Foot_number=Foot_number+1`]:Beyond the nation, Ethiopia has four official levels of administrative areas. These include, in order of geographic size, regions, zones, woredas and kebeles.  There are approximately 12 regions, 88 zones, 690 woredas and 15,000 kebeles.  For our purposes, we use the sub-kebele, not recognized as a geographic region for administrative purposes, but commonly used for statistical sampling and are roughly based on population.  There are over 75,000 sub-kebeles in the country.
+
+While this study collected data on the five principal Ethiopian field crops (teff, wheat, maize, barley, sorghum), because of their predominant importance in value terms for Ethiopia as well as their geographically wide-spread adoption, the analysis should therefore be placed within this context. This study covers the drought effects of only these five crops and not all agricultural production.  In other words, when we outline percentages of crop losses we are referring to losses of only these five crops and not total output in the country.  We have no reason to believe that these are not generally representative of all crop production, in terms of the drought, but a more detailed analysis would be needed to make this assertion. 
+
+The principal unit of analysis is the sub-kebele and all relevant CSA data is aggregated to this level.  The survey data represents an amalgamation of all 20 households as a single representative farmer, we refer to as a "super-farmer." This was done for a variety of reasons including the fragmented plot farming system common in Ethiopia as well as CSA data collection methodology. More specifically, CSA data collection methodology relies on crop cuts to estimate productivity at the local level.  Depending on the actual number of farmers growing the specific crop, CSA collects up to five different individual farmer crop cuts, averages the yields, and projects this figure onto all plot areas for that crop in the sub-kebele.  In this way, individual plot level yields are not able to be determined and, consequently, household level estimates are not possible.  Additionally, while the level of the pixel used for the remote sensing data is relatively granular (6,250 m2), cost and logistic considerations make plot level estimations prohibitive in this research.   Therefore, the data from 20 farmers is aggregated to a single super-farmer resulting in 1,780 observations sampled from the sub-kebele area (approximately 23,900,000 m2) over a six-year period.  The total number of observations collected is about 10,680 but will vary in sample size depending on the crop choice (ie. some areas do not grow all five designated crops).  A breakdown of each super-farmer is done with aggregated non-crop related information combined with the specificity of the individual crop chosen.  More precisely, several variables are consistent across all five crop choices (elevation, proportional numbers of male and female household heads, total land area, etc.) and others are crop specific (use of fertilizer, seed, etc.).  Each crop year was checked for consistency, cleaned and aggregated to the sub-kebele level.  The six years where then aggregated and merged with other data to develop the panel data set.  Importantly, for our analysis, we chose specific variables to reflect farmer management decisions and other actions affecting yields. For data cleaning, we Winsorize yield estimates capping them at the 95th percentile, and we also drop any sub-kebele unit that has less than 4 years of data from regressions. 
+
+### Remotely sensed data - Greeness, precipitation and evaporation
+####Normalized Difference Vegetation Index
+Considering the relatively small scale of agriculture in this region we use 250m vegetation products from the MODIS satellites. Vegetation indices are obtained from two 16-day MODIS products (MOD13Q1, MYD13Q1) from the Aqua and Terra satellites [@didan2006modis]. Due to the staggered nature of acquisition, these products are treated as partially overlapping windows representing 8 day periods [@doraiswamy2007crop]. We find that the combination of these two products provides a stable and informative time series.
+
+For the sake of simplicity and replicability, we focus on the Normalized Difference Vegetation Index (NDVI) and examine its predictive power using panel econometric techniques. NDVI is sensitive to the amount of chlorophyll in any given pixel and is commonly used to estimate plant productivity and health in agricultural applications [@Mann2017,@Mann2015,@funk2009phenologically]. After removal of snow, cloud and other flagged low quality cells, we remove all non-agricultural cells through the use of the 500m MODIS land cover product (MCD12Q1) for the appropriate year.
+
+####Water Availability Variables
+In order to estimate the effects of precipitation (ppt)  on our crop production models the Climate Hazards Group InfraRed Precipitation Station (CHIRPS) data was included. Data is collected as total precipitation by dekad [@funk2015climate]. A dekad represents three periods each month, the first two periods being 10 days each, and the third being any remaining days of that month.
+
+Hydrological availability of water and available energy for plant growth have been shown in previous research to be important factors in crop models and are therefore included here. For this reason, we include monthly estimates of potential evaporation (PET) and actual evapotranspiration anomaly (ETA). Actual evapotranspiration (AET) is the sum of transpiration of water through plants plus evaporation from soils and water surfaces. AET is a correlated with vascular plant productivity and correlates with the biomass accumulation and regrowth[@major1967potential,@mann2016incorporating]. The ETA variable used in this study is the current AET compared to the 2003-2013 mean. ETA therefore is a proxy for drought as low current values of AET would correspond to reductions either in available energy to move water, or water itself.  Potential evapotranspiration (PET) is an estimate of the total amount of water that could be moved through the system if water was not a limiting factor. As such it is an ideal indicator of available (or excessive) energy in the form of light and heat, but also includes the impact of wind speed, pressure, and humidity amongst others. The standard deviation of PET, reflects variability at the local level of these weather conditions.  Both ETA and PET are available for download through FEWS NET [@dataportals].
+
+## Preprocessing 
+###Data Aggregation
+Because historical crop yields are only available at the level of certain political units (EAs in this case), pixel-level NDVI data must be aggregated at this same level. In this study, we calculate the mean across the raw NDVI values for all available agricultural pixels at the EA-level and further extract statistics of interest from this resulting time-series (at a frequency of 8-days).
+
+###Summarizing Temporal Data
+One of the primary challenges in utilizing high-frequency time series (8-day NDVI) to estimate low-frequency events (seasonal yields ) is in reconciling this temporal mismatch when formalizing the relationship between sources of data. In general, low-frequency properties must be extracted from the high-frequency time series that may be relevant to characterize and identify important aspects of plant phenology across the growing season that affect crop yields. 
+In this paper we aim to capture relevant phenological features of wheat through 41 metrics summarizing 8-day NDVI data. These metrics cover Meher growing season statistics, spanning the estimated planting date until harvest date. These plant and harvest dates are estimated on a EA by EA basis, therefore differences in timing due to elevation, crop choice or other management considerations should be captured. 
+
+We estimate three classes of statistics across each of these two distinct periods: summary statistics (e.g. mean, max, variance); integrated summary statistics (e.g. area under the curve for the first half of the growing season); and deviation from the norm statistics (e.g. deviations of a given statistic from its 95th historical percentile).
+
+##Estimation Strategy
+###Variable Selection
+One of the key challenges is how to decide on which of the 126 variables from AgSS and MODIS we want to include in the model. For this task we relied on a new suite of variable selection tools coming out of the computer science domain. We utilized VSURF that utilizes a two-stage strategy based on preliminary ranking of all explanatory variables for prediction using the random forests permutation-based score of importance, and finalized with a forward stepwise strategy for variable introduction. 
+
+Here we utilize VSURF to select unique sets of variables for each crop (barley, maize, wheat, teff). Given the complexity of these permutations for each crop (100s of millions) we utilize 15 cores of the GWU supercomputer Colonial One. Each run took between 10-24 hours. 
+
+###Regression
+Compared to cross-sectional approaches, panel analysis can substantially increase the degree of observed variance over both space and time. For instance, in our current application, the integration of EAS (with n = 1752) over the 2001-2016 sample period (t = 1-5), results in a substantially larger dataset (N=6903), allowing for a much greater flexibility and degrees of freedom in the modelling of the issue of interest. Here we include a few variables of interest to the reader including Zonal and annual dummies, and a lagged value of output per hectare. Here we estimate a series of random effect models of the following form`r F1=Formula_number` `r paste(F1)`: `r Formula_number=Formula_number+1`
+
+(`r paste(F1)`)                
+$\ Y_{itc}=\alpha_{i}+\sum_{k=1}^{K}\beta_{k}X_{it}+ \mu_{it} +\epsilon_{it}$
+ 
+where $ Y_{it}$ is the ouput per hectare (OPH) for crop *c* for sub-kebele *i* for year *t*, $\alpha$ is the average ouput per hectare for sample population (country), $\sum_{k=1}^{K}\beta_{k}X_{it}$ is the sum of all *K* coefficient estimates $\beta_{k}$ for all variables *X*, $\mu_{i}$ is the sub-kebele specific random effect that measures the difference between the average OPH at sub-kebele *i* and the average OPH in the entire country. The term $\epsilon_{it}$ is the individual-specific effect, which can be described as the deviation of the *i*th OPH from the average for that year.
+
+Here we present preliminary results from panel regressions on output per hectare for Ethiopia's major crops. These variables reflect the initial selection from the VSURF algorithm. 
+
+# Results 
+
+```{r Panel Regression, echo=FALSE, message=FALSE, warning=FALSE}
+
+#### Panel Regression ----------------------------------------------------
+
+  # read data
+  version = 4  
+  setwd('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_Code/') 
+  
+
+ ######## MAIZE
+
+ # read data
+  data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v",version,".dta",sep=''))
+  data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
+
+  # remove EA with less than 4 observations
+  counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(MAIZEOPH_W))) %>% filter(non_na_count<4))
+  data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
+
+  # define as panel data
+  data_in_plm <- pdata.frame(data_in, index=c("EACODE","Year"),  row.names=TRUE)
+
+    # load variable selection results 
+  load('../Data/VariableSelection/vsmaize_4.RData')
+  form_1_maz = paste(attr(vsmaize4$terms,'term.labels')[vsmaize4$varselect.pred], collapse='+')
+  form_1_maz = as.formula(paste('MAIZEOPH_W ~',form_1_maz,sep=' '))
+
+  form_1_maz_w = paste(c(attr(vsmaize4$terms,'term.labels')[vsmaize4$varselect.pred],'lag(data_in_plm$MAIZEOPH_W,1)',
+                "factor(W_CODE)"), collapse='+')
+  form_1_maz_w = as.formula(paste('MAIZEOPH_W ~',form_1_maz_w,sep=' '))
+
+  form_1_maz_z = paste(c(attr(vsmaize4$terms,'term.labels')[vsmaize4$varselect.pred],'lag(data_in_plm$MAIZEOPH_W,1)',
+                "factor(Z_CODE)"), collapse='+')
+  form_1_maz_z = as.formula(paste('MAIZEOPH_W ~',form_1_maz_z,sep=' '))
+
+  form_1_maz_z =  MAIZEOPH_W ~ lag(data_in_plm$MAIZEOPH_W, 1) +G_mn +  G_AUC_leading + G_AUC_Qnt  + 
+    A_mn +A_max+A_AUC + A_Qnt+A_AUC_Qnt +A_max_Qnt + T_G_Qnt + PPT_A_max +PPT_G_AUC_Qnt + PPT_G_mx_Qnt + PPT_T_G_Qnt + 
+    PET_A_min +  PET_G_AUC_diff_mn + MAIZEAREA + MAIZESEED1AREA +  MAIZEIMSEED +  
+    MAIZEDAMAGEAREA_P + MAIZEFERT_CHEMICAL_AREA + MAIZEFERT_CHEMICAL_AMT + 
+     MAIZEEXTAREA +   Y_COORD + X_COORD + elevation + I(as.numeric(Year)) +
+     + factor(Z_CODE)
+  
+  maz.re1 <- plm(form_1_maz_z, data = data_in_plm, model = "random")
+  # summary(maz.re1)
+  
+  form_2_maz_z = MAIZEOPH_W ~ lag(data_in_plm$MAIZEOPH_W, 1)  + 
+    A_Qnt   + A_AUC_Qnt + T_G_Qnt  + MAIZEIMSEED +
+    MAIZEDAMAGEAREA_P + MAIZEAREA +  I(MAIZEFERT_CHEMICAL_AMT/(MAIZEFERT_CHEMICAL_AREA+1)) +
+    MAIZEEXTAREA + PPT_A_max + PPT_G_AUC_Qnt + PET_G_AUC_diff_mn   + 
+    I(as.numeric(Year)) + Y_COORD +  X_COORD + bs(elevation,3) + factor(Z_CODE) 
+  maz.re2 <- plm(form_2_maz_z, data = data_in_plm, model = "random")
+  # summary(maz.re2)
+  
+  form_3_maz_z = MAIZEOPH_W ~ lag(data_in_plm$MAIZEOPH_W, 1)  + 
+    A_Qnt   + A_AUC_Qnt   + MAIZEIMSEED +
+    MAIZEDAMAGEAREA_P  +  I(MAIZEFERT_CHEMICAL_AMT/(MAIZEFERT_CHEMICAL_AREA+1)) +
+    MAIZEEXTAREA + PPT_A_max + PPT_G_AUC_Qnt + PET_G_AUC_diff_mn   + 
+      X_COORD + bs(elevation,3) + factor(Z_CODE) 
+  maz.re3 <- plm(form_3_maz_z, data = data_in_plm, model = "random")
+  # summary(maz.re3)
+  
+    form_4_maz_z = MAIZEOPH_W ~    lag(data_in_plm$MAIZEOPH_W, 1)+
+    A_Qnt   + A_AUC_Qnt + PPT_A_max + PPT_G_AUC_Qnt + PET_G_AUC_diff_mn   + 
+      X_COORD + bs(elevation,3) + factor(Z_CODE) 
+  maz.re4 <- plm(form_4_maz_z, data = data_in_plm, model = "random")
+  # summary(maz.re4)
+  
+  # form_4_maz_z = MAIZEOPH_W ~ bs(lag(data_in_plm$MAIZEOPH_W, 1),3)  + 
+  #   bs(A_Qnt,3)   + A_AUC_Qnt   + MAIZEIMSEED +
+  #   bs(MAIZEDAMAGEAREA_P,3)  +  bs(I(MAIZEFERT_CHEMICAL_AMT/(MAIZEFERT_CHEMICAL_AREA+1)),3) +
+  #   bs(MAIZEEXTAREA,3) + PPT_A_max  + bs(PPT_G_AUC_Qnt ,3)+ PET_G_AUC_diff_mn    + 
+  #     X_COORD + elevation + factor(Z_CODE) 
+  # maz.re4 <- plm(form_4_maz_z, data = data_in_plm, model = "random")
+  # summary(maz.re4)
+  
+  stargazer(maz.re1, maz.re2,  maz.re3, maz.re4,
+           title="Panel regressions, clustered SEs", type="text", 
+          column.labels=c("Full", "Reduced","Final","No AgSS"), 
+          df=FALSE, digits=4,omit = "Z_CODE",omit.labels = 'Zone Dummy')
+  
+  
+ ######## WHEAT
+
+ # read data
+  setwd('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_Code/') 
+  data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v",version,".dta",sep=''))
+  data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
+
+  # remove EA with less than 4 observations
+  counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(WHEATOPH_W))) %>% filter(non_na_count<4))
+  data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
+
+  # define as panel data
+  data_in_plm <- pdata.frame(data_in, index=c("EACODE","Year"),  row.names=TRUE)
+
+
+  load('../Data/VariableSelection/vswheat_4.RData')
+  form_1_wht = paste(attr(vswheat4$terms,'term.labels')[vswheat4$varselect.pred], collapse='+')
+  form_1_wht = as.formula(paste('WHEATOPH_W ~',form_1_wht,sep=' '))
+
+  form_1_wht_w = paste(c(attr(vswheat4$terms,'term.labels')[vswheat4$varselect.pred],'lag(data_in_plm$WHEATOPH_W,1)',
+                "factor(W_CODE)"), collapse='+')
+  form_1_wht_w = as.formula(paste('WHEATOPH_W ~',form_1_wht_w,sep=' '))
+
+  form_1_wht_z = paste(c(attr(vswheat4$terms,'term.labels')[vswheat4$varselect.pred],'lag(data_in_plm$WHEATOPH_W,1)',
+                "factor(Z_CODE)"), collapse='+')
+  form_1_wht_z = as.formula(paste('WHEATOPH_W ~',form_1_wht_z,sep=' '))
+
+  wht.re <- plm(form_1_wht_z, data = data_in_plm, model = "random")
+  summary(wht.re)
+  
+  
+  
+  wht.re1 = WHEATOPH_W ~ lag(data_in_plm$WHEATOPH_W, 1)+ 
+    G_mx + A_max_Qnt + T_G_Qnt +  PPT_G_Qnt + PPT_G_sd +  PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_T_G_Qnt + PET_G_mn +PET_G_sd+   
+    WHEATAREA  +WHEATNIMSEED + WHEATNIMSEED_P + WHEATDAMAGEAREA_P + WHEATFERT_CHEMICAL_AMT + WHEATFERT_CHEMICAL_AREA +    
+    WHEATFERT_CHEMICAL_AMT_P + WHEATFERT_CHEMICAL_AREA_P +  
+     X_COORD +Y_COORD +  dist_rcap  + elevation + c(Year) + factor(Z_CODE)
+  wht.re1 <- plm(wht.re1, data = data_in_plm, model = "random")
+  # summary(wht.re1)
+  
+  
+  wht.re2 = WHEATOPH_W ~ lag(data_in_plm$WHEATOPH_W, 1)+ 
+    G_mx + A_max_Qnt + T_G_Qnt  + PPT_G_sd +  PPT_G_mx_Qnt + PPT_T_G_Qnt  +   
+    WHEATAREA  + WHEATNIMSEED_P + WHEATDAMAGEAREA_P +    I(WHEATFERT_CHEMICAL_AMT / (WHEATFERT_CHEMICAL_AREA+1)) +    
+      WHEATFERT_CHEMICAL_AREA_P +  
+     X_COORD  + Y_COORD  + bs(elevation,3) + c(Year) + factor(Z_CODE)
+  wht.re2 <- plm(wht.re2, data = data_in_plm, model = "random")
+  # summary(wht.re2)
+  
+  
+  wht.re3 = WHEATOPH_W ~ lag(data_in_plm$WHEATOPH_W, 1)+ 
+    G_mx + A_max_Qnt + T_G_Qnt   + PPT_T_G_Qnt  +   
+    WHEATAREA  + WHEATNIMSEED_P + WHEATDAMAGEAREA_P +      
+      WHEATFERT_CHEMICAL_AREA_P +  
+     X_COORD    + bs(elevation,3) + c(Year) + factor(Z_CODE)
+  wht.re3 <- plm(wht.re3, data = data_in_plm, model = "random")
+  # summary(wht.re3)
+  
+  wht.re4 = WHEATOPH_W ~ lag(data_in_plm$WHEATOPH_W, 1)+ 
+    G_mx + A_max_Qnt + T_G_Qnt   + PPT_T_G_Qnt  +   
+     X_COORD    + bs(elevation,3) + c(Year) + factor(Z_CODE)
+  wht.re4 <- plm(wht.re4, data = data_in_plm, model = "random")
+  # summary(wht.re4)
+  
+  stargazer(wht.re1, wht.re2,  wht.re3, wht.re4,
+           title="Panel regressions, clustered SEs", type="text", 
+          column.labels=c("Full", "Reduced","Final","No AgSS"), 
+          df=FALSE, digits=4,omit = "Z_CODE",omit.labels = 'Zone Dummy')
+
+#  ######### BARLEY
+# 
+#  # read data
+#   data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v",version,".dta",sep=''))
+#   data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
+# 
+#   # remove EA with less than 4 observations
+#   counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(BARLEYOPH_W))) %>% filter(non_na_count<4))
+#   data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
+# 
+#   # define as panel data
+#   data_in_plm <- pdata.frame(data_in, index=c("EACODE","Year"),  row.names=TRUE)
+# 
+#   load('../Data/VariableSelection/vsbarley_4.RData')
+#   form_1_bar = paste(attr(vsbarley4$terms,'term.labels')[vsbarley4$varselect.pred], collapse='+')
+#   form_1_bar = as.formula(paste('BARLEYOPH_W ~',form_1_bar,sep=' '))
+# 
+#   form_1_bar_w = paste(c(attr(vsbarley4$terms,'term.labels')[vsbarley4$varselect.pred],'lag(data_in_plm$BARLEYOPH_W,1)',
+# 		"factor(W_CODE)"), collapse='+')
+#   form_1_bar_w = as.formula(paste('BARLEYOPH_W ~',form_1_bar_w,sep=' '))
+# 
+#   form_1_bar_z = paste(c(attr(vsbarley4$terms,'term.labels')[vsbarley4$varselect.pred],'lag(data_in_plm$BARLEYOPH_W,1)',
+# 		"factor(Z_CODE)"), collapse='+')
+#   form_1_bar_z = as.formula(paste('BARLEYOPH_W ~',form_1_bar_z,sep=' '))
+# 
+#   bar.re <- plm(form_1_bar_z, data = data_in_plm, model = "random")
+#   summary(bar.re)
+# 
+# 
+# 
+#  # formula TEFF
+#   data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v",version,".dta",sep=''))
+#   data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
+# 
+#   # remove EA with less than 4 observations
+#   counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(TEFFOPH_W))) %>% filter(non_na_count<4))
+#   data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
+# 
+#   # define as panel data
+#   data_in_plm <- pdata.frame(data_in, index=c("EACODE","Year"),  row.names=TRUE)
+# 
+#   load('../Data/VariableSelection/vsteff_4.RData')
+#   form_1_tef = paste(attr(vsteff4$terms,'term.labels')[vsteff4$varselect.pred], collapse='+')
+#   form_1_tef = as.formula(paste('TEFFOPH_W ~',form_1_tef,sep=' '))
+# 
+#   form_1_tef_w = paste(c(attr(vsteff4$terms,'term.labels')[vsteff4$varselect.pred],'lag(data_in_plm$TEFFOPH_W,1)',
+#                 "factor(W_CODE)"), collapse='+')
+#   form_1_tef_w = as.formula(paste('TEFFOPH_W ~',form_1_tef_w,sep=' '))
+# 
+#   form_1_tef_z = paste(c(attr(vsteff4$terms,'term.labels')[vsteff4$varselect.pred],'lag(data_in_plm$TEFFOPH_W,1)',
+#                 "factor(Z_CODE)"), collapse='+')
+#   form_1_tef_z = as.formula(paste('TEFFOPH_W ~',form_1_tef_z,sep=' '))
+# 
+#   tef.re <- plm(form_1_tef_z, data = data_in_plm, model = "random")
+#   summary(tef.re)
+# 
+# 
+# 
+# 
+#  # formula SORGHUM
+#   setwd('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_Code/') 
+#   data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v4.dta",sep=''))
+#   data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
+# 
+#   # remove EA with less than 4 observations
+#   counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(SORGHUMOPH_W))) %>% filter(non_na_count<4))
+#   data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
+# 
+#   # define as panel data
+#   data_in_plm <- pdata.frame(data_in, index=c("EACODE","Year"),  row.names=TRUE)
+# #'
+#   load('../Data/VariableSelection/vssorghum_4.RData')
+#   form_1_sor = paste(attr(vssorghum4$terms,'term.labels')[vssorghum4$varselect.pred], collapse='+')
+#   form_1_sor = as.formula(paste('SORGHUMOPH_W ~',form_1_sor,sep=' '))
+# 
+#   form_1_sor_w = paste(c(attr(vssorghum4$terms,'term.labels')[vssorghum4$varselect.pred],'lag(data_in_plm$SORGHUMOPH_W,1)',
+#                	"factor(W_CODE)"), collapse='+')
+#   form_1_sor_w = as.formula(paste('SORGHUMOPH_W ~',form_1_sor_w,sep=' '))
+# 
+#   form_1_sor_z = paste(c(attr(vssorghum4$terms,'term.labels')[vssorghum4$varselect.pred],'lag(data_in_plm$SORGHUMOPH_W,1)',
+#                 "factor(Z_CODE)"), collapse='+')
+#   form_1_sor_z = as.formula(paste('SORGHUMOPH_W ~',form_1_sor_z,sep=' '))
+# 
+#   sor.re <- plm(form_1_sor_z, data = data_in_plm, model = "random")
+#   summary(sor.re)
+
+  
+```
 
 
 

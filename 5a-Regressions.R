@@ -225,12 +225,6 @@ save(vssorghum4,file = '../Data/VariableSelection/vssorghum_4.RData')
 
 
 
-
-
-
-
-
-
 #### Panel Regression ----------------------------------------------------
 
   # read data
@@ -386,7 +380,7 @@ save(vssorghum4,file = '../Data/VariableSelection/vssorghum_4.RData')
 
 
  # formula SORGHUM
-  setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/IFPRI_Ethiopia_Drought_2016/')
+  setwd('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_Code/')
   data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v",version,".dta",sep=''))
   data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
 
@@ -415,21 +409,7 @@ save(vssorghum4,file = '../Data/VariableSelection/vssorghum_4.RData')
   summary(sor.re)
 
 
-
-
-
-
-
-
-  form_EA_sor = as.formula(paste('SORGHUMOPH_W ~',form_EA_1,sep=' '))
-  training_EA_sor = na.omit(model.frame(form_EA_sor,data_in))
-
-  form_sor = as.formula(paste('SORGHUMOPH_W ~',form_1,sep=' '))
-  training_sor = na.omit(model.frame(form_sor,data_in))
-
-  sor.re <- plm(form_sor, data = data_in_plm, model = "random")
-  summary(sor.re)
-  summary(sor.re$residuals)
+ 
 
 
 
