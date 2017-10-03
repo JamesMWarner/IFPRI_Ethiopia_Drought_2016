@@ -507,6 +507,159 @@ save(vssorghum4,file = '../Data/VariableSelection/vssorghum_4.RData')
 
 
 
+  
+  
+  
+  #### Predict damages ----------------------------------------------------
+  
+  # read data
+  version = 4  
+  setwd(Home_dir) 
+  
+  ######## MAIZE
+  
+  # read data
+  data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v",version,".dta",sep=''))
+  data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
+  
+  # remove EA with less than 4 observations
+  counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(MAIZEOPH_W))) %>% filter(non_na_count<4))
+  data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
+  
+  #lag(data_in_plm$MAIZEOPH_W, 1) + c(year)MAIZEDAMAGEAREA_P
+  maz_dam1_w_ea = MAIZEDAMAGE_DROUGHT_DUM ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
+    PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+EACODE
+  
+  
+  library(readstata13)
+  library(e1071)
+  library(randomForest)
+  library(caret)
+  library(doMC)
+  library(parallel)
+  library(DEoptim)
+  library(kernlab)
+  registerDoMC(cores = 6)
+  
+  
+  
+  # sample from EAs 
+  set.seed(17516)
+  # limit to variables of interest by EA 
+  model_data = data_in[,names(data_in) %in%   all.vars(maz_dam1_w_ea)]   
+  num_eas <- floor(0.75 * length(unique(model_data$EACODE)))
+  train_eas <- sample(unique(model_data$EACODE), size = num_eas)
+  
+  train <- model_data[model_data$EACODE %in% train_eas, ]
+  test <- model_data[!(model_data$EACODE %in% train_eas), ]
+  
+  
+  # maz.rf <- randomForest(maz_dam1_wo_zones, train)
+  # varImpPlot(maz.rf)
+  # save(maz.rf,file = './Outputs4Pred/maz.rf.RData')
+  # 
+  
+  # Impute values 
+  library(RANN)
+  set.seed(123)
+  pp.train = predict(preProcess(train, method = "knnImpute",k=25),train)
+  pp.test  = predict(preProcess(test, method = "knnImpute",k=25),train)
+  #data_in.maz.imputed.full <- rfImpute(maz_dam1_wo_zones,   data_in[!is.na(data_in$MAIZEOPH_W),])
+  #save(data_in.maz.imputed.full,file = './Outputs4Pred/data_in.maz.imputed.full.RData')
+  
+  
+  #set up seeds for multicore
+  set.seed(123)
+  seeds <- vector(mode = "list", length = 16)
+  for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
+  
+  #set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
+  groups = groupKFold(train$EACODE, k = 15)
+  
+  # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
+  maz.rf<-train(maz_dam1_w_ea,data=pp.train,method="rf", 
+                trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
+                prox=TRUE,allowParallel=TRUE)
+  print(maz.rf)
+  save(maz.rf,file = './Outputs4Pred/maz.rf.MAIZEDAMAGE_DROUGHT_DUM.RData')
+  
+  
+  # # Problem not spliting by groups... look at gkf.split for scikitlearn
+  # svm_model1 <- svm(maz_dam1,data_in, cost = 100, gamma = .1)
+  # summary(svm_model1)
+  # summary((predict(svm_model1)- data_in$WHEATOPH_W))
+  
+  
+  
+  # impute missing data 
+  set.seed(222)
+  #data_in.maz.imputed <- rfImpute(maz_dam1_wo_zones, data_in[!is.na(data_in$MAIZEOPH_W),])
+  #names(data_in.maz.imputed)[names(data_in.maz.imputed)=='c(Year)'] = 'Year'
+  #save(data_in.maz.imputed,file = './Outputs4Pred/data_in_maz.imputed.RData')
+  load('./Outputs4Pred/data_in_maz.imputed.RData')
+  
+  set.seed(17516)
+  smp_size <- floor(0.75 * nrow(data_in.maz.imputed))
+  train_ind <- sample(seq_len(nrow(data_in.maz.imputed)), size = smp_size)
+  
+  train <- data_in.maz.imputed[train_ind, ]
+  test <- data_in.maz.imputed[-train_ind, ]
+  
+  grid = expand.grid()
+  
+  model <-  train(maz_dam1_wo_zones, data = train, method="svmRadial", 
+                  trControl=trainControl(method='cv', number=10,search = 'grid',allowParallel = T),)
+  model$results
+  
+  #https://github.com/tobigithub/caret-machine-learning/blob/master/caret-tune/caret-tune-evolutionial-algorithm-svmRadial.R
+  
+  svm_fit <- function(x) {
+    mod <- train(maz_dam1_wo_zones, data = train,
+                 method = "svmRadial",
+                 preProc = c("center", "scale"),
+                 trControl = trainControl(method = "cv"),
+                 tuneGrid = data.frame(C = 2^x[1], sigma = exp(x[2])))
+    getTrainPerf(mod)[, "TrainRMSE"]
+  }
+  
+  
+  
+  ## converged after 31 iterations
+  svm_de_obj <-  DEoptim(fn = svm_fit,
+                         ## test cost values between ~0 and 2^10,
+                         ## test sigma values between exp(-5) and 1
+                         lower = c(-5, -5), 
+                         upper = c(10, 0),
+                         control = DEoptim.control(reltol = 1e-3,
+                                                   steptol = 10,
+                                                   itermax = 100))
+  
+  
+  fitted_params <- svm_de_obj$optim$bestmem
+  
+  svm_model <- train(y ~ ., data = maz_dam1_wo_zones,
+                     method = "svmRadial",
+                     preProc = c("center", "scale"),
+                     trControl = trainControl(method = "cv", number = 10),
+                     tuneGrid = data.frame(C = 2^fitted_params[1], 
+                                           sigma = exp(fitted_params[2])))
+  
+  predictions <- predict(svm_model, testing_data)
+  
+  cat("Train RMSE:", getTrainPerf(svm_model)[, "TrainRMSE"], "\n")
+  cat("Test RMSE:", RMSE(predictions, testing_data$y))
+  
+  # CUDA Implementation
+  #https://github.com/Danko-Lab/Rgtsvm/blob/master/Rgtsvm-vignette.pdf
+  
+  
+  
+  
+  
+  
+  
+  
+  
 ## CTREES 
 
   # Conditional Inference Tree for Kyphosis
