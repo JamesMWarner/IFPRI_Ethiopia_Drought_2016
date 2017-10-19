@@ -744,25 +744,20 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
  
   #lag(data_in_plm$MAIZEOPH_W, 1) + c(year)MAIZEDAMAGEAREA_P
  maz_dam1_w_ea = factor(MAIZEDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
-	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+EACODE
+	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+ZONECODE
          
-  
-
   registerDoMC(cores = 6)
   
- 
- 
   # sample from EAs 
   set.seed(17516)
   # limit to variables of interest by EA 
-  model_data = data_in[,names(data_in) %in%   all.vars(maz_dam1_w_ea)]   
+  model_data = data_in[,names(data_in) %in%   c(all.vars(maz_dam1_w_ea),'EACODE')]   
   num_eas <- floor(0.75 * length(unique(model_data$EACODE)))
   train_eas <- sample(unique(model_data$EACODE), size = num_eas)
   
   train <- model_data[model_data$EACODE %in% train_eas, ]
   test <- model_data[!(model_data$EACODE %in% train_eas), ]
   
-
   # maz.rf <- randomForest(maz_dam1_wo_zones, train)
   # varImpPlot(maz.rf)
   # save(maz.rf,file = './Outputs4Pred/maz.rf.RData')
@@ -785,19 +780,18 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
   #set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
   groups = groupKFold(train$EACODE, k = 15)
   
-  # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
-  # maz.rf<-train(maz_dam1_w_ea,data=pp.train,method="rf", 
-  #                 trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
-  #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,10,2)))
+   #train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
+  #  maz.rf<-train(maz_dam1_w_ea,data=pp.train,method="rf",
+  #                  trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
+  #                  prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
   # print(maz.rf)
-  
-  #save(maz.rf,file = './Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P>.3.RData')
-  load('./Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P>.3.RData')
+  # # 
+  # save(maz.rf,file = './Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P>.3_zone.RData')
+  load('./Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P>.3_zone.RData')
   pp.test$pred = predict(maz.rf,pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
-  confusionMatrix(data =  pp.test$pred, reference = (pp.test$MAIZEDAMAGEAREA_P>0.3), mode = "prec_recall")
+  confusionMatrix(data =  pp.test$pred, reference = (pp.test$MAIZEDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
 ```
-
 
 ```{r Predict Damages Wheat Regression, echo=FALSE, message=FALSE, warning=FALSE,fig.height=7}
 
@@ -818,7 +812,7 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
   data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
  
 wht_dam1_w_ea = factor(WHEATDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
-	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+EACODE
+	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+ZONECODE
         
   registerDoMC(cores = 6)
 
@@ -826,12 +820,12 @@ wht_dam1_w_ea = factor(WHEATDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC + 
   set.seed(17516)
   
   # limit to variables of interest by EA 
-  model_data = data_in[,names(data_in) %in%   all.vars(wht_dam1_w_ea)]   
-  num_eas <- floor(0.75 * length(unique(model_data$EACODE)))
-  train_eas <- sample(unique(model_data$EACODE), size = num_eas)
+  model_data = data_in[,names(data_in) %in%   c(all.vars(wht_dam1_w_ea)]   
+  num_eas <- floor(0.75 * length(unique(model_data$ZONECODE)))
+  train_eas <- sample(unique(model_data$ZONECODE), size = num_eas)
   
-  train <- model_data[model_data$EACODE %in% train_eas, ]
-  test <- model_data[!(model_data$EACODE %in% train_eas), ]
+  train <- model_data[model_data$ZONECODE %in% train_eas, ]
+  test <- model_data[!(model_data$ZONECODE %in% train_eas), ]
   
 
   # maz.rf <- randomForest(maz_dam1_wo_zones, train)
@@ -854,19 +848,19 @@ wht_dam1_w_ea = factor(WHEATDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC + 
   for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
   
   #set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
-  groups = groupKFold(train$EACODE, k = 15)
+  groups = groupKFold(train$ZONECODE, k = 15)
   
   # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
-  # wht.rf<-train(wht_dam1_w_ea,data=pp.train,method="rf", 
-                  trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
-                  prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,10,2)))
+  # wht.rf<-train(wht_dam1_w_ea,data=pp.train,method="rf",
+  #                trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
+  #                prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,10,2)))
   # print(maz.rf)
-  # save(wht.rf,file = './Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P>.3.RData')
-  load('./Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P>.3.RData')
+  # save(wht.rf,file = './Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P>.3_zone.RData')
+  load('./Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P>.3_zone.RData')
   
   pp.test$pred = predict(wht.rf,pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
-  confusionMatrix(data =  pp.test$pred, reference = (pp.test$WHEATDAMAGEAREA_P>0.3), mode = "prec_recall")
+  confusionMatrix(data =  pp.test$pred, reference = (pp.test$WHEATDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
 ```
 
 ```{r Predict Damages Sorghum Regression, echo=FALSE, message=FALSE, warning=FALSE,fig.height=7}
@@ -888,7 +882,7 @@ wht_dam1_w_ea = factor(WHEATDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC + 
   data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
  
 sor_dam1_w_ea = factor(SORGHUMDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
-	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+EACODE
+	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+ZONECODE
         
   registerDoMC(cores = 6)
 
@@ -897,11 +891,11 @@ sor_dam1_w_ea = factor(SORGHUMDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC 
   
   # limit to variables of interest by EA 
   model_data = data_in[,names(data_in) %in%   all.vars(sor_dam1_w_ea)]   
-  num_eas <- floor(0.75 * length(unique(model_data$EACODE)))
-  train_eas <- sample(unique(model_data$EACODE), size = num_eas)
+  num_eas <- floor(0.75 * length(unique(model_data$ZONECODE)))
+  train_eas <- sample(unique(model_data$ZONECODE), size = num_eas)
   
-  train <- model_data[model_data$EACODE %in% train_eas, ]
-  test <- model_data[!(model_data$EACODE %in% train_eas), ]
+  train <- model_data[model_data$ZONECODE %in% train_eas, ]
+  test <- model_data[!(model_data$ZONECODE %in% train_eas), ]
   
   # Impute values 
   set.seed(123)
@@ -914,21 +908,20 @@ sor_dam1_w_ea = factor(SORGHUMDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC 
   for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
   
   #set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
-  groups = groupKFold(train$EACODE, k = 15)
+  groups = groupKFold(train$ZONECODE, k = 15)
   
   # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
   # sor.rf<-train(sor_dam1_w_ea,data=pp.train,method="rf",
   #                 trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
   #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,10,2)))
   # print(sor.rf)
-  # save(sor.rf,file = './Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P>.3.RData')
-  load('./Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P>.3.RData')
+  # save(sor.rf,file = './Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P>.3_zone.RData')
+  load('./Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P>.3_zone.RData')
   
   pp.test$pred = predict(sor.rf, pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
-  confusionMatrix(data =  pp.test$pred, reference = (pp.test$SORGHUMDAMAGEAREA_P>0.3), mode = "prec_recall")
+  confusionMatrix(data =  pp.test$pred, reference = (pp.test$SORGHUMDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
 ```
-
 
 ```{r Predict Damages Barley Regression, echo=FALSE, message=FALSE, warning=FALSE,fig.height=7}
 
@@ -938,7 +931,7 @@ sor_dam1_w_ea = factor(SORGHUMDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC 
   version = 4  
   setwd(Home_dir) 
 
- ######## MAIZE
+ ########  Barley
 
  # read data
   data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v",version,".dta",sep=''))
@@ -949,7 +942,7 @@ sor_dam1_w_ea = factor(SORGHUMDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC 
   data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
  
 bar_dam1_w_ea = factor(BARLEYDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
-	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+EACODE
+	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+ZONECODE
         
   registerDoMC(cores = 6)
 
@@ -958,11 +951,11 @@ bar_dam1_w_ea = factor(BARLEYDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC +
   
   # limit to variables of interest by EA 
   model_data = data_in[,names(data_in) %in%   all.vars(bar_dam1_w_ea)]   
-  num_eas <- floor(0.75 * length(unique(model_data$EACODE)))
-  train_eas <- sample(unique(model_data$EACODE), size = num_eas)
+  num_eas <- floor(0.75 * length(unique(model_data$ZONECODE)))
+  train_eas <- sample(unique(model_data$ZONECODE), size = num_eas)
   
-  train <- model_data[model_data$EACODE %in% train_eas, ]
-  test <- model_data[!(model_data$EACODE %in% train_eas), ]
+  train <- model_data[model_data$ZONECODE %in% train_eas, ]
+  test <- model_data[!(model_data$ZONECODE %in% train_eas), ]
   
   # Impute values 
   set.seed(123)
@@ -975,22 +968,81 @@ bar_dam1_w_ea = factor(BARLEYDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC +
   for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
   
   #set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
-  groups = groupKFold(train$EACODE, k = 15)
+  groups = groupKFold(train$ZONECODE, k = 15)
   
   # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
-  bar.rf<-train(bar_dam1_w_ea,data=pp.train,method="rf",
-                  trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
-                  prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,10,2)))
-  print(bar.rf)
-  save(bar.rf,file = './Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P>.3.RData')
-  load('./Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P>.3.RData')
+  # bar.rf<-train(bar_dam1_w_ea,data=pp.train,method="rf",
+  #                 trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
+  #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,10,2)))
+  # print(bar.rf)
+  # save(bar.rf,file = './Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P>.3_zone.RData')
+  load('./Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P>.3_zone.RData')
   
   pp.test$pred = predict(bar.rf, pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
-  confusionMatrix(data =  pp.test$pred, reference = (pp.test$BARLEYDAMAGEAREA_P>0.3), mode = "prec_recall")
+  confusionMatrix(data =  pp.test$pred, reference = (pp.test$BARLEYDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
 ```
    
+```{r Predict Damages Teff Regression, echo=FALSE, message=FALSE, warning=FALSE,fig.height=7}
+
+#### Predict damages TEFF  ----------------------------------------------------
+
+  # read data
+  version = 4  
+  setwd(Home_dir) 
+
+ ########  Barley
+
+ # read data
+  data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v",version,".dta",sep=''))
+  data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
+
+  # remove EA with less than 4 observations
+  counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(TEFFOPH_W))) %>% filter(non_na_count<4))
+  data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
+ 
+tef_dam1_w_ea = factor(TEFFDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
+	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+ZONECODE
+        
+  registerDoMC(cores = 6)
+
+  # sample from EAs 
+  set.seed(17516)
   
+  # limit to variables of interest by EA 
+  model_data = data_in[,names(data_in) %in%   all.vars(tef_dam1_w_ea)]   
+  num_eas <- floor(0.75 * length(unique(model_data$ZONECODE)))
+  train_eas <- sample(unique(model_data$ZONECODE), size = num_eas)
+  
+  train <- model_data[model_data$ZONECODE %in% train_eas, ]
+  test <- model_data[!(model_data$ZONECODE %in% train_eas), ]
+  
+  # Impute values 
+  set.seed(123)
+  pp.train = predict(preProcess(train, method = "knnImpute",k=25),train)
+  pp.test  = predict(preProcess(test, method = "knnImpute",k=25),train)
+  
+  #set up seeds for multicore
+  set.seed(123)
+  seeds <- vector(mode = "list", length = 16)
+  for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
+  
+  #set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
+  groups = groupKFold(train$ZONECODE, k = 15)
+  
+  # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
+  # tef.rf<-train(tef_dam1_w_ea,data=pp.train,method="rf",
+  #                 trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
+  #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,10,2)))
+  # print(tef.rf)
+  # save(tef.rf,file = './Outputs4Pred/tef.rf.TEFFDAMAGEAREA_P>.3_zone.RData')
+  load('./Outputs4Pred/tef.rf.TEFFDAMAGEAREA_P>.3_zone.RData')
+  
+  pp.test$pred = predict(tef.rf, pp.test)
+  #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
+  confusionMatrix(data =  pp.test$pred, reference = (pp.test$TEFFDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
+```
+
   
   
   # look at generalized additive models
