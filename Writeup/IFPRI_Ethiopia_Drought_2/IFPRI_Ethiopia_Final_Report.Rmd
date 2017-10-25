@@ -336,12 +336,23 @@ Here we present preliminary results from panel regressions on output per hectare
 
 
 ## Predicting Crop Losses
-Another critical emphasis of this project is to see if remotely sensed data on greeness, precipitation, or evapotranspiration can be used in conjunction with household surveys to predict the location and/or extent of damages before the next years AgSS survey results are released. In this vein we aim to utilize advances from machine learning to accurately predict crop damages for all major crops. 
+Another critical emphasis of this project is to see if remotely sensed data on greeness, precipitation, or evapotranspiration and the zone code can be used in conjunction with household surveys to predict the location and/or extent of damages before the next years AgSS survey results are released. In this vein we aim to utilize advances from machine learning to accurately predict substantial crop damages for all major crops. We define our dependent variable, 'substantial' losses, as farmer reported losses over 30%. 
 
 ### Estimation Strategy
 #### Random Forests Description
-Random forests (RF) are a flexible (used for classification and regression) ensemble learning method that aggregates across multible trees each based on a randomized subset of variables. Each tree is formed by This ensemble method improves performance by finding the mode or median of 'weak learners'. This process in turn allows RFs to avoid overfitting and therefore perform consistently out-of-sample and with noisy datasets. 
+Random forests (RF) are a flexible (used for classification and regression) ensemble learning method that aggregates across multible trees each based on a randomized subset of variables. Each tree is formed through heirarchical spliting method where by each binary split (e.g. NDVI < 0.1) is identified as the most informative, as defined by the greatest reduction in Gini. This ensemble method improves performance by finding the mode or median of 'weak learners'. This process in turn allows RFs to avoid overfitting and therefore perform consistently out-of-sample and with noisy datasets. 
 
+#### Training vs Testing Data
+Before we run any models we break the data into two groups, with 75% of all sub-kebele units being retained for the training/tuning/validation of the models, and 25% of these held aside to provide measures of out-of-sample performance. 
+
+#### Training Data: Cross Validation & Tuning
+To enhance the perfomance of the RF out of sample we undertake two procedures on the training data; tuning and cross validation. Tuning in this case is limited to choosing the number of features (variables) randomly selected for use in each tree. We do a grid search for each crop finding the parameter tuning that provides the best performance. To ensure that these parameter tunings work well out of sample we utilize k-fold cross validation whereby the training data is split further into 3 groups of sub-kebeles, the model is trained on two thirds of the data and its performance, using the kappa coefficient, is estimated using the omited third subsample. Perfomance for each parater value is therefore evaluated out-of-sample three times and averaged. The optimal parameter then is that with the highest kappa value. Kappa[^2] is a perfomance indicator similar to the percentage of observations that are correctly classified but that controls for the fact that catagories with large numbers of observations are easier to guess by random chance. 
+
+#### Testing Data: Out-of-sample Performance
+Independent of the training data we intially witheld 25% of sub-kebele units to provide 'testing data' for accurate measures of truely out-of-sample performance for our tuned RF models. To test accuracy we make predictions of the damage category on this testing data and compare them to each observations actual damage category. We provide three major performance indicators , a) overall accurancy, 2) Kappa coefficient, and 3) **the detection rate**[^3]. 
+
+[^2]: see: https://en.m.wikipedia.org/wiki/Cohen%27s_kappa    
+[^3]: the percentage of sub-kebeles with 'substantial damage' that are correctly classified by our models.
 # Results 
 ## Regression Results
 ```{r Panel Maize Regression, echo=FALSE, message=FALSE, warning=FALSE}
@@ -724,6 +735,8 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
 ```
 
 ## Predicting damages
+
+
 ```{r Predict Damages Maize Regression, echo=FALSE, message=FALSE, warning=FALSE,fig.height=7}
 
 #### Predict damages MAIZE ----------------------------------------------------
@@ -781,12 +794,13 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
   groups = groupKFold(train$EACODE, k = 15)
   
    #train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
-  #  maz.rf<-train(maz_dam1_w_ea,data=pp.train,method="rf",
-  #                  trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
-  #                  prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
-  # print(maz.rf)
-  # # 
-  # save(maz.rf,file = './Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P>.3_zone.RData')
+   maz.rf<-train(maz_dam1_w_ea,data=pp.train,method="rf",
+                   trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
+                   prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
+  print(maz.rf)
+  varImp(maz.rf)
+  # 
+  save(maz.rf,file = './Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P>.3_zone.RData')
   load('./Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P>.3_zone.RData')
   pp.test$pred = predict(maz.rf,pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
@@ -820,12 +834,12 @@ wht_dam1_w_ea = factor(WHEATDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC + 
   set.seed(17516)
   
   # limit to variables of interest by EA 
-  model_data = data_in[,names(data_in) %in%   c(all.vars(wht_dam1_w_ea)]   
-  num_eas <- floor(0.75 * length(unique(model_data$ZONECODE)))
-  train_eas <- sample(unique(model_data$ZONECODE), size = num_eas)
+  model_data = data_in[,names(data_in) %in%   c(all.vars(wht_dam1_w_ea),'EACODE')]   
+  num_eas <- floor(0.75 * length(unique(model_data$EACODE)))
+  train_eas <- sample(unique(model_data$EACODE), size = num_eas)
   
-  train <- model_data[model_data$ZONECODE %in% train_eas, ]
-  test <- model_data[!(model_data$ZONECODE %in% train_eas), ]
+  train <- model_data[model_data$EACODE %in% train_eas, ]
+  test <- model_data[!(model_data$EACODE %in% train_eas), ]
   
 
   # maz.rf <- randomForest(maz_dam1_wo_zones, train)
@@ -848,19 +862,19 @@ wht_dam1_w_ea = factor(WHEATDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC + 
   for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
   
   #set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
-  groups = groupKFold(train$ZONECODE, k = 15)
+  groups = groupKFold(train$EACODE, k = 15)
   
   # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
   # wht.rf<-train(wht_dam1_w_ea,data=pp.train,method="rf",
   #                trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
-  #                prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,10,2)))
+  #                prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
   # print(maz.rf)
   # save(wht.rf,file = './Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P>.3_zone.RData')
   load('./Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P>.3_zone.RData')
   
   pp.test$pred = predict(wht.rf,pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
-  confusionMatrix(data =  pp.test$pred, reference = (pp.test$WHEATDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
+  confusionMatrix(data =  pp.test$pred, reference = (pp.test$WHEATDAMAGEAREA_P>0.3), mode = "prec_recall")
 ```
 
 ```{r Predict Damages Sorghum Regression, echo=FALSE, message=FALSE, warning=FALSE,fig.height=7}
@@ -890,12 +904,12 @@ sor_dam1_w_ea = factor(SORGHUMDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC 
   set.seed(17516)
   
   # limit to variables of interest by EA 
-  model_data = data_in[,names(data_in) %in%   all.vars(sor_dam1_w_ea)]   
-  num_eas <- floor(0.75 * length(unique(model_data$ZONECODE)))
-  train_eas <- sample(unique(model_data$ZONECODE), size = num_eas)
+  model_data = data_in[,names(data_in) %in%   c(all.vars(sor_dam1_w_ea),'EACODE')]   
+  num_eas <- floor(0.75 * length(unique(model_data$EACODE)))
+  train_eas <- sample(unique(model_data$EACODE), size = num_eas)
   
-  train <- model_data[model_data$ZONECODE %in% train_eas, ]
-  test <- model_data[!(model_data$ZONECODE %in% train_eas), ]
+  train <- model_data[model_data$EACODE %in% train_eas, ]
+  test <- model_data[!(model_data$EACODE %in% train_eas), ]
   
   # Impute values 
   set.seed(123)
@@ -908,19 +922,19 @@ sor_dam1_w_ea = factor(SORGHUMDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC 
   for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
   
   #set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
-  groups = groupKFold(train$ZONECODE, k = 15)
+  groups = groupKFold(train$EACODE, k = 15)
   
   # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
   # sor.rf<-train(sor_dam1_w_ea,data=pp.train,method="rf",
   #                 trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
-  #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,10,2)))
+  #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
   # print(sor.rf)
   # save(sor.rf,file = './Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P>.3_zone.RData')
   load('./Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P>.3_zone.RData')
   
   pp.test$pred = predict(sor.rf, pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
-  confusionMatrix(data =  pp.test$pred, reference = (pp.test$SORGHUMDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
+  confusionMatrix(data =  pp.test$pred, reference = (pp.test$SORGHUMDAMAGEAREA_P>0.3), mode = "prec_recall")
 ```
 
 ```{r Predict Damages Barley Regression, echo=FALSE, message=FALSE, warning=FALSE,fig.height=7}
@@ -950,12 +964,12 @@ bar_dam1_w_ea = factor(BARLEYDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC +
   set.seed(17516)
   
   # limit to variables of interest by EA 
-  model_data = data_in[,names(data_in) %in%   all.vars(bar_dam1_w_ea)]   
-  num_eas <- floor(0.75 * length(unique(model_data$ZONECODE)))
-  train_eas <- sample(unique(model_data$ZONECODE), size = num_eas)
+  model_data = data_in[,names(data_in) %in%   c(all.vars(bar_dam1_w_ea),'EACODE')]   
+  num_eas <- floor(0.75 * length(unique(model_data$EACODE)))
+  train_eas <- sample(unique(model_data$EACODE), size = num_eas)
   
-  train <- model_data[model_data$ZONECODE %in% train_eas, ]
-  test <- model_data[!(model_data$ZONECODE %in% train_eas), ]
+  train <- model_data[model_data$EACODE %in% train_eas, ]
+  test <- model_data[!(model_data$EACODE %in% train_eas), ]
   
   # Impute values 
   set.seed(123)
@@ -968,19 +982,19 @@ bar_dam1_w_ea = factor(BARLEYDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC +
   for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
   
   #set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
-  groups = groupKFold(train$ZONECODE, k = 15)
+  groups = groupKFold(train$EACODE, k = 15)
   
   # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
   # bar.rf<-train(bar_dam1_w_ea,data=pp.train,method="rf",
   #                 trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
-  #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,10,2)))
+  #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
   # print(bar.rf)
   # save(bar.rf,file = './Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P>.3_zone.RData')
   load('./Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P>.3_zone.RData')
   
   pp.test$pred = predict(bar.rf, pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
-  confusionMatrix(data =  pp.test$pred, reference = (pp.test$BARLEYDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
+  confusionMatrix(data =  pp.test$pred, reference = (pp.test$BARLEYDAMAGEAREA_P>0.3), mode = "prec_recall")
 ```
    
 ```{r Predict Damages Teff Regression, echo=FALSE, message=FALSE, warning=FALSE,fig.height=7}
@@ -1010,12 +1024,12 @@ tef_dam1_w_ea = factor(TEFFDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC + A
   set.seed(17516)
   
   # limit to variables of interest by EA 
-  model_data = data_in[,names(data_in) %in%   all.vars(tef_dam1_w_ea)]   
-  num_eas <- floor(0.75 * length(unique(model_data$ZONECODE)))
-  train_eas <- sample(unique(model_data$ZONECODE), size = num_eas)
+  model_data = data_in[,names(data_in) %in%   c(all.vars(tef_dam1_w_ea),'EACODE')]   
+  num_eas <- floor(0.75 * length(unique(model_data$EACODE)))
+  train_eas <- sample(unique(model_data$EACODE), size = num_eas)
   
-  train <- model_data[model_data$ZONECODE %in% train_eas, ]
-  test <- model_data[!(model_data$ZONECODE %in% train_eas), ]
+  train <- model_data[model_data$EACODE %in% train_eas, ]
+  test <- model_data[!(model_data$EACODE %in% train_eas), ]
   
   # Impute values 
   set.seed(123)
@@ -1028,21 +1042,22 @@ tef_dam1_w_ea = factor(TEFFDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC + A
   for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
   
   #set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
-  groups = groupKFold(train$ZONECODE, k = 15)
+  groups = groupKFold(train$EACODE, k = 15)
   
   # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
   # tef.rf<-train(tef_dam1_w_ea,data=pp.train,method="rf",
   #                 trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
-  #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,10,2)))
+  #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
   # print(tef.rf)
   # save(tef.rf,file = './Outputs4Pred/tef.rf.TEFFDAMAGEAREA_P>.3_zone.RData')
   load('./Outputs4Pred/tef.rf.TEFFDAMAGEAREA_P>.3_zone.RData')
   
   pp.test$pred = predict(tef.rf, pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
-  confusionMatrix(data =  pp.test$pred, reference = (pp.test$TEFFDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
+  confusionMatrix(data =  pp.test$pred, reference = (pp.test$TEFFDAMAGEAREA_P>0.3), mode = "prec_recall")
 ```
 
+  
   
   
   # look at generalized additive models
