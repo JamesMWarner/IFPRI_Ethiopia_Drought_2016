@@ -3,8 +3,8 @@ title: "Modeling Impacts of Drought on all Major Crops in Ethiopia"
 author: "Michael L Mann & James Warner"
 date: "September 29, 2017"
 output:
-  word_document: default
   pdf_document: default
+  word_document: default
 bibliography: mybibfile.bib
 ---
 
@@ -747,8 +747,11 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
   counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(MAIZEOPH_W))) %>% filter(non_na_count<4))
   data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
  
+  # create dependent variable 
+  data_in$dependent = factor(data_in$MAIZEDAMAGEAREA_P>0.3, levels=c('TRUE','FALSE'))
+  
   #lag(data_in_plm$MAIZEOPH_W, 1) + c(year)MAIZEDAMAGEAREA_P
- maz_dam1_w_ea = factor(MAIZEDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
+ maz_dam1_w_ea = dependent ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
 	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+ZONECODE
          
   registerDoMC(cores = 6)
@@ -763,19 +766,19 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
   train <- model_data[model_data$EACODE %in% train_eas, ]
   test <- model_data[!(model_data$EACODE %in% train_eas), ]
   
-  # maz.rf <- randomForest(maz_dam1_wo_zones, train)
-  # varImpPlot(maz.rf)
-  # save(maz.rf,file = './Outputs4Pred/maz.rf.RData')
-  # 
-  
   # Impute values 
   library(RANN)
   set.seed(123)
-  pp.train = predict(preProcess(train, method = "knnImpute",k=25),train)
+  pp.train = na.omit(predict(preProcess(train, method = "knnImpute",k=25),train))   #naomit bc binary dependent variable has a few missing 
   pp.test  = predict(preProcess(test, method = "knnImpute",k=25),train)
   #data_in.maz.imputed.full <- rfImpute(maz_dam1_wo_zones,   data_in[!is.na(data_in$MAIZEOPH_W),])
   #save(data_in.maz.imputed.full,file = './Outputs4Pred/data_in.maz.imputed.full.RData')
 
+  # maz.rf <- randomForest(maz_dam1_w_ea, na.omit(pp.train),mtry = 3)
+  # varImpPlot(maz.rf)
+  # maz.rf %>% partial(pred.var = 'G_Qnt') %>% autoplot(rug = F, train = pp.train,x)+ labs(y='Likelihood of loss',x = paste('G_Qnt', '\n (centered & scaled)'))
+  #save(maz.rf,file = './Outputs4Pred/maz.rf.RData')
+   
   
   #set up seeds for multicore
   set.seed(123)
@@ -786,30 +789,32 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
   groups = groupKFold(train$EACODE, k = 15)
   
    #train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
-  #  maz.rf<-train(maz_dam1_w_ea,data=pp.train,method="rf",
-  #                  trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
-  #                  prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
-  # print(maz.rf)
-  # varImp(maz.rf)
-  # # 
-  # save(maz.rf,file = './Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P>.3_zone.RData')
+   maz.rf<-train(maz_dam1_w_ea,data=pp.train,method="rf",
+                   trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
+                   prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
+  print(maz.rf)
+  varImp(maz.rf)
+  #
+  save(maz.rf,file = './Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P>.3_zone.RData')
   load('./Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P>.3_zone.RData')
   pp.test$pred = predict(maz.rf,pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
-  cm_maz = confusionMatrix(data =  pp.test$pred, reference = (pp.test$MAIZEDAMAGEAREA_P>0.3),positive='TRUE')
+  cm_maz = confusionMatrix(data =  pp.test$pred, reference = (pp.test$dependent),positive='TRUE')
 ```
 ### Maize Damages
 We can evaluate accuracy with a number of metrics on our independent testing dataset described in the "Testing Data: Out-of-sample Performance" section above. The first, the confusion matrix compares predicted values against the observed (reference). We also report the a) overall accurancy, 2) Kappa coefficient, and 3) the recall rate[^3] as seen in table `r paste(Table_number)` below:
 
-*Table `r paste(Table_number)`: Confusion matrix & performance metrics for reported damages > 30% for Maize* `r  Table_number=Table_number+1`
-`r pander(cm_maz$table)`
-`r pander(data.frame(Accuracy=round(cm_maz$overall['Accuracy'],2), Kappa=round(cm_maz$overall['Kappa'],2), Recall=round(cm_maz$byClass['Recall'],2),row.names ='Value'))`
+*Table `r paste(Table_number)`: Confusion matrix for reported damages > 30% for Maize* `r  Table_number=Table_number+1`
+`r pander(cm_maz$table, caption = "TRUE = Reported damages greater than 30%")`
+*Table `r paste(Table_number)`: Performance metrics for reported damages > 30% for Maize* `r  Table_number=Table_number+1`
+`r pander(data.frame(Accuracy=round(cm_maz$overall['Accuracy'],2), Kappa=round(cm_maz$overall['Kappa'],2), Recall=round(cm_maz$byClass['Recall'],2),row.names ='Value'), caption = "TRUE = Reported damages greater than 30%")`
  
 We see impressive identification of reported maize crop losses with a recall rate of `r round(cm_maz$byClass['Recall'],2)`, indicating that 88% of all substantial loss cases in our completely independent *testing* data. In all, `r cm_maz$table['TRUE','TRUE']` out of `r cm_maz$table['TRUE','TRUE']+ cm_maz$table['FALSE','TRUE']` reported cases were predicted, and only `r cm_maz$table['TRUE','FALSE']` cases were false positives. 
  
 We can also examine the relative importance of each variable to each model, as well as its estimated non-linear relationship with the dependent variable through partial dependency plots. First, let's examine the relativeimportance of each variable in the random forest through the role it played in Gini coefficient loss.
 
 Figure `r paste(Figure_number)`: Variable importance plot for maize damage prediction`r Figure_number =Figure_number+1 `
+
 ```{r Variable Importance Maize, echo=FALSE, message=FALSE, warning=FALSE,fig.width=7}
 # store variable importance values
 varImp_maz = varImp(maz.rf)
@@ -828,18 +833,18 @@ From the figure above we can see that `r most_imp_maz` has the highest relative 
 We can now look at the partial dependence plots to help understand the non-linear response of reported damages to the most important variable `r most_imp_maz`.  
 
 Figure `r paste(Figure_number)`: Partial dependency plot for influence of `r most_imp_maz` on maize damage prediction`r Figure_number =Figure_number+1 `
+
 ```{r Partial Dependency Maize, echo=FALSE, message=FALSE, warning=FALSE,fig.width=7}
-maz.rf %>% partial(pred.var = most_imp_maz) %>% autoplot(rug = F, train = pp.train,x)+ labs(x = paste(most_imp_maz, '\n (centered & scaled)'))
-  #maz.rf %>% partial(pred.var = "A_sd") %>% autoplot(rug = F, train = pp.train,x)+ labs(x = "A_sd (centered)")
+maz.rf %>% partial(pred.var = most_imp_maz) %>% autoplot(rug = F, train = pp.train,x)+ labs(y='Likelihood of loss',x = paste(most_imp_maz, '\n (centered & scaled)'))
 ```
 In the figure above, **we can see how the likelihood of reporting maize losses increases rapidly after one standard deviation below the mean value of `r most_imp_maz`, with the likelihood of losses declining at the upper end of the distribution.**
 
 Similarly, we can look at the partial dependence plot for the second most important variable `r secd_imp_maz`.
 
 Figure `r paste(Figure_number)`: Partial dependency plot for influence of `r secd_imp_maz` on maize damage prediction`r Figure_number =Figure_number+1 `
+
 ```{r Partial Dependency Maize second most important , echo=FALSE, message=FALSE, warning=FALSE,fig.width=7}
 maz.rf %>% partial(pred.var = secd_imp_maz) %>% autoplot(rug = F, train = pp.train,x)+ labs(x = paste(secd_imp_maz, '\n (centered & scaled)'))
-  #maz.rf %>% partial(pred.var = "A_sd") %>% autoplot(rug = F, train = pp.train,x)+ labs(x = "A_sd (centered)")
 ```
 **`r secd_imp_maz` is a measure of variability across the entire year. We see a near linear increase in the likelihood of damage starting from two standard deviations (sd) below the mean, with a peak near one sd above. After this point, we see a dramatic drop in the likelihood. This is likely related to the fact that a plot of healthy plants harvested (especially in Meher and Belg seasons), followed by tilling, will likely have the highest variance of all plots. ** 
 
@@ -1126,47 +1131,47 @@ tef_dam1_w_ea = factor(TEFFDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC + A
 <!--     trControl=trainControl(method='cv', number=10,search = 'grid',allowParallel = T),) -->
 <!-- model$results -->
 
-# # CUDA Implementation
-# #https://github.com/Danko-Lab/Rgtsvm/blob/master/Rgtsvm-vignette.pdf
+<!-- # # CUDA Implementation -->
+<!-- # #https://github.com/Danko-Lab/Rgtsvm/blob/master/Rgtsvm-vignette.pdf -->
 
 
-# 
-# #https://github.com/tobigithub/caret-machine-learning/blob/master/caret-tune/caret-tune-evolutionial-algorithm-svmRadial.R
-#  
-# svm_fit <- function(x) {
-#   mod <- train(maz_dam1_wo_zones, data = train,
-#                method = "svmRadial",
-#                preProc = c("center", "scale"),
-#                trControl = trainControl(method = "cv"),
-#                tuneGrid = data.frame(C = 2^x[1], sigma = exp(x[2])))
-#   getTrainPerf(mod)[, "TrainRMSE"]
-# }
-# 
-# ## converged after 31 iterations
-# svm_de_obj <-  DEoptim(fn = svm_fit,
-#                        ## test cost values between ~0 and 2^10,
-#                        ## test sigma values between exp(-5) and 1
-#                        lower = c(-5, -5), 
-#                        upper = c(10, 0),
-#                        control = DEoptim.control(reltol = 1e-3,
-#                                                  steptol = 10,
-#                                                  itermax = 100))
-# 
-# 
-# fitted_params <- svm_de_obj$optim$bestmem
-# 
-# svm_model <- train(y ~ ., data = maz_dam1_wo_zones,
-#                    method = "svmRadial",
-#                    preProc = c("center", "scale"),
-#                    trControl = trainControl(method = "cv", number = 10),
-#                    tuneGrid = data.frame(C = 2^fitted_params[1], 
-#                                          sigma = exp(fitted_params[2])))
-# 
-# predictions <- predict(svm_model, testing_data)
-# 
-# cat("Train RMSE:", getTrainPerf(svm_model)[, "TrainRMSE"], "\n")
-# cat("Test RMSE:", RMSE(predictions, testing_data$y))
-# 
+<!-- #  -->
+<!-- # #https://github.com/tobigithub/caret-machine-learning/blob/master/caret-tune/caret-tune-evolutionial-algorithm-svmRadial.R -->
+<!-- #   -->
+<!-- # svm_fit <- function(x) { -->
+<!-- #   mod <- train(maz_dam1_wo_zones, data = train, -->
+<!-- #                method = "svmRadial", -->
+<!-- #                preProc = c("center", "scale"), -->
+<!-- #                trControl = trainControl(method = "cv"), -->
+<!-- #                tuneGrid = data.frame(C = 2^x[1], sigma = exp(x[2]))) -->
+<!-- #   getTrainPerf(mod)[, "TrainRMSE"] -->
+<!-- # } -->
+<!-- #  -->
+<!-- # ## converged after 31 iterations -->
+<!-- # svm_de_obj <-  DEoptim(fn = svm_fit, -->
+<!-- #                        ## test cost values between ~0 and 2^10, -->
+<!-- #                        ## test sigma values between exp(-5) and 1 -->
+<!-- #                        lower = c(-5, -5),  -->
+<!-- #                        upper = c(10, 0), -->
+<!-- #                        control = DEoptim.control(reltol = 1e-3, -->
+<!-- #                                                  steptol = 10, -->
+<!-- #                                                  itermax = 100)) -->
+<!-- #  -->
+<!-- #  -->
+<!-- # fitted_params <- svm_de_obj$optim$bestmem -->
+<!-- #  -->
+<!-- # svm_model <- train(y ~ ., data = maz_dam1_wo_zones, -->
+<!-- #                    method = "svmRadial", -->
+<!-- #                    preProc = c("center", "scale"), -->
+<!-- #                    trControl = trainControl(method = "cv", number = 10), -->
+<!-- #                    tuneGrid = data.frame(C = 2^fitted_params[1],  -->
+<!-- #                                          sigma = exp(fitted_params[2]))) -->
+<!-- #  -->
+<!-- # predictions <- predict(svm_model, testing_data) -->
+<!-- #  -->
+<!-- # cat("Train RMSE:", getTrainPerf(svm_model)[, "TrainRMSE"], "\n") -->
+<!-- # cat("Test RMSE:", RMSE(predictions, testing_data$y)) -->
+<!-- #  -->
 
 
 
