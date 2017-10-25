@@ -1,9 +1,11 @@
 ---
 title: "Modeling Impacts of Drought on all Major Crops in Ethiopia"
+author: "Michael L Mann & James Warner"
 date: "September 29, 2017"
-author: Michael L Mann & James Warner  
+output:
+  word_document: default
+  pdf_document: default
 bibliography: mybibfile.bib
-output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -24,8 +26,8 @@ library(ggplot2)
 library(readstata13)
 library(reshape)
 library(rgdal)
-library(grid)
-library(gridExtra)
+#library(grid)
+#library(gridExtra)
 library(plotly)
 library(plyr)
 library(plm)
@@ -33,8 +35,6 @@ library(dplyr)
 library(splines)
 library(stargazer)
 library(rasterVis)
-library(gridExtra)
-library(splines)
 library(e1071)
 library(randomForest)
 library(caret)
@@ -43,6 +43,8 @@ library(parallel)
 library(DEoptim)
 library(kernlab)
 library(RANN)
+library(pdp)
+library(pander)
 
 # set up numbering for figures/graphs etc
 Table_number = 1
@@ -340,16 +342,16 @@ Another critical emphasis of this project is to see if remotely sensed data on g
 
 ### Estimation Strategy
 #### Random Forests Description
-Random forests (RF) are a flexible (used for classification and regression) ensemble learning method that aggregates across multible trees each based on a randomized subset of variables. Each tree is formed through heirarchical spliting method where by each binary split (e.g. NDVI < 0.1) is identified as the most informative, as defined by the greatest reduction in Gini. This ensemble method improves performance by finding the mode or median of 'weak learners'. This process in turn allows RFs to avoid overfitting and therefore perform consistently out-of-sample and with noisy datasets. 
+Random forests (RF) are a flexible (used for classification and regression) ensemble learning method that aggregates across multiple classification or regression trees each based on a randomized subset of variables. Each tree is formed through heirarchical spliting method where by each binary split (e.g. NDVI < 0.1) is identified as the most informative, as defined by the greatest reduction in Gini. This ensemble method improves performance by finding the mode or median of 'weak learners'. This process in turn allows RFs to avoid overfitting and therefore perform consistently out-of-sample and with noisy datasets. 
 
 #### Training vs Testing Data
-Before we run any models we break the data into two groups, with 75% of all sub-kebele units being retained for the training/tuning/validation of the models, and 25% of these held aside to provide measures of out-of-sample performance. 
+Before we run any models we break the data into two groups, with 75% of all sub-kebele units being retained for the training/tuning/cross-validation of the models, and 25% of these held aside to provide independent measures of out-of-sample performance. 
 
 #### Training Data: Cross Validation & Tuning
-To enhance the perfomance of the RF out of sample we undertake two procedures on the training data; tuning and cross validation. Tuning in this case is limited to choosing the number of features (variables) randomly selected for use in each tree. We do a grid search for each crop finding the parameter tuning that provides the best performance. To ensure that these parameter tunings work well out of sample we utilize k-fold cross validation whereby the training data is split further into 3 groups of sub-kebeles, the model is trained on two thirds of the data and its performance, using the kappa coefficient, is estimated using the omited third subsample. Perfomance for each parater value is therefore evaluated out-of-sample three times and averaged. The optimal parameter then is that with the highest kappa value. Kappa[^2] is a perfomance indicator similar to the percentage of observations that are correctly classified but that controls for the fact that catagories with large numbers of observations are easier to guess by random chance. 
+To enhance the perfomance of the models out-of-sample, we undertake two procedures on the training data; tuning and cross validation. Tuning in this case is limited to choosing the number of features (variables) randomly selected for use in each tree. We do a grid search independently for each crop finding the parameter tuning that provides the best performance. To ensure that these parameter tunings work well, we utilize k-fold cross validation whereby the training data is split further into 3 sets of sub-kebele data, the model is trained on two thirds of the data and its performance, using the Kappa coefficient, is estimated using the omited third subsample. Perfomance for each parater value is therefore evaluated out-of-sample three times and averaged. The optimal parameter then is that with the highest Kappa value and is specific for each crop model. Kappa[^2] is a perfomance indicator similar to the percentage of observations that are correctly classified but that controls for the fact that catagories with large numbers of observations are easier to guess by random chance. 
 
 #### Testing Data: Out-of-sample Performance
-Independent of the training data we intially witheld 25% of sub-kebele units to provide 'testing data' for accurate measures of truely out-of-sample performance for our tuned RF models. To test accuracy we make predictions of the damage category on this testing data and compare them to each observations actual damage category. We provide three major performance indicators , a) overall accurancy, 2) Kappa coefficient, and 3) **the detection rate**[^3]. 
+Independent of the training data we intially witheld 25% of sub-kebele units to provide 'testing data' for accurate measures of truely out-of-sample performance for our tuned RF models. These tests should therefore be good indicators of performance for sub-kebeles excluded from the AgSS survey. To test accuracy we make predictions of the damage category on this testing data and compare them to each observations observed damage category. We provide three major performance indicators, a) overall accurancy, 2) Kappa coefficient, and 3) the recall rate[^3]. 
 
 [^2]: see: https://en.m.wikipedia.org/wiki/Cohen%27s_kappa    
 [^3]: the percentage of sub-kebeles with 'substantial damage' that are correctly classified by our models.
@@ -449,8 +451,6 @@ Looking at precipitation variables we can see that *PPT_G_AUC_Qnt* yields are hi
 
 The AgSS data also provide some insights. We see scant evidence for yield improvements based on planted area alone (*MAIZEAREA* p<`r paste(signif(summary(maz.re2)[1]$coefficients['MAIZEAREA',4],3))`), but we do see the positive effects of fertilization rates (*Fert_Amt_Per_Area* p<`r paste(signif(summary(maz.re3)[1]$coefficients['Fert_Amt_Per_Area',4],3))`), the use of improved seeds (*MAIZEIMSEED* p<`r paste(signif(summary(maz.re3)[1]$coefficients['MAIZEIMSEED',4],3))`), and the area of land in the sub-kebele that has utilized extension agents (*MAIZEEXTAREA* p<`r paste(signif(summary(maz.re3)[1]$coefficients['MAIZEEXTAREA',4],3))`). Conversely, we see the substantial impact of the percent of reported crop damage (*MAIZEDAMAGEAREA_P*), with every additional one percent of land damaged corresponding to a `r paste(signif(summary(maz.re3)[1]$coefficients['MAIZEDAMAGEAREA_P',1],3))` unit loss in OPH (p<`r paste(signif(summary(maz.re3)[1]$coefficients['MAIZEDAMAGEAREA_P',4],3))`). 
            
- 
-
 ```{r Panel Wheat Regression, echo=FALSE, message=FALSE, warning=FALSE }
   
  ######## WHEAT
@@ -517,8 +517,6 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
           column.labels=c("Full", "Reduced","Final","No AgSS"), 
           df=FALSE, digits=4,omit = "Z_CODE",omit.labels = 'Zone Dummy',no.space=T)
 ```
-
- 
 
 ```{r Panel Barley Regression, echo=FALSE, message=FALSE, warning=FALSE}
 ######### BARLEY
@@ -590,7 +588,6 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
           column.labels=c("Full", "Reduced","Final","No AgSS"), 
           df=FALSE, digits=4,omit = "Z_CODE",omit.labels = 'Zone Dummy',no.space=T)
 ```
- 
 
 ```{r Panel Teff Regression, echo=FALSE, message=FALSE, warning=FALSE}
 
@@ -665,8 +662,6 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
           df=FALSE, digits=4,omit = "Z_CODE",omit.labels = 'Zone Dummy',no.space=T)
 ```
 
-
- 
 ```{r Panel Sorghum Regression, echo=FALSE, message=FALSE, warning=FALSE}
 
   ### formula SORGHUM
@@ -735,10 +730,7 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
 ```
 
 ## Predicting damages
-
-
 ```{r Predict Damages Maize Regression, echo=FALSE, message=FALSE, warning=FALSE,fig.height=7}
-
 #### Predict damages MAIZE ----------------------------------------------------
 
   # read data
@@ -794,18 +786,62 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
   groups = groupKFold(train$EACODE, k = 15)
   
    #train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
-   maz.rf<-train(maz_dam1_w_ea,data=pp.train,method="rf",
-                   trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
-                   prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
-  print(maz.rf)
-  varImp(maz.rf)
-  # 
-  save(maz.rf,file = './Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P>.3_zone.RData')
+  #  maz.rf<-train(maz_dam1_w_ea,data=pp.train,method="rf",
+  #                  trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
+  #                  prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
+  # print(maz.rf)
+  # varImp(maz.rf)
+  # # 
+  # save(maz.rf,file = './Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P>.3_zone.RData')
   load('./Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P>.3_zone.RData')
   pp.test$pred = predict(maz.rf,pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
-  confusionMatrix(data =  pp.test$pred, reference = (pp.test$MAIZEDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
+  cm_maz = confusionMatrix(data =  pp.test$pred, reference = (pp.test$MAIZEDAMAGEAREA_P>0.3),positive='TRUE')
 ```
+### Maize Damages
+We can evaluate accuracy with a number of metrics on our independent testing dataset described in the "Testing Data: Out-of-sample Performance" section above. The first, the confusion matrix compares predicted values against the observed (reference). We also report the a) overall accurancy, 2) Kappa coefficient, and 3) the recall rate[^3] as seen in table `r paste(Table_number)` below:
+
+*Table `r paste(Table_number)`: Confusion matrix & performance metrics for reported damages > 30% for Maize* `r  Table_number=Table_number+1`
+`r pander(cm_maz$table)`
+`r pander(data.frame(Accuracy=round(cm_maz$overall['Accuracy'],2), Kappa=round(cm_maz$overall['Kappa'],2), Recall=round(cm_maz$byClass['Recall'],2),row.names ='Value'))`
+ 
+We see impressive identification of reported maize crop losses with a recall rate of `r round(cm_maz$byClass['Recall'],2)`, indicating that 88% of all substantial loss cases in our completely independent *testing* data. In all, `r cm_maz$table['TRUE','TRUE']` out of `r cm_maz$table['TRUE','TRUE']+ cm_maz$table['FALSE','TRUE']` reported cases were predicted, and only `r cm_maz$table['TRUE','FALSE']` cases were false positives. 
+ 
+We can also examine the relative importance of each variable to each model, as well as its estimated non-linear relationship with the dependent variable through partial dependency plots. First, let's examine the relativeimportance of each variable in the random forest through the role it played in Gini coefficient loss.
+
+Figure `r paste(Figure_number)`: Variable importance plot for maize damage prediction`r Figure_number =Figure_number+1 `
+```{r Variable Importance Maize, echo=FALSE, message=FALSE, warning=FALSE,fig.width=7}
+# store variable importance values
+varImp_maz = varImp(maz.rf)
+
+dotPlot(varImp_maz)
+
+# sort by importance
+varImp_maz$importance$name = rownames(varImp_maz$importance)
+varImp_maz$importance = varImp_maz$importance[order(varImp_maz$importance[,1],decreasing = T),]
+# store top 2 
+most_imp_maz = varImp_maz$importance$name[1]
+secd_imp_maz = varImp_maz$importance$name[2]
+```
+From the figure above we can see that `r most_imp_maz` has the highest relative importance in the random forest model. `r most_imp_maz` is **measured as the 95th percentile NDVI value for the growing season. As such the highest NDVI value (controling for outliers due to noise) likely reflects a measure of plant health, with higher `r rownames(varImp_maz$importance)[which.max(varImp_maz$importance$Overall)]` values corresponding to strong plant health at some point in the growing season.** We can also see that the most important variables are largely comprised of variables summarizing NDVI, with the exception of **PPT_G_mn which is the mean value of precipitation for each 10 day period across the growing season.** In the middle, we see the importance of precipitation and potential evapotranspiration (largely related to heat), and near the bottom, comparisons to historical averages. 
+
+We can now look at the partial dependence plots to help understand the non-linear response of reported damages to the most important variable `r most_imp_maz`.  
+
+Figure `r paste(Figure_number)`: Partial dependency plot for influence of `r most_imp_maz` on maize damage prediction`r Figure_number =Figure_number+1 `
+```{r Partial Dependency Maize, echo=FALSE, message=FALSE, warning=FALSE,fig.width=7}
+maz.rf %>% partial(pred.var = most_imp_maz) %>% autoplot(rug = F, train = pp.train,x)+ labs(x = paste(most_imp_maz, '\n (centered & scaled)'))
+  #maz.rf %>% partial(pred.var = "A_sd") %>% autoplot(rug = F, train = pp.train,x)+ labs(x = "A_sd (centered)")
+```
+In the figure above, **we can see how the likelihood of reporting maize losses increases rapidly after one standard deviation below the mean value of `r most_imp_maz`, with the likelihood of losses declining at the upper end of the distribution.**
+
+Similarly, we can look at the partial dependence plot for the second most important variable `r secd_imp_maz`.
+
+Figure `r paste(Figure_number)`: Partial dependency plot for influence of `r secd_imp_maz` on maize damage prediction`r Figure_number =Figure_number+1 `
+```{r Partial Dependency Maize second most important , echo=FALSE, message=FALSE, warning=FALSE,fig.width=7}
+maz.rf %>% partial(pred.var = secd_imp_maz) %>% autoplot(rug = F, train = pp.train,x)+ labs(x = paste(secd_imp_maz, '\n (centered & scaled)'))
+  #maz.rf %>% partial(pred.var = "A_sd") %>% autoplot(rug = F, train = pp.train,x)+ labs(x = "A_sd (centered)")
+```
+**`r secd_imp_maz` is a measure of variability across the entire year. We see a near linear increase in the likelihood of damage starting from two standard deviations (sd) below the mean, with a peak near one sd above. After this point, we see a dramatic drop in the likelihood. This is likely related to the fact that a plot of healthy plants harvested (especially in Meher and Belg seasons), followed by tilling, will likely have the highest variance of all plots. ** 
 
 ```{r Predict Damages Wheat Regression, echo=FALSE, message=FALSE, warning=FALSE,fig.height=7}
 
@@ -874,7 +910,7 @@ wht_dam1_w_ea = factor(WHEATDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC + 
   
   pp.test$pred = predict(wht.rf,pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
-  confusionMatrix(data =  pp.test$pred, reference = (pp.test$WHEATDAMAGEAREA_P>0.3), mode = "prec_recall")
+  confusionMatrix(data =  pp.test$pred, reference = (pp.test$WHEATDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
 ```
 
 ```{r Predict Damages Sorghum Regression, echo=FALSE, message=FALSE, warning=FALSE,fig.height=7}
@@ -934,7 +970,7 @@ sor_dam1_w_ea = factor(SORGHUMDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC 
   
   pp.test$pred = predict(sor.rf, pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
-  confusionMatrix(data =  pp.test$pred, reference = (pp.test$SORGHUMDAMAGEAREA_P>0.3), mode = "prec_recall")
+  confusionMatrix(data =  pp.test$pred, reference = (pp.test$SORGHUMDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
 ```
 
 ```{r Predict Damages Barley Regression, echo=FALSE, message=FALSE, warning=FALSE,fig.height=7}
@@ -994,7 +1030,7 @@ bar_dam1_w_ea = factor(BARLEYDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC +
   
   pp.test$pred = predict(bar.rf, pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
-  confusionMatrix(data =  pp.test$pred, reference = (pp.test$BARLEYDAMAGEAREA_P>0.3), mode = "prec_recall")
+  confusionMatrix(data =  pp.test$pred, reference = (pp.test$BARLEYDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
 ```
    
 ```{r Predict Damages Teff Regression, echo=FALSE, message=FALSE, warning=FALSE,fig.height=7}
@@ -1054,41 +1090,41 @@ tef_dam1_w_ea = factor(TEFFDAMAGEAREA_P>0.3) ~  A_mn + A_min + A_max + A_AUC + A
   
   pp.test$pred = predict(tef.rf, pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
-  confusionMatrix(data =  pp.test$pred, reference = (pp.test$TEFFDAMAGEAREA_P>0.3), mode = "prec_recall")
+  confusionMatrix(data =  pp.test$pred, reference = (pp.test$TEFFDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
 ```
 
   
-  
-  
-  # look at generalized additive models
-  
-  
-  # # Problem not spliting by groups... look at gkf.split for scikitlearn
-  svm_model1 <- randomForest(maz_dam1_w_ea,pp.train, mtry = 9)
-  summary(svm_model1)
-  varImpPlot(svm_model1)
 
 
-  
-  # impute missing data 
-  set.seed(222)
-  #data_in.maz.imputed <- rfImpute(maz_dam1_wo_zones, data_in[!is.na(data_in$MAIZEOPH_W),])
-  #names(data_in.maz.imputed)[names(data_in.maz.imputed)=='c(Year)'] = 'Year'
-  #save(data_in.maz.imputed,file = './Outputs4Pred/data_in_maz.imputed.RData')
-  load('./Outputs4Pred/data_in_maz.imputed.RData')
-  
-  set.seed(17516)
-  smp_size <- floor(0.75 * nrow(data_in.maz.imputed))
-  train_ind <- sample(seq_len(nrow(data_in.maz.imputed)), size = smp_size)
-  
-  train <- data_in.maz.imputed[train_ind, ]
-  test <- data_in.maz.imputed[-train_ind, ]
+<!--   # look at generalized additive models -->
 
-  grid = expand.grid()
 
-model <-  train(maz_dam1_wo_zones, data = train, method="svmRadial", 
-    trControl=trainControl(method='cv', number=10,search = 'grid',allowParallel = T),)
-model$results
+<!--   # # Problem not spliting by groups... look at gkf.split for scikitlearn -->
+<!--   svm_model1 <- randomForest(maz_dam1_w_ea,pp.train, mtry = 9) -->
+<!--   summary(svm_model1) -->
+<!--   varImpPlot(svm_model1) -->
+
+
+
+<!--   # impute missing data  -->
+<!--   set.seed(222) -->
+<!--   #data_in.maz.imputed <- rfImpute(maz_dam1_wo_zones, data_in[!is.na(data_in$MAIZEOPH_W),]) -->
+<!--   #names(data_in.maz.imputed)[names(data_in.maz.imputed)=='c(Year)'] = 'Year' -->
+<!--   #save(data_in.maz.imputed,file = './Outputs4Pred/data_in_maz.imputed.RData') -->
+<!--   load('./Outputs4Pred/data_in_maz.imputed.RData') -->
+
+<!--   set.seed(17516) -->
+<!--   smp_size <- floor(0.75 * nrow(data_in.maz.imputed)) -->
+<!--   train_ind <- sample(seq_len(nrow(data_in.maz.imputed)), size = smp_size) -->
+
+<!--   train <- data_in.maz.imputed[train_ind, ] -->
+<!--   test <- data_in.maz.imputed[-train_ind, ] -->
+
+<!--   grid = expand.grid() -->
+
+<!-- model <-  train(maz_dam1_wo_zones, data = train, method="svmRadial",  -->
+<!--     trControl=trainControl(method='cv', number=10,search = 'grid',allowParallel = T),) -->
+<!-- model$results -->
 
 # # CUDA Implementation
 # #https://github.com/Danko-Lab/Rgtsvm/blob/master/Rgtsvm-vignette.pdf
