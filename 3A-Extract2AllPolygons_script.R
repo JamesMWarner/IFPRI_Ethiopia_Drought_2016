@@ -165,8 +165,6 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
                                    PlantingDay=1,HarvestMonth=1,HarvestDay=30)
 
 
-
-
   # Get summary statistics lists
 
   extr_values = Poly_Veg_Ext
@@ -179,20 +177,17 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
   n = 1000
   blocks = split(x, sort(x%%n))
 
-  
-
   NDVI_summary_all_EAs <- foreach(i = 1:length(blocks), inorder=T) %do% {
      print(i)
      Annual_Summary_Functions(extr_values[as.numeric(blocks[[i]])], PlantHarvestTable,Quant_percentile, aggregate=T,
                                          return_df=T,num_workers)  # make sure to convert block from integer to numeric for index
-}
+  }
 
-
-NDVI_summary_all_EAs = Annual_Summary_Functions(extr_values, PlantHarvestTable,Quant_percentile, aggregate=T,
+  NDVI_summary_all_EAs = Annual_Summary_Functions(extr_values, PlantHarvestTable,Quant_percentile, aggregate=T,
                                          return_df=T,num_workers)  # make sure to convert block from integer to numeric for index
 
-product = 'NDVI'
- save(NDVI_summary_all_EAs, file = paste('../Processed Panel/ExtractRaw_Combined_AllEAs/','AllEAs_',product,'_panel_summary.RData',sep='') )
+  product = 'NDVI'
+  save(NDVI_summary_all_EAs, file = paste('../Processed Panel/ExtractRaw_Combined_AllEAs/','AllEAs_',product,'_panel_summary.RData',sep='') )
 
 
 

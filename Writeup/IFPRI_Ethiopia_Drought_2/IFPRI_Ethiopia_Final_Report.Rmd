@@ -1114,8 +1114,26 @@ tef_dam1_w_ea = dependent ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_ma
   confusionMatrix(data =  pp.test$pred, reference = (pp.test$TEFFDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
 ```
 
+```{r Predict Damages to all EAs,  echo=FALSE, message=FALSE, warning=FALSE,fig.height=7, include=FALSE} 
+  # Read in all EA data
+
+  # all_eas = readOGR("/home/mmann1123/Documents/IFPRI_Ethiopia_Drought_2016/Data/EnumerationAreas/", "EnumerationAreasSIN")
+  # plot(all_eas)
+  # all_eas = all_eas[!(all_eas$R_NAME %in% c('SOMALI','Addis Ababa','SOMALIE')),]
+  # all_eas@data$id = rownames(all_eas@data)
+  # all_eas_df = fortify(all_eas, region="id")
+  # all_eas_df = join(all_eas_df, all_eas@data, by="id")
+  # save(all_eas_df,file = './Outputs4Pred/all_eas_df.RData')
+  load('./Outputs4Pred/all_eas_df.RData')
   
 
+ggplot(all_eas_df,aes(long,lat,group=id  ))+  #fill=dist_rcap,colour=dist_rcap) + color = 'gray',
+  geom_polygon(fill = 'white',colour='black') +coord_quickmap()
+  
+load('../../../Data/Processed Panel/Processed Panel/ExtractRaw_Combined_AllEAs/AllEAs_NDVI_panel_summary.RData') 
+NDVI_summary_all_EAs[[1]]
+
+```
 
 <!--   # look at generalized additive models -->
 
