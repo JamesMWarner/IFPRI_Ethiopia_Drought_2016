@@ -17,13 +17,15 @@ if [ -e $HOME/.Renviron ]; then cp $HOME/.Renviron $HOME/.Renviron.bkp; fi
 if [ ! -d $HOME/.Rtmp ] ; then mkdir $HOME/.Rtmp; fi
 echo "TMP='$HOME/.Rtmp'" > $HOME/.Renviron
 
-module load proj.4/4.8.0
-module load gdal/gcc/1.11
+
+module load gcc/4.9.2
+module load proj.4/4.7
+module load gdal/gcc/2.2.0
 module load R/3.3.3
-module load gcc/4.9.0
+R
 
-srun R CMD BATCH ./scriptvselect_sor.R
 
+srun R CMD BATCH ./extract_alleas_petaetppt.R
 
 
 
