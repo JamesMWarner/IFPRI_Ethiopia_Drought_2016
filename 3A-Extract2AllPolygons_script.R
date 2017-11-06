@@ -25,7 +25,8 @@ library(sp)
 library(foreach)
 library(doParallel)
 library(compiler)
-library(iterator)
+library(iterators)
+
 
 # Compile Functions ---------------------------------------------------------------
 
@@ -92,6 +93,13 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
 
   # use iterator package to move through rows
   inter_rows = lapply(1:length(bs_rows), function(x) seq(bs_rows[x],(bs_rows[x]+bs_nrows[x]-1)))
+
+  # change location stating at for parallel
+  start_loc = 14
+  end_loc = length(inter_rows)
+  inter_rows = inter_rows[start_loc:end_loc]
+
+  # set up iterator 
   inter_rows = iter(inter_rows)
 
   product = c('NDVI','EVI')[1]
@@ -106,12 +114,13 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
                 get(paste(product,'_stack_h21v08_WO_Clouds_Clean_LC',sep='')),
                 get(paste(product,'_stack_h21v07_WO_Clouds_Clean_LC',sep=''))),10)
 
-        print(paste("saving block",rows))
+        print(paste("saving block",start_loc))
         save(Poly_Veg_Ext ,
                  file = paste(
                     '/lustre/groups/manngroup/Processed Panel/ExtractRaw/',
-                    rows,product,'_panel_','_ExtractRaw','.RData',sep='') )
-        rm(Poly_Veg_Ext)
+                    start_loc,product,'_panel_','_ExtractRaw','.RData',sep='') )
+        start_loc = start_loc + 1   # counter so that can start with later blocks
+	rm(Poly_Veg_Ext)
         return(0)
   }
 
@@ -147,14 +156,14 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
   Poly_Veg_Ext = holder
   
   dir.create(file.path('../Processed Panel/ExtractRaw_Combined_AllEAs/'), showWarnings=F,recursive=T) # create dir for tifs
-  save(Poly_Veg_Ext, file = paste('../Processed Panel/ExtractRaw_Combined_AllEAs/','AllEAs_',product,'_panel_ExtractRaw.RData',sep='') )
+  save(Poly_Veg_Ext, file = paste('../Processed Panel/ExtractRaw_Combined_AllEAs/','AllEAs_',product,'_panel_ExtractRaw2.RData',sep='') )
 
 
   # Summary Functions --------------------------------------------------------
  
   setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Processed Panel/ExtractRaw/')
   product = 'NDVI'
-  load(paste('../Processed Panel/ExtractRaw_Combined_AllEAs/','AllEAs_',product,'_panel_ExtractRaw.RData',sep='') )
+  load(paste('../Processed Panel/ExtractRaw_Combined_AllEAs/','AllEAs_',product,'_panel_ExtractRaw2.RData',sep='') )
 
 
   # Get planting and harvest dates
@@ -184,7 +193,7 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
                                          return_df=T,num_workers)  # make sure to convert block from integer to numeric for index
 
   product = 'NDVI'
-  save(NDVI_summary_all_EAs, file = paste('../Processed Panel/ExtractRaw_Combined_AllEAs/','AllEAs_',product,'_panel_summary.RData',sep='') )
+  save(NDVI_summary_all_EAs, file = paste('../Processed Panel/ExtractRaw_Combined_AllEAs/','AllEAs_',product,'_panel_summary2.RData',sep='') )
 
 
 
@@ -243,20 +252,40 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
   	 'AllEas_Poly_PET_Ext_V',version,'.RData',sep=''))
   rm(list=c('Poly_PET_Ext_sub','PET_stack'))
   
+
+  part1 = 1:30000
+  part2 = 30001:length(Polys_sub)
+
   load(paste('./ETa Anomaly/ETA_stack_V',version,'.RData',sep=''))
-  Poly_ETA_Ext_sub = extract_value_point_polygon(Polys_sub,ETA_stack,12)
+  Poly_ETA_Ext_sub = extract_value_point_polygon(Polys_sub[part1,],ETA_stack,13)
   save(Poly_ETA_Ext_sub,
   	 file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
-  	 'AllEas_Poly_ETA_Ext_V',version,'.RData',sep=''))
+  	 'AllEas_Poly_ETA_Ext_V',version,'part1.RData',sep=''))
   rm(list=c('Poly_ETA_Ext_sub','ETA_stack'))
+
+  Poly_ETA_Ext_sub = extract_value_point_polygon(Polys_sub[part2,],ETA_stack,13)
+  save(Poly_ETA_Ext_sub,
+         file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+         'AllEas_Poly_ETA_Ext_V',version,'part2.RData',sep=''))
+  rm(list=c('Poly_ETA_Ext_sub','ETA_stack'))
+
+
+
 
   ## deal with CHIRPS PPT data downloaded and stacked w/ 1a-DownloadCHIRPSFTP_Rcurl.R
   load('./Data Stacks/Rain Stacks/Rain_Stack_h21v07_h21v08_h22v07_h22v08.RData')
-  Poly_PPT_Ext_sub = extract_value_point_polygon(Polys_sub,rain_stack,12)
+  Poly_PPT_Ext_sub = extract_value_point_polygon(Polys_sub[part1,],rain_stack,12)
   save(Poly_PPT_Ext_sub,
   	 file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
-  	 'AllEas_Poly_PPT_Ext_V',version,'.RData',sep=''))
+  	 'AllEas_Poly_PPT_Ext_V',version,'part1.RData',sep=''))
   rm(list=c('Poly_PPT_Ext_sub','rain_stack'))
+
+  Poly_PPT_Ext_sub = extract_value_point_polygon(Polys_sub[part2,],rain_stack,12)
+  save(Poly_PPT_Ext_sub,
+         file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+         'AllEas_Poly_PPT_Ext_V',version,'part2.RData',sep=''))
+  rm(list=c('Poly_PPT_Ext_sub','rain_stack'))
+
 
   #fix date NO LONGER NEEDED, intrgrated into 1a-... .R
   #Poly_PPT_Ext_sub=  lapply(1:length(Poly_PPT_Ext_sub),function(x){

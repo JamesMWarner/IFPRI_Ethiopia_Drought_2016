@@ -8,7 +8,7 @@
 #SBATCH -N 1
 #SBATCH -p defq
 #SBATCH -D /groups/manngroup/IFPRI_Ethiopia_Dought_2016/IFPRI_Ethiopia_Drought_2016
-#SBATCH -t 7-00:00:00
+#SBATCH -t 12-00:00:00
 #SBATCH --mail-user=mmann1123@gwu.edu
 #SBATCH --mail-type=ALL
 
@@ -25,7 +25,7 @@ module load R/3.3.3
 R
 
 
-srun R CMD BATCH ./extract_alleas_petaetppt.R
+srun R CMD BATCH ./extract_alleas_eta.R
 
 
 
