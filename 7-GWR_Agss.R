@@ -110,159 +110,24 @@ library(sf)
 sf <- st_as_sf(sp) 
 names(sf)
 
-ggplot() + geom_sf(data = sf, aes(colour=Local_R2)) +
-  coord_sf() +
-  ggtitle(paste("Local R2"))  
+# loop through variable plots
+for(name in names(sf)[1:13]){
+  print(ggplot() + geom_sf(data = sf, aes_string(colour=paste(name))) +
+    coord_sf() + ggtitle(paste(name)) ) 
+}
 
-ggplot() + geom_sf(data = sf, aes(colour=MAIZEEXTAREA_P)) +
-  coord_sf() +
-  ggtitle(paste("Local R2")) 
-
-ggplot() + geom_sf(data = sf, aes(colour=MAIZESERRAREA_P)) +
-  coord_sf() +
-  ggtitle(paste("Local R2")) 
-
-ggplot() + geom_sf(data = sf, aes(colour=MAIZESERRAREA_P)) +
-  coord_sf() +
-  ggtitle(paste("Local R2")) 
-
-
-
-# find kernel distance and form
-GWRbandwidth <- gwr.sel(form1, data=eas.agss.yx.maize ,adapt=T) 
-# fit model 
-gwr.model = gwr(form1, data=eas.agss.yx.maize, adapt =  GWRbandwidth, hatmatrix=TRUE, se.fit=TRUE) 
-gwr.model
-# Create an object with the value of Quasi-global R2
-globalR2 <- (1 - (gwr.model$results$rss/gwr.model$gTSS))
-#get model results  https://gis.stackexchange.com/questions/241127/how-to-plot-output-from-gwr-in-r
-sp = gwr.model$SDF
-
-#sp$RK_CODE = model.frame(form1_rk,eas.agss.yx.maize@data)$RK_CODE
-# sp_outliers = gwr.model$SDF[gwr.model$SDF$MAIZEMERR2AREA_P>1000,]
-# sp_outliers
-
-# Export to KML  
-# p4s <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84")
-# sp_wgs84<- spTransform(sp, CRS= p4s)
-# sp_wgs84 = sp_wgs84[,c('MAIZEMERR2AREA_P')]
-# writeOGR(sp_wgs84, dsn="./sp_wgs84.kml", layer= "sp_wgs84", driver="KML", dataset_options=c("NameField=name"),overwrite_layer = T)
-
-# convert to sf spatial data format (easier and faster)
-library(sf)
-sf <- st_as_sf(sp) 
-
-ggplot() + geom_sf(data = sf, aes(colour=localR2)) +
-  coord_sf() +
-  ggtitle(paste("Local R2")) +
-  labs(title='localR2',subtitle = paste("Global R2:", round(globalR2, 2) ) ) 
+# loop through variable plots Zero out insignificant 
+for(name in names(sf)[1:13]){
+  isnsig = abs(gwr.rob$SDF@data[,paste(name)] /gwr.rob$SDF@data[,paste(name,"SE",sep='_')])<1.64  # find insignificant at 90%
+  sf[isnsig,paste(name)] = NA # NA out insigg
+  plots = ggplot() + geom_sf(data = sf, aes_string(colour=paste(name))) +
+          coord_sf() + ggtitle(paste(name))
+  print(plots)
+  ggsave(plot = plots,filename = paste('./IFPRI_Ethiopia_Drought_2016/Visualizations/GWR_plot_',name,'.pdf',sep=''))
+  }
 
 
-ggplot() + geom_sf(data = sf, aes(colour=MAIZEEXTAREA_P)) +
-  coord_sf() +
-  ggtitle(paste("Local R2")) +
-  labs(title='MAIZEEXTAREA_P Coefficient',subtitle =  'Localized Coefficient Estimates' ) 
-
-ggplot() + geom_sf(data = sf, aes(colour=MAIZENIMSEED_P)) +
-  coord_sf() +
-  ggtitle(paste("Local R2")) +
-  labs(title='MAIZENIMSEED_P',subtitle =  'Localized Coefficient Estimates' ) 
-
-ggplot() + geom_sf(data = sf, aes(colour=MAIZESERRAREA_P)) +
-  coord_sf() +
-  ggtitle(paste("Local R2")) +
-  labs(title='MAIZESERRAREA_P',subtitle =  'Localized Coefficient Estimates' ) 
-
-ggplot() + geom_sf(data = sf, aes(colour=MAIZEMERR1AREA_P)) +
-  coord_sf() +
-  ggtitle(paste("Local R2")) +
-  labs(title='MAIZEMERR1AREA_P',subtitle =  'Localized Coefficient Estimates' ) 
-
-ggplot() + geom_sf(data = sf, aes(colour=MAIZEMERR2AREA_P)) +
-  coord_sf() +
-  ggtitle(paste("Local R2")) +
-  labs(title='MAIZEMERR2AREA_P',subtitle =  'Localized Coefficient Estimates' ) 
-
-ggplot() + geom_sf(data = sf, aes(colour=MAIZEMERR3AREA_P)) +
-  coord_sf() +
-  ggtitle(paste("Local R2")) +
-  labs(title='MAIZEMERR3AREA_P',subtitle =  'Localized Coefficient Estimates' ) 
-
-ggplot() + geom_sf(data = sf, aes(colour=MAIZEMERR4AREA_P)) +
-  coord_sf() +
-  ggtitle(paste("Local R2")) +
-  labs(title='MAIZEMERR4AREA_P',subtitle =  'Localized Coefficient Estimates' ) 
-
-ggplot() + geom_sf(data = sf, aes(colour=MAIZEMERR5AREA_P)) +
-  coord_sf() +
-  ggtitle(paste("Local R2")) +
-  labs(title='MAIZEMERR5AREA_P',subtitle =  'Localized Coefficient Estimates' ) 
-
-ggplot() + geom_sf(data = sf, aes(colour=MAIZENIMSEED_P)) +
-  coord_sf() +
-  ggtitle(paste("Local R2")) +
-  labs(title='MAIZENIMSEED_P',subtitle =  'Localized Coefficient Estimates' ) 
-
-ggplot() + geom_sf(data = sf, aes(colour=elevation)) +
-  coord_sf() +
-  ggtitle(paste("Local R2")) +
-  labs(title='elevation',subtitle =  'Localized Coefficient Estimates' ) 
-
-ggplot() + geom_sf(data = sf, aes(colour=dist_rcap)) +
-  coord_sf() +
-  ggtitle(paste("Local R2")) +
-  labs(title='dist_rcap',subtitle =  'Localized Coefficient Estimates' ) 
-ggplot() + geom_sf(data = sf, aes(colour=roadden)) +
-  coord_sf() +
-  ggtitle(paste("Local R2")) +
-  labs(title='roadden',subtitle =  'Localized Coefficient Estimates' ) 
-
-ggplot() + geom_sf(data = sf, aes(colour=dist_pp50k)) +
-  coord_sf() +
-  ggtitle(paste("Local R2")) +
-  labs(title='dist_pp50k',subtitle =  'Localized Coefficient Estimates' ) 
-
-ggplot() + geom_sf(data = sf, aes(colour=soil_TAWC)) +
-  coord_sf() +
-  ggtitle(paste("Local R2")) +
-  labs(title='soil_TAWC',subtitle =  'Localized Coefficient Estimates' ) 
-ggplot() + geom_sf(data = sf, aes(colour=G_mx)) +
-  coord_sf() +
-  ggtitle(paste("Local R2")) +
-  labs(title='G_mx',subtitle =  'Localized Coefficient Estimates' ) 
-ggplot() + geom_sf(data = sf, aes(colour=A_Qnt)) +
-  coord_sf() +
-  ggtitle(paste("Local R2")) +
-  labs(title='A_Qnt',subtitle =  'Localized Coefficient Estimates' ) 
-ggplot() + geom_sf(data = sf, aes(colour=PPT_G_AUC_Qnt)) +
-  coord_sf() +
-  ggtitle(paste("Local R2")) +
-  labs(title='PPT_G_AUC_Qnt',subtitle =  'Localized Coefficient Estimates' ) 
-ggplot() + geom_sf(data = sf, aes(colour=PPT_G_mn)) +
-  coord_sf() +
-  ggtitle(paste("Local R2")) +
-  labs(title='PPT_G_mn',subtitle =  'Localized Coefficient Estimates' ) 
-
-
-#print the results of the model
-gwr.model
-results<-as.data.frame(gwr.model$SDF)
-head(results)
-
-#attach coefficients to original dataframe
-LondonWards$coefUnauthAbsenceSchools11<-results$UnauthAbsenceSchools11
-LondonWards$coefPctWithNoQual11<-results$PctWithNoQual11
-LondonWards$coefCarsPerHH2011<-results$CarsPerHH2011
-
-#read in the shapefile using the maptools function readShapePoly
-boroughs <- readShapePoly("london_boroughs.shp")
-#fortify for use in ggpplot2
-boroughoutline <- fortify(boroughs, region="name")
-
-#now plot the various GWR coefficients                       
-gwr.point1<-ggplot(LondonWards, aes(x=x,y=y))+geom_point(aes(colour=LondonWards$coefUnauthAbsenceSchools11))+scale_colour_gradient2(low = "red", mid = "white", high = "blue", midpoint = 0, space = "rgb", na.value = "grey50", guide = "colourbar", guide_legend(title="Coefs"))
-gwr.point1+geom_path(data=boroughoutline,aes(long, lat, group=id), colour="grey")+coord_equal()
-
+ 
 
 
 # other stuff -------------------------------------------------------------
