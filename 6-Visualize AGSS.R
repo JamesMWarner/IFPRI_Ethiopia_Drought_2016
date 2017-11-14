@@ -311,20 +311,19 @@ grid.arrange(pptA,pptC,ncol=2)#,heights=c(.75,.25))
 
 # Polygon plots
 library(plyr)
-setwd('Z://Mann_Research//IFPRI_Ethiopia_Drought_2016')
-agss = read.dta13('./IFPRI_Ethiopia_Drought_Code/Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_PCA_v4.dta') 
+setwd('./Documents/IFPRI_Ethiopia_Drought_2016')
+agss = read.dta13('./IFPRI_Ethiopia_Drought_2016/Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_PCA_v4.dta') 
 
-# setwd('R:/Mann_Research/IFPRI_Ethiopia_Drought_2016/Data/AdminBoundaries/')
-# eas = readOGR(dsn=".", layer="ETH_adm3_UTM")
-# eas@data$id = rownames(eas@data)
-# eas.points = fortify(eas, region="id")
-# eas.df = join(eas.points, eas@data, by="id")
-#   
-# eas@data$id = rownames(eas@data)
-# eas.points = fortify(eas, region="id")
-# eas.df = join(eas.points, eas@data, by="id")
-# eas.df$WOREDACODE = eas.df$ID_3  # rename for join
-# eas.df$MYID = eas.df$ID_3  # rename for join
+eas = readOGR(dsn="./Data/AdminBoundaries/", layer="ETH_adm3_UTM")
+eas@data$id = rownames(eas@data)
+eas.points = fortify(eas, region="id")
+eas.df = join(eas.points, eas@data, by="id")
+
+eas@data$id = rownames(eas@data)
+eas.points = fortify(eas, region="id")
+eas.df = join(eas.points, eas@data, by="id")
+eas.df$WOREDACODE = eas.df$ID_3  # rename for join
+eas.df$MYID = eas.df$ID_3  # rename for join
 
 
 eas = readOGR(dsn="./Data/EnumerationAreas", layer="EnumerationAreasSIN_sub_agss_codes_wdata")
