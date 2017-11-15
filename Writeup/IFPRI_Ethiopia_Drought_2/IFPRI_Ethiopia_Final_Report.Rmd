@@ -355,6 +355,26 @@ Independent of the training data we intially witheld 25% of sub-kebele units to 
 
 [^2]: see: https://en.m.wikipedia.org/wiki/Cohen%27s_kappa    
 [^3]: the percentage of sub-kebeles with 'substantial damage' that are correctly classified by our models.
+
+## Geographically Weighted Regression
+Another way to explore the impacts of policy efforts is to look at how their impacts vary across space. We can do this by estimating how the relationships between a depedent and independent variables change in different areas. One popular method is using Geographically Weighted Regression (GWR) [@brunsdon1996geographically, @brunsdon1998geographically]. A simple GWR implimentation is as follows `r F1234=Formula_number` `r paste(F1234)`: `r Formula_number=Formula_number+1`
+
+(`r paste(F1234)`)    
+$$\ Y_{i}=\alpha_{i}+\sum_{k=1}^{m}\beta_{ik}X_{ik}+ \epsilon_{i}$$
+where $\ Y_{i}$ is the dependent variable at location $i$, $\alpha_{i}$ is the local intercept value, $\beta_{ik}$ is the local estimate of a coefficient for the $k$th independent variable at location $i$ times $\beta_{ik}$, which is the local coeffient estimate for the same location and independent variable, where $m$ is number of independent variables, and $\epsilon_{i}$ is the random error component for location $i$.
+ 
+These estimates are weighted by some geographic weighting function, whereby nearby locations are given greater weight in estimating local coefficient values than those farther away. In this case we use a bisquare adaptive kernal, where closer observations are given weights near one and further observations given less weight as follows in the Figure `r paste(Figure_number)`. We use an 'adaptive' kernal, indicating that the distance used to assigned weights can vary across the surface, but the number of observations used is fixed at some number. We use the adaptive kernal since some of our samples are geogrphically isolated, and therefore would have problems with local degrees of freedom. 
+
+![](bisquareplot.png)
+Figure `r paste(Figure_number)`: Example of Biquare weighting kernal`r Figure_number =Figure_number+1 `
+
+GWR can suffer from a number of problems in estimation, including local outliers and local multicolinearity. We address the prior with a robust implementation of GWR [@gollini2013gwmodel], that removes local outliers by examining the sudentised residuals from an initial GWR estimation. 
+
+Key take aways for GWR:
+* A new regression is estimated for every location
+* Each location has it's own coefficient estimates, standard errors, and R^2
+* Local outliers can be adressed
+
 # Results 
 ## Regression Results
 ```{r Panel Maize Regression, echo=FALSE, message=FALSE, warning=FALSE}
