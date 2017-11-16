@@ -3,8 +3,8 @@ title: "Modeling Impacts of Drought on all Major Crops in Ethiopia"
 author: "Michael L Mann & James Warner"
 date: "September 29, 2017"
 output:
-  pdf_document: default
   word_document: default
+  pdf_document: default
 bibliography: mybibfile.bib
 ---
 
@@ -361,11 +361,12 @@ Another way to explore the impacts of policy efforts is to look at how their imp
 
 (`r paste(F1234)`)    
 $$\ Y_{i}=\alpha_{i}+\sum_{k=1}^{m}\beta_{ik}X_{ik}+ \epsilon_{i}$$
+
 where $\ Y_{i}$ is the dependent variable at location $i$, $\alpha_{i}$ is the local intercept value, $\beta_{ik}$ is the local estimate of a coefficient for the $k$th independent variable at location $i$ times $\beta_{ik}$, which is the local coeffient estimate for the same location and independent variable, where $m$ is number of independent variables, and $\epsilon_{i}$ is the random error component for location $i$.
  
 These estimates are weighted by some geographic weighting function, whereby nearby locations are given greater weight in estimating local coefficient values than those farther away. In this case we use a bisquare adaptive kernal, where closer observations are given weights near one and further observations given less weight as follows in the Figure `r paste(Figure_number)`. We use an 'adaptive' kernal, indicating that the distance used to assigned weights can vary across the surface, but the number of observations used is fixed at some number. We use the adaptive kernal since some of our samples are geogrphically isolated, and therefore would have problems with local degrees of freedom. 
 
-![](bisquareplot.png)
+![](bisquareplot_md.png)
 Figure `r paste(Figure_number)`: Example of Biquare weighting kernal`r Figure_number =Figure_number+1 `
 
 GWR can suffer from a number of problems in estimation, including local outliers and local multicolinearity. We address the prior with a robust implementation of GWR [@gollini2013gwmodel], that removes local outliers by examining the sudentised residuals from an initial GWR estimation. 
@@ -804,13 +805,13 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
   # 
   
   #set up seeds for multicore
-  set.seed(123)
-  seeds <- vector(mode = "list", length = 16)
-  for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
-  
+  # set.seed(123)
+  # seeds <- vector(mode = "list", length = 16)
+  # for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
+  # 
   #set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
-  groups = groupKFold(train$EACODE, k = 15)
-  
+  # groups = groupKFold(train$EACODE, k = 15)
+  # 
    #train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
   # maz.rf<-train(maz_dam1_w_ea,data=pp.train,method="rf",
   #                 trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
@@ -821,6 +822,9 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
   # save(maz.rf,file = './Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P>.3_zone.RData')
   load('./Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P<.3_zone.RData')
   pp.test$pred = predict(maz.rf,pp.test)
+  # write save predictions for james
+  # model_data$pred_MAIZEDAMAGE = predict(maz.rf, predict(preProcess(model_data, method = "knnImpute",k=25),model_data) )
+  # write.csv(model_data[,c('EACODE','pred_MAIZEDAMAGE')],'./Outputs4Share/maz.rfMAIZEDAMAGEAREA_pred.csv',row.names = F)
   # get accuracy measures 
   cm_maz = confusionMatrix(data =  pp.test$pred, reference = (pp.test$MAIZEDAMAGEAREA_P<0.3), mode = "prec_recall")
 
@@ -930,18 +934,21 @@ maz.rf %>% partial(pred.var = thrd_imp_maz) %>% autoplot(rug = F, train = pp.tra
   for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
   
   #set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
-  groups = groupKFold(train$EACODE, k = 15)
-  
+  # groups = groupKFold(train$EACODE, k = 15)
   # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
-  wht.rf<-train(wht_dam1_w_ea,data=pp.train,method="rf",
-                 trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
-                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
-  print(maz.rf)
-  save(wht.rf,file = './Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P>.3_zone.RData')
+  # wht.rf<-train(wht_dam1_w_ea,data=pp.train,method="rf",
+  #                trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
+  #                prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
+  # print(maz.rf)
+  # save(wht.rf,file = './Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P>.3_zone.RData')
   load('./Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P>.3_zone.RData')
   
   pp.test$pred = predict(wht.rf,pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
+   #write save predictions for james
+  # model_data$pred_WHEATDAMAGE = predict(wht.rf, predict(preProcess(model_data, method = "knnImpute",k=25),model_data) )
+  # write.csv(model_data[,c('EACODE','pred_WHEATDAMAGE')],'./Outputs4Share/wht.rfWHEATDAMAGEAREA_pred.csv',row.names = F)
+  # 
   confusionMatrix(data =  pp.test$pred, reference = (pp.test$WHEATDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
 ```
 
@@ -996,15 +1003,19 @@ sor_dam1_w_ea = dependent ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_ma
   groups = groupKFold(train$EACODE, k = 15)
   
   # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
-  sor.rf<-train(sor_dam1_w_ea,data=pp.train,method="rf",
-                  trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
-                  prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
-  print(sor.rf)
-  save(sor.rf,file = './Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P>.3_zone.RData')
+  # sor.rf<-train(sor_dam1_w_ea,data=pp.train,method="rf",
+  #                 trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
+  #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
+  # print(sor.rf)
+  # save(sor.rf,file = './Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P>.3_zone.RData')
   load('./Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P>.3_zone.RData')
   
   pp.test$pred = predict(sor.rf, pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
+     #write save predictions for james
+  # model_data$pred_SORGDAMAGE = predict(sor.rf, predict(preProcess(model_data, method = "knnImpute",k=25),model_data) )
+  # write.csv(model_data[,c('EACODE','pred_SORGDAMAGE')],'./Outputs4Share/sor.rfSORGDAMAGEAREA_pred.csv',row.names = F)
+
   confusionMatrix(data =  pp.test$pred, reference = (pp.test$SORGHUMDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
 ```
 
@@ -1059,15 +1070,18 @@ bar_dam1_w_ea = dependent ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_ma
   groups = groupKFold(train$EACODE, k = 15)
   
   # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
-  bar.rf<-train(bar_dam1_w_ea,data=pp.train,method="rf",
-                  trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
-                  prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
-  print(bar.rf)
-  save(bar.rf,file = './Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P>.3_zone.RData')
+  # bar.rf<-train(bar_dam1_w_ea,data=pp.train,method="rf",
+  #                 trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
+  #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
+  # print(bar.rf)
+  # save(bar.rf,file = './Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P>.3_zone.RData')
   load('./Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P>.3_zone.RData')
   
   pp.test$pred = predict(bar.rf, pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
+     #write save predictions for james
+  # model_data$pred_BARLEYDAMAGE = predict(bar.rf, predict(preProcess(model_data, method = "knnImpute",k=25),model_data) )
+  # write.csv(model_data[,c('EACODE','pred_BARLEYDAMAGE')],'./Outputs4Share/bar.rfBARLEYDAMAGEAREA_pred.csv',row.names = F)
   confusionMatrix(data =  pp.test$pred, reference = (pp.test$BARLEYDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
 ```
    
@@ -1122,15 +1136,18 @@ tef_dam1_w_ea = dependent ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_ma
   groups = groupKFold(train$EACODE, k = 15)
   
   # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
-  tef.rf<-train(tef_dam1_w_ea,data=pp.train,method="rf",
-                  trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
-                  prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
-  print(tef.rf)
-  save(tef.rf,file = './Outputs4Pred/tef.rf.TEFFDAMAGEAREA_P>.3_zone.RData')
+  # tef.rf<-train(tef_dam1_w_ea,data=pp.train,method="rf",
+  #                 trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
+  #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
+  # print(tef.rf)
+  # save(tef.rf,file = './Outputs4Pred/tef.rf.TEFFDAMAGEAREA_P>.3_zone.RData')
   load('./Outputs4Pred/tef.rf.TEFFDAMAGEAREA_P>.3_zone.RData')
   
   pp.test$pred = predict(tef.rf, pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
+  # model_data$pred_TEFFDAMAGE = predict(tef.rf, predict(preProcess(model_data, method = "knnImpute",k=25),model_data) )
+  # write.csv(model_data[,c('EACODE','pred_TEFFDAMAGE')],'./Outputs4Share/tef.rfTEFFDAMAGEAREA_pred.csv',row.names = F)
+ 
   confusionMatrix(data =  pp.test$pred, reference = (pp.test$TEFFDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
 ```
 
