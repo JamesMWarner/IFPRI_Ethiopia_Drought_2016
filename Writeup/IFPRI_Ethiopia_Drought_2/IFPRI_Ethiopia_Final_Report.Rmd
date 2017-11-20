@@ -782,7 +782,7 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
   # sample from EAs 
   set.seed(17516)
   # limit to variables of interest by EA 
-  model_data = data_in[,names(data_in) %in%   c(all.vars(maz_dam1_w_ea),'EACODE')]   
+  model_data = data_in[,names(data_in) %in%   c(all.vars(maz_dam1_w_ea),'EACODE','Year')]   
   num_eas <- floor(0.75 * length(unique(model_data$EACODE)))
   train_eas <- sample(unique(model_data$EACODE), size = num_eas)
   
@@ -824,7 +824,7 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
   pp.test$pred = predict(maz.rf,pp.test)
   # write save predictions for james
   # model_data$pred_MAIZEDAMAGE = predict(maz.rf, predict(preProcess(model_data, method = "knnImpute",k=25),model_data) )
-  # write.csv(model_data[,c('EACODE','pred_MAIZEDAMAGE')],'./Outputs4Share/maz.rfMAIZEDAMAGEAREA_pred.csv',row.names = F)
+  # write.csv(model_data[,c('EACODE','Year','pred_MAIZEDAMAGE')],'./Outputs4Share/maz.rfMAIZEDAMAGEAREA_pred.csv',row.names = F)
   # get accuracy measures 
   cm_maz = confusionMatrix(data =  pp.test$pred, reference = (pp.test$MAIZEDAMAGEAREA_P<0.3), mode = "prec_recall")
 
@@ -912,7 +912,7 @@ maz.rf %>% partial(pred.var = thrd_imp_maz) %>% autoplot(rug = F, train = pp.tra
   set.seed(17516)
   
   # limit to variables of interest by EA 
-  model_data = data_in[,names(data_in) %in%   c(all.vars(wht_dam1_w_ea),'EACODE')]   
+  model_data = data_in[,names(data_in) %in%   c(all.vars(wht_dam1_w_ea),'EACODE','Year')]   
   num_eas <- floor(0.75 * length(unique(model_data$EACODE)))
   train_eas <- sample(unique(model_data$EACODE), size = num_eas)
   
@@ -947,7 +947,7 @@ maz.rf %>% partial(pred.var = thrd_imp_maz) %>% autoplot(rug = F, train = pp.tra
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
    #write save predictions for james
   # model_data$pred_WHEATDAMAGE = predict(wht.rf, predict(preProcess(model_data, method = "knnImpute",k=25),model_data) )
-  # write.csv(model_data[,c('EACODE','pred_WHEATDAMAGE')],'./Outputs4Share/wht.rfWHEATDAMAGEAREA_pred.csv',row.names = F)
+  # write.csv(model_data[,c('EACODE','Year','pred_WHEATDAMAGE')],'./Outputs4Share/wht.rfWHEATDAMAGEAREA_pred.csv',row.names = F)
   # 
   confusionMatrix(data =  pp.test$pred, reference = (pp.test$WHEATDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
 ```
@@ -982,7 +982,7 @@ sor_dam1_w_ea = dependent ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_ma
   set.seed(17516)
   
   # limit to variables of interest by EA 
-  model_data = data_in[,names(data_in) %in%   c(all.vars(sor_dam1_w_ea),'EACODE')]   
+  model_data = data_in[,names(data_in) %in%   c(all.vars(sor_dam1_w_ea),'EACODE','Year')]   
   num_eas <- floor(0.75 * length(unique(model_data$EACODE)))
   train_eas <- sample(unique(model_data$EACODE), size = num_eas)
   
@@ -1014,7 +1014,7 @@ sor_dam1_w_ea = dependent ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_ma
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
      #write save predictions for james
   # model_data$pred_SORGDAMAGE = predict(sor.rf, predict(preProcess(model_data, method = "knnImpute",k=25),model_data) )
-  # write.csv(model_data[,c('EACODE','pred_SORGDAMAGE')],'./Outputs4Share/sor.rfSORGDAMAGEAREA_pred.csv',row.names = F)
+  # write.csv(model_data[,c('EACODE','Year','pred_SORGDAMAGE')],'./Outputs4Share/sor.rfSORGDAMAGEAREA_pred.csv',row.names = F)
 
   confusionMatrix(data =  pp.test$pred, reference = (pp.test$SORGHUMDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
 ```
@@ -1049,7 +1049,7 @@ bar_dam1_w_ea = dependent ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_ma
   set.seed(17516)
   
   # limit to variables of interest by EA 
-  model_data = data_in[,names(data_in) %in%   c(all.vars(bar_dam1_w_ea),'EACODE')]   
+  model_data = data_in[,names(data_in) %in%   c(all.vars(bar_dam1_w_ea),'EACODE','Year')]   
   num_eas <- floor(0.75 * length(unique(model_data$EACODE)))
   train_eas <- sample(unique(model_data$EACODE), size = num_eas)
   
@@ -1081,7 +1081,7 @@ bar_dam1_w_ea = dependent ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_ma
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
      #write save predictions for james
   # model_data$pred_BARLEYDAMAGE = predict(bar.rf, predict(preProcess(model_data, method = "knnImpute",k=25),model_data) )
-  # write.csv(model_data[,c('EACODE','pred_BARLEYDAMAGE')],'./Outputs4Share/bar.rfBARLEYDAMAGEAREA_pred.csv',row.names = F)
+  # write.csv(model_data[,c('EACODE','Year','pred_BARLEYDAMAGE')],'./Outputs4Share/bar.rfBARLEYDAMAGEAREA_pred.csv',row.names = F)
   confusionMatrix(data =  pp.test$pred, reference = (pp.test$BARLEYDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
 ```
    
@@ -1115,7 +1115,7 @@ tef_dam1_w_ea = dependent ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_ma
   set.seed(17516)
   
   # limit to variables of interest by EA 
-  model_data = data_in[,names(data_in) %in%   c(all.vars(tef_dam1_w_ea),'EACODE')]   
+  model_data = data_in[,names(data_in) %in%   c(all.vars(tef_dam1_w_ea),'EACODE','Year')]   
   num_eas <- floor(0.75 * length(unique(model_data$EACODE)))
   train_eas <- sample(unique(model_data$EACODE), size = num_eas)
   
@@ -1146,7 +1146,7 @@ tef_dam1_w_ea = dependent ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_ma
   pp.test$pred = predict(tef.rf, pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
   # model_data$pred_TEFFDAMAGE = predict(tef.rf, predict(preProcess(model_data, method = "knnImpute",k=25),model_data) )
-  # write.csv(model_data[,c('EACODE','pred_TEFFDAMAGE')],'./Outputs4Share/tef.rfTEFFDAMAGEAREA_pred.csv',row.names = F)
+  # write.csv(model_data[,c('EACODE','Year','pred_TEFFDAMAGE')],'./Outputs4Share/tef.rfTEFFDAMAGEAREA_pred.csv',row.names = F)
  
   confusionMatrix(data =  pp.test$pred, reference = (pp.test$TEFFDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
 ```
