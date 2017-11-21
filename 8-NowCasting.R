@@ -66,8 +66,8 @@ data_in_plm$Fert_Amt_Per_Area = data_in_plm$MAIZEFERT_CHEMICAL_AMT / (data_in_pl
 
 agss_lag_maz_z = MAIZEOPH_W ~ lag(data_in_plm$MAIZEOPH_W, 1)   +G_mx + G_mx_Qnt + G_AUC_leading+
   lag(MAIZEIMSEED,1) + lag(MAIZEDAMAGEAREA_P,1)  +  lag(Fert_Amt_Per_Area,1) +
-  lag(MAIZEEXTAREA,1) + PPT_G_mx+ PPT_G_AUC_leading+ PPT_G_mx_Qnt+
-  c(Year) +   bs(elevation,3) + factor(Z_CODE) 
+  lag(MAIZEEXTAREA,1) + PPT_G_mx_Qnt+
+ bs(elevation,3) + factor(Z_CODE) 
 agss_lag_maz_z <- plm(agss_lag_maz_z, data = data_in_plm, model = "random")
 
 # store for text pasting 

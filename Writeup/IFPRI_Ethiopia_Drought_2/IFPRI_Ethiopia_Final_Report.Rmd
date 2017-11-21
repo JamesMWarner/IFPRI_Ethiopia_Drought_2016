@@ -899,14 +899,12 @@ maz.rf %>% partial(pred.var = thrd_imp_maz) %>% autoplot(rug = F, train = pp.tra
   # remove EA with less than 4 observations
   counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(WHEATOPH_W))) %>% filter(non_na_count<4))
   data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
- 
-  # create dependent variable 
-  data_in$dependent = factor(data_in$WHEATDAMAGEAREA_P>0.3, levels=c('TRUE','FALSE'))
   
-  wht_dam1_w_ea = dependent ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
+  #set as < because caret reverses the outcome variable 
+  wht_dam1_w_ea =  factor(WHEATDAMAGEAREA_P<0.3) ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
 	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+ZONECODE
         
-  registerDoMC(cores = 6)
+  registerDoMC(cores = 3)
 
   # sample from EAs 
   set.seed(17516)
@@ -928,20 +926,28 @@ maz.rf %>% partial(pred.var = thrd_imp_maz) %>% autoplot(rug = F, train = pp.tra
   #save(data_in.maz.imputed.full,file = './Outputs4Pred/data_in.maz.imputed.full.RData')
 
   
+  # test plots REMOVE
+   # wht.rftest <- randomForest(wht_dam1_w_ea, pp.train,mtry=3)
+   # varImpPlot(wht.rftest)
+   # partialPlot(wht.rftest,pp.train,x.var='PPT_G_mn')
+   # partialPlot(wht.rftest,pp.train,x.var='G_mx')
+
+  
+  
   #set up seeds for multicore
   set.seed(123)
   seeds <- vector(mode = "list", length = 16)
   for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
   
   #set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
-  # groups = groupKFold(train$EACODE, k = 15)
+  groups = groupKFold(train$EACODE, k = 15)
   # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
   # wht.rf<-train(wht_dam1_w_ea,data=pp.train,method="rf",
   #                trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
   #                prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
-  # print(maz.rf)
-  # save(wht.rf,file = './Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P>.3_zone.RData')
-  load('./Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P>.3_zone.RData')
+  # print(wht.rf)
+  # save(wht.rf,file = './Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P>.3_zone_v2.RData')
+  load('./Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P>.3_zone_v2.RData')
   
   pp.test$pred = predict(wht.rf,pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
@@ -949,8 +955,58 @@ maz.rf %>% partial(pred.var = thrd_imp_maz) %>% autoplot(rug = F, train = pp.tra
   # model_data$pred_WHEATDAMAGE = predict(wht.rf, predict(preProcess(model_data, method = "knnImpute",k=25),model_data) )
   # write.csv(model_data[,c('EACODE','Year','pred_WHEATDAMAGE')],'./Outputs4Share/wht.rfWHEATDAMAGEAREA_pred.csv',row.names = F)
   # 
-  confusionMatrix(data =  pp.test$pred, reference = (pp.test$WHEATDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
+ cm_wht =  confusionMatrix(data =  pp.test$pred, reference = (pp.test$WHEATDAMAGEAREA_P<0.3), mode = "prec_recall") 
+
+  
 ```
+
+### Wheat Damages
+The confusion matrix compares predicted values against the observed (reference). We also report the a) overall accurancy, 2) Kappa coefficient, and 3) the recall rate[^3] as seen in table `r paste(Table_number)` below:
+
+*Table `r paste(Table_number)`: Confusion matrix for reported damages > 30% for Wheat* `r  Table_number=Table_number+1`
+`r library(pander); pander(cm_wht$table, caption = "FALSE = Crop damages greater than 30%")`
+*Table `r paste(Table_number)`: Performance metrics for reported damages > 30% for Wheat* `r  Table_number=Table_number+1`
+`r pander(data.frame(Accuracy=round(cm_wht$overall['Accuracy'],2), Kappa=round(cm_wht$overall['Kappa'],2), Recall=round(cm_wht$byClass['Recall'],2),row.names ='Value'))`
+ 
+For the case of wheat, qe see impressive identification of reported maize crop losses with a recall rate of `r round(cm_wht$byClass['Recall'],2)`, indicating that `r round(cm_wht$byClass['Recall'],2)*100`% of all substantial loss cases were predicted in our completely independent *testing* data. In all, `r cm_wht$table['FALSE','FALSE']` out of `r cm_wht$table['FALSE','FALSE']+ cm_wht$table['TRUE','FALSE']` reported cases were predicted, and only `r cm_wht$table['FALSE','TRUE']` cases were falsely predicted as crop failure areas. 
+ 
+We can also examine the relative importance of each variable to each model, as well as its estimated non-linear relationship with the dependent variable through partial dependency plots. First, let's examine the relative importance of each variable in the random forest through the role it played in Gini coefficient loss.
+
+Figure `r paste(Figure_number)`: Variable importance plot for maize damage prediction`r Figure_number =Figure_number+1 `
+
+```{r Variable Importance Maize, echo=FALSE, message=FALSE, warning=FALSE,fig.width=7}
+# store variable importance values
+varImp_wht = varImp(wht.rf)
+# plot importance 
+dotPlot(varImp_wht)
+# sort by importance
+varImp_wht$importance$name = rownames(varImp_wht$importance)
+varImp_wht$importance = varImp_wht$importance[order(varImp_wht$importance[,1],decreasing = T),]
+# store top 2 
+most_imp_wht = varImp_wht$importance$name[1]
+secd_imp_wht = varImp_wht$importance$name[6]
+thrd_imp_wht = varImp_wht$importance$name[7]
+```
+
+From the figure above we can see that `r most_imp_wht` has the highest relative importance in the random forest model. `r most_imp_wht` is **measured as the maximum NDVI value for the growing season. As such the highest NDVI value likely reflects a measure of plant health, with higher `r  rownames(varImp_wht$importance)[which.max(varImp_wht$importance$Overall)]` values corresponding to strong plant health at some point in the growing season.** We can also see that the most important variables are largely comprised of variables summarizing NDVI, with the exception of **PPT_G_mn which is the mean value of precipitation for each 10 day period across the growing season.**  
+
+We can now look at the partial dependence plots to help understand the non-linear response of reported damages to variables of interest, such as `r most_imp_wht`.  
+
+Figure `r paste(Figure_number)`: Partial dependency plot for influence of `r most_imp_wht` on maize damage prediction`r Figure_number =Figure_number+1 `
+
+```{r Partial Dependency Wheat first, echo=FALSE, message=FALSE, warning=FALSE,fig.width=7}
+wht.rf %>% partial(pred.var = most_imp_wht) %>% autoplot(rug = F, train = pp.train,x)+ labs(y='Likelihood of loss',x = paste(most_imp_wht, '\n (centered & scaled)'))
+```
+In the figure above, **we can see how the likelihood of reporting maize losses decreases rapidly after one standard deviation below the mean value of `r most_imp_wht`, with the likelihood of losses increasing at the upper end of the distribution. These losses at upper end of the distribution might reflect excess rainfall, or late season losses from lodging or frost. Ideally additional variables would capture the effects of these late season dynamics in ways that maximum NDVI cannot.** Similarly, we can look at the partial dependence plot for other variables of interest such as `r secd_imp_wht`.
+
+```{r Partial Dependency Wheat second, echo=FALSE, message=FALSE, warning=FALSE,fig.width=7}
+wht.rf %>% partial(pred.var = secd_imp_wht) %>% autoplot(rug = F, train = pp.train,x)+ labs(y='Likelihood of loss',x = paste(secd_imp_wht, '\n (centered & scaled)'))
+```
+
+```{r Partial Dependency Wheat third, echo=FALSE, message=FALSE, warning=FALSE,fig.width=7}
+wht.rf %>% partial(pred.var = thrd_imp_wht) %>% autoplot(rug = F, train = pp.train,x)+ labs(y='Likelihood of loss',x = paste(thrd_imp_wht, '\n (centered & scaled)'))
+```
+
 
 ```{r Predict Damages Sorghum Regression, eval=FALSE, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
 
@@ -960,8 +1016,7 @@ maz.rf %>% partial(pred.var = thrd_imp_maz) %>% autoplot(rug = F, train = pp.tra
   version = 4  
   setwd(Home_dir) 
 
- ######## MAIZE
-
+ 
  # read data
   data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v",version,".dta",sep=''))
   data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
@@ -970,13 +1025,11 @@ maz.rf %>% partial(pred.var = thrd_imp_maz) %>% autoplot(rug = F, train = pp.tra
   counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(SORGHUMOPH_W))) %>% filter(non_na_count<4))
   data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
  
-  # create dependent variable 
-  data_in$dependent = factor(data_in$SORGHUMDAMAGEAREA_P>0.3, levels=c('TRUE','FALSE'))
-  
-sor_dam1_w_ea = dependent ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
+   #set as < because caret reverses the outcome variable 
+sor_dam1_w_ea = factor(SORGHUMDAMAGEAREA_P<0.3) ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
 	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+ZONECODE
         
-  registerDoMC(cores = 6)
+  registerDoMC(cores = 4)
 
   # sample from EAs 
   set.seed(17516)
@@ -1007,8 +1060,8 @@ sor_dam1_w_ea = dependent ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_ma
   #                 trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
   #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
   # print(sor.rf)
-  # save(sor.rf,file = './Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P>.3_zone.RData')
-  load('./Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P>.3_zone.RData')
+  # save(sor.rf,file = './Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P>.3_zone_v2.RData')
+  load('./Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P>.3_zone_v2.RData')
   
   pp.test$pred = predict(sor.rf, pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
@@ -1016,7 +1069,7 @@ sor_dam1_w_ea = dependent ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_ma
   # model_data$pred_SORGDAMAGE = predict(sor.rf, predict(preProcess(model_data, method = "knnImpute",k=25),model_data) )
   # write.csv(model_data[,c('EACODE','Year','pred_SORGDAMAGE')],'./Outputs4Share/sor.rfSORGDAMAGEAREA_pred.csv',row.names = F)
 
-  confusionMatrix(data =  pp.test$pred, reference = (pp.test$SORGHUMDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
+  confusionMatrix(data =  pp.test$pred, reference = (pp.test$SORGHUMDAMAGEAREA_P<0.3), mode = "prec_recall")
 ```
 
 ```{r Predict Damages Barley Regression, eval=FALSE, echo=FALSE, message=FALSE, warning=FALSE,fig.height=7, include=FALSE}
@@ -1037,13 +1090,12 @@ sor_dam1_w_ea = dependent ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_ma
   counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(BARLEYOPH_W))) %>% filter(non_na_count<4))
   data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
   
-  # create dependent variable 
-  data_in$dependent = factor(data_in$BARLEYDAMAGEAREA_P>0.3, levels=c('TRUE','FALSE'))
-  
-bar_dam1_w_ea = dependent ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
+   #set as < because caret reverses the outcome variable 
+
+bar_dam1_w_ea = factor(BARLEYDAMAGEAREA_P<0.3) ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
 	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+ZONECODE
         
-  registerDoMC(cores = 6)
+  registerDoMC(cores = 4)
 
   # sample from EAs 
   set.seed(17516)
@@ -1074,15 +1126,15 @@ bar_dam1_w_ea = dependent ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_ma
   #                 trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
   #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
   # print(bar.rf)
-  # save(bar.rf,file = './Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P>.3_zone.RData')
-  load('./Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P>.3_zone.RData')
+  # save(bar.rf,file = './Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P>.3_zone_v2.RData')
+  load('./Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P>.3_zone_v2.RData')
   
   pp.test$pred = predict(bar.rf, pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
      #write save predictions for james
   # model_data$pred_BARLEYDAMAGE = predict(bar.rf, predict(preProcess(model_data, method = "knnImpute",k=25),model_data) )
   # write.csv(model_data[,c('EACODE','Year','pred_BARLEYDAMAGE')],'./Outputs4Share/bar.rfBARLEYDAMAGEAREA_pred.csv',row.names = F)
-  confusionMatrix(data =  pp.test$pred, reference = (pp.test$BARLEYDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
+  confusionMatrix(data =  pp.test$pred, reference = (pp.test$BARLEYDAMAGEAREA_P<0.3), mode = "prec_recall")
 ```
    
 ```{r Predict Damages Teff Regression, eval=FALSE, echo=FALSE, message=FALSE, warning=FALSE,fig.height=7, include=FALSE}
@@ -1103,10 +1155,9 @@ bar_dam1_w_ea = dependent ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_ma
   counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(TEFFOPH_W))) %>% filter(non_na_count<4))
   data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
    
-  # create dependent variable 
-  data_in$dependent = factor(data_in$TEFFDAMAGEAREA_P>0.3, levels=c('TRUE','FALSE'))
-  
-tef_dam1_w_ea = dependent ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
+  #set as < because caret reverses the outcome variable 
+
+tef_dam1_w_ea = factor(TEFFDAMAGEAREA_P<0.3) ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
 	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+ZONECODE
         
   registerDoMC(cores = 6)
@@ -1140,15 +1191,15 @@ tef_dam1_w_ea = dependent ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_ma
   #                 trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
   #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
   # print(tef.rf)
-  # save(tef.rf,file = './Outputs4Pred/tef.rf.TEFFDAMAGEAREA_P>.3_zone.RData')
-  load('./Outputs4Pred/tef.rf.TEFFDAMAGEAREA_P>.3_zone.RData')
+  # save(tef.rf,file = './Outputs4Pred/tef.rf.TEFFDAMAGEAREA_P>.3_zone_v2.RData')
+  load('./Outputs4Pred/tef.rf.TEFFDAMAGEAREA_P>.3_zone_v2.RData')
   
   pp.test$pred = predict(tef.rf, pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
   # model_data$pred_TEFFDAMAGE = predict(tef.rf, predict(preProcess(model_data, method = "knnImpute",k=25),model_data) )
   # write.csv(model_data[,c('EACODE','Year','pred_TEFFDAMAGE')],'./Outputs4Share/tef.rfTEFFDAMAGEAREA_pred.csv',row.names = F)
  
-  confusionMatrix(data =  pp.test$pred, reference = (pp.test$TEFFDAMAGEAREA_P>0.3), mode = "prec_recall",positive='TRUE')
+  confusionMatrix(data =  pp.test$pred, reference = (pp.test$TEFFDAMAGEAREA_P<0.3), mode = "prec_recall")
 ```
 
 ```{r Predict Damages to all EAs,  echo=FALSE, message=FALSE, warning=FALSE,fig.height=7, include=FALSE} 
