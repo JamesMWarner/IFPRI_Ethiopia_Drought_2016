@@ -53,7 +53,7 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
   dates = c('2009-01-01','2017-03-6') # example c('year-month-day',year-month-day')
 
   version = 4 # updated land cover classes
-
+  product ='NDVI'
 
 
 # Extract polygon or points data from stacks -------------------------------------
@@ -144,7 +144,8 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
   fname = list.files(".", glob2rx(paste('*','NDVI_panel__ExtractRaw.RData$',sep='')),full.names = F)
   nums = unlist(regmatches(fname, gregexpr("[0-9]+", fname)))
   fname = fname[order(as.numeric( nums))]  # put in order
-  
+  product = 'NDVI'
+
   holder =list()
   for(i in 1:length(fname)){
  	print(i)
@@ -156,7 +157,8 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
   Poly_Veg_Ext = holder
   
   dir.create(file.path('../Processed Panel/ExtractRaw_Combined_AllEAs/'), showWarnings=F,recursive=T) # create dir for tifs
-  save(Poly_Veg_Ext, file = paste('../Processed Panel/ExtractRaw_Combined_AllEAs/','AllEAs_',product,'_panel_ExtractRaw2.RData',sep='') )
+  save(Poly_Veg_Ext, file = paste('../Processed Panel/ExtractRaw_Combined_AllEAs/','AllEAs_',product,
+										'_panel_ExtractRaw2.RData',sep='') )
 
 
   # Summary Functions --------------------------------------------------------
@@ -222,69 +224,123 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
 
   for(layer in c('dist_rcap','roadden','dist_pp50k','elevation','soil_TAWC')){
 	 print(paste('working on ',layer))
-         #values = extract_value_point_polygon(Polys_sub,get(layer),16)
-	 #save(values,file = paste('./Outputs/AllEas_values_',layer,'backup.RData',sep=''))
+         values = extract_value_point_polygon(Polys_sub,get(layer),16)
+	 save(values,file = paste('./Outputs/AllEas_values_',layer,'backup2.RData',sep=''))
 	 load(paste('./Outputs/AllEas_values_',layer,'backup.RData',sep=''))
 	 mean = do.call('rbind',lapply(values, function(x) if (!is.null(x)&is.data.frame(x)) colMeans((x), na.rm=TRUE) else NA ))
          Polys_sub[[layer]] = as.numeric(mean)
- 	# save(Polys_sub,file = paste('./Outputs/AllEas_',layer,'backup.RData',sep=''))
   }
 
 
  writeOGR(obj=Polys_sub, dsn="/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/",
-         layer="EnumerationAreasSIN_v4_wdata", driver="ESRI Shapefile",overwrite=T)
+         layer="AllEas_EnumerationAreasSIN_v4_wdata2", driver="ESRI Shapefile",overwrite=T)
 
 
  writeOGR(obj=Polys_sub, dsn="/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/EnumerationAreasSIN_v4_wdata",
-         layer="EnumerationAreasSIN_v4_wdata", driver="GeoJSON",overwrite=T)
+         layer="AllEas_EnumerationAreasSIN_v4_wdata2", driver="GeoJSON",overwrite=T)
 
 
 
-# pull ETA PET data to polygons -----------------------------------
-  ##load data
-  version = 4
-  setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
-  ##pull to polygons
-  load(paste('./PET/PET_stack_V',version,'.RData',sep=''))
-  Poly_PET_Ext_sub = extract_value_point_polygon(Polys_sub,PET_stack,12)
-  save(Poly_PET_Ext_sub,
-  	 file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
-  	 'AllEas_Poly_PET_Ext_V',version,'.RData',sep=''))
-  rm(list=c('Poly_PET_Ext_sub','PET_stack'))
-  
+# pull ETA PET data to polygons FINISHED -----------------------------------
+#  ##load data
+#  version = 4
+#  setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
+#  ##pull to polygons
+#  load(paste('./PET/PET_stack_V',version,'.RData',sep=''))
+#  Poly_PET_Ext_sub = extract_value_point_polygon(Polys_sub,PET_stack,12)
+#  save(Poly_PET_Ext_sub,
+#  	 file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+#  	 'AllEas_Poly_PET_Ext_V',version,'.RData',sep=''))
+#  rm(list=c('Poly_PET_Ext_sub','PET_stack'))
+#  
+#
+#  part1 = 1:30000
+#  part2 = 30001:50000
+#  part3 = 50001:length(Polys_sub)
 
-  part1 = 1:30000
-  part2 = 30001:length(Polys_sub)
+  #load(paste('./ETa Anomaly/ETA_stack_V',version,'.RData',sep=''))
+  #Poly_ETA_Ext_sub = extract_value_point_polygon(Polys_sub[part1,],ETA_stack,13)
+  #save(Poly_ETA_Ext_sub,
+  #	 file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+  #	 'AllEas_Poly_ETA_Ext_V',version,'part1.RData',sep=''))
+  #rm(list=c('Poly_ETA_Ext_sub','ETA_stack'))
+#
+#  Poly_ETA_Ext_sub = extract_value_point_polygon(Polys_sub[part2,],ETA_stack,13)
+#  save(Poly_ETA_Ext_sub,
+#         file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+#         'AllEas_Poly_ETA_Ext_V',version,'part2.RData',sep=''))
+#  rm(list=c('Poly_ETA_Ext_sub','ETA_stack'))
+#
+#  Poly_ETA_Ext_sub = extract_value_point_polygon(Polys_sub[part3,],ETA_stack,10)
+#  save(Poly_ETA_Ext_sub,
+#         file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+#         'AllEas_Poly_ETA_Ext_V',version,'part3.RData',sep=''))
 
-  load(paste('./ETa Anomaly/ETA_stack_V',version,'.RData',sep=''))
-  Poly_ETA_Ext_sub = extract_value_point_polygon(Polys_sub[part1,],ETA_stack,13)
-  save(Poly_ETA_Ext_sub,
-  	 file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
-  	 'AllEas_Poly_ETA_Ext_V',version,'part1.RData',sep=''))
-  rm(list=c('Poly_ETA_Ext_sub','ETA_stack'))
 
-  Poly_ETA_Ext_sub = extract_value_point_polygon(Polys_sub[part2,],ETA_stack,13)
-  save(Poly_ETA_Ext_sub,
-         file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
-         'AllEas_Poly_ETA_Ext_V',version,'part2.RData',sep=''))
-  rm(list=c('Poly_ETA_Ext_sub','ETA_stack'))
-
+  # combine back ETA parts
+#  load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+#         'AllEas_Poly_ETA_Ext_V',version,'part1.RData',sep=''))
+#  all_eas_ETA_part1 = Poly_ETA_Ext_sub
+#  load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+#         'AllEas_Poly_ETA_Ext_V',version,'part2.RData',sep=''))
+#  all_eas_ETA_part2 = Poly_ETA_Ext_sub
+# load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+#         'AllEas_Poly_ETA_Ext_V',version,'part3.RData',sep=''))
+#  all_eas_ETA_part3 = Poly_ETA_Ext_sub
+#
+#  all_eas_ETA = c(all_eas_ETA_part1,all_eas_ETA_part2,all_eas_ETA_part3)
+#
+#  save(all_eas_ETA,
+#         file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+#         'AllEas_Poly_ETA_Ext_V',version,'.RData',sep=''))
+#  rm(list=c('all_eas_ETA_part1','all_eas_ETA_part2','all_eas_ETA_part3'))
 
 
 
   ## deal with CHIRPS PPT data downloaded and stacked w/ 1a-DownloadCHIRPSFTP_Rcurl.R
+#  part1 = 1:30000
+  part2 = 30001:50000
+  part3 = 50001:length(Polys_sub)
+
   load('./Data Stacks/Rain Stacks/Rain_Stack_h21v07_h21v08_h22v07_h22v08.RData')
-  Poly_PPT_Ext_sub = extract_value_point_polygon(Polys_sub[part1,],rain_stack,12)
-  save(Poly_PPT_Ext_sub,
-  	 file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
-  	 'AllEas_Poly_PPT_Ext_V',version,'part1.RData',sep=''))
-  rm(list=c('Poly_PPT_Ext_sub','rain_stack'))
+#  Poly_PPT_Ext_sub = extract_value_point_polygon(Polys_sub[part1,],rain_stack,12)
+#  save(Poly_PPT_Ext_sub,
+#  	 file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+#  	 'AllEas_Poly_PPT_Ext_V',version,'part1.RData',sep=''))
+#  rm(list=c('Poly_PPT_Ext_sub','rain_stack'))
 
   Poly_PPT_Ext_sub = extract_value_point_polygon(Polys_sub[part2,],rain_stack,12)
   save(Poly_PPT_Ext_sub,
          file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
          'AllEas_Poly_PPT_Ext_V',version,'part2.RData',sep=''))
-  rm(list=c('Poly_PPT_Ext_sub','rain_stack'))
+  rm(list=c('Poly_PPT_Ext_sub'))
+
+  Poly_PPT_Ext_sub = extract_value_point_polygon(Polys_sub[part3,],rain_stack,12)
+  save(Poly_PPT_Ext_sub,
+         file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+         'AllEas_Poly_PPT_Ext_V',version,'part3.RData',sep=''))
+  rm(list=c('Poly_PPT_Ext_sub'))
+
+
+
+
+
+  # combine back PPT parts   # part 2 not complete? 
+  load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+         'AllEas_Poly_PPT_Ext_V',version,'part1.RData',sep=''))
+  all_eas_PPT_part1 = Poly_PPT_Ext_sub
+  load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+         'AllEas_Poly_PPT_Ext_V',version,'part2.RData',sep=''))
+  all_eas_PPT_part2 = Poly_PPT_Ext_sub
+   
+   all_eas_PPT = c(all_eas_PPT_part1,all_eas_PPT_part2)
+#
+#  save(all_eas_ETA,
+#         file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+#         'AllEas_Poly_ETA_Ext_V',version,'.RData',sep=''))
+#  rm(list=c('all_eas_ETA_part1','all_eas_ETA_part2','all_eas_ETA_part3'))
+
+
 
 
   #fix date NO LONGER NEEDED, intrgrated into 1a-... .R
