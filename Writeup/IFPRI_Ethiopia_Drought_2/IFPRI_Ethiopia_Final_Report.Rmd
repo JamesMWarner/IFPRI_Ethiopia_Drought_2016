@@ -367,6 +367,7 @@ where $\ Y_{i}$ is the dependent variable at location $i$, $\alpha_{i}$ is the l
 These estimates are weighted by some geographic weighting function, whereby nearby locations are given greater weight in estimating local coefficient values than those farther away. In this case we use a bi-square adaptive kernel, where closer observations are given weights near one and further observations given less weight as follows in the Figure `r paste(Figure_number)`. We use an 'adaptive' kernel, indicating that the distance used to assigned weights can vary across the surface, but the number of observations used is fixed at some number. We use the adaptive kernel since some of our samples are geographically isolated, and therefore would have problems with local degrees of freedom. 
 
 ![](bisquareplot_md.png)
+
 Figure `r paste(Figure_number)`: Example of bi-square weighting kernel`r Figure_number =Figure_number+1 `
 
 GWR can suffer from a number of problems in estimation, including local outliers and local multicolinearity. We address the prior with a robust implementation of GWR [@gollini2013gwmodel], that removes local outliers by examining the studentized residuals from an initial GWR estimation. 
@@ -882,7 +883,7 @@ maz.rf %>% partial(pred.var = thrd_imp_maz) %>% autoplot(rug = F, train = pp.tra
 
 `r thrd_imp_maz` **is a measure of variability in NDVI across the entire year (including both the Meher and Belg seasons). We see a near linear decrease in the likelihood of damage starting from 1.5 sd below the mean, with a minima near one sd above. The high likelihood of failure corresponding with very low values of NDVI variance likely relates to early season trouble including a failure to germinate, or early damage leading to crop failure. These early catastrophic losses would have little change in NDVI across the year and therefore very low values of `r thrd_imp_maz`. After the minima, we see a minima in damages around +1 sd. This is likely related to the fact that a plot of healthy plants that is harvested and tilled, will likely have relatively high variance (especially in dual-cropping Meher and Belg areas). We can see around +2 sd that extremely high variance again corresponds to increased likelihood of losses, as dramatic shifts in plant health would likely correspond to.** 
 
-```{r Predict Damages Wheat Regression, eval=FALSE, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
+```{r Predict Damages Wheat Regression, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
 
 #### Predict damages WHEAT ----------------------------------------------------
 
@@ -1015,7 +1016,7 @@ wht.rf %>% partial(pred.var = thrd_imp_wht) %>% autoplot(rug = F, train = pp.tra
 
 In the figure above, **we can see some interesting similarities and differences between the wheat and maize response to variability in greeness. Of particular interest is the broader range of variability that has no substantial influence on the likelihood of losses. This is not nescessarily pointing out that wheat is more resiliant to changes, but might be an indication of a broader range of natural variability in greeness that is expected for wheat. **
 
-```{r Predict Damages Sorghum Regression, eval=FALSE, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
+```{r Predict Damages Sorghum Regression, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
 
 #### Predict damages Sorghum  ----------------------------------------------------
 
@@ -1091,7 +1092,7 @@ For the case of Sorghum, we see impressive identification of reported Sorghum cr
 
 
 
-```{r Predict Damages Barley Regression, eval=FALSE, echo=FALSE, message=FALSE, warning=FALSE,fig.height=7, include=FALSE}
+```{r Predict Damages Barley Regression, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
 
 #### Predict damages BARLEY  ----------------------------------------------------
 
@@ -1167,7 +1168,7 @@ The confusion matrix compares predicted values against the observed (reference).
 For the case of barley, we see relatively poor identification of reported losses with a recall rate of only `r round(cm_bar$byClass['Recall'],2)`, indicating that only`r round(cm_bar$byClass['Recall'],2)*100`% of all substantial loss cases were predicted in our independent *testing* data. In all, `r cm_bar$table['FALSE','FALSE']` out of `r cm_bar$table['FALSE','FALSE']+ cm_bar$table['TRUE','FALSE']` reported cases were predicted, and  `r cm_bar$table['FALSE','TRUE']` cases were falsely predicted as crop failure areas. 
    
    
-```{r Predict Damages Teff Regression, eval=FALSE, echo=FALSE, message=FALSE, warning=FALSE,fig.height=7, include=FALSE}
+```{r Predict Damages Teff Regression, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
 
 #### Predict damages TEFF  ----------------------------------------------------
 
@@ -1254,14 +1255,14 @@ For the case of teff, we see relatively poor identification of reported losses w
   # all_eas_df = fortify(all_eas, region="id")
   # all_eas_df = join(all_eas_df, all_eas@data, by="id")
   # save(all_eas_df,file = './Outputs4Pred/all_eas_df.RData')
-  load('./Outputs4Pred/all_eas_df.RData')
-  
-
-ggplot(all_eas_df,aes(long,lat,group=id  ))+  #fill=dist_rcap,colour=dist_rcap) + color = 'gray',
-  geom_polygon(fill = 'white',colour='black') +coord_quickmap()
-  
-load('../../../Data/Processed Panel/Processed Panel/ExtractRaw_Combined_AllEAs/AllEAs_NDVI_panel_summary.RData') 
-NDVI_summary_all_EAs[[1]]
+#   load('./Outputs4Pred/all_eas_df.RData')
+#   
+# 
+# ggplot(all_eas_df,aes(long,lat,group=id  ))+  #fill=dist_rcap,colour=dist_rcap) + color = 'gray',
+#   geom_polygon(fill = 'white',colour='black') +coord_quickmap()
+#   
+# load('../../../Data/Processed Panel/Processed Panel/ExtractRaw_Combined_AllEAs/AllEAs_NDVI_panel_summary.RData') 
+# NDVI_summary_all_EAs[[1]]
 
 ```
 
