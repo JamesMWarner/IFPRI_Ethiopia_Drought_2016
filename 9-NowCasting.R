@@ -49,37 +49,34 @@ data_in_plm <- pdata.frame(data_in, index=c("EACODE","Year"),  row.names=TRUE)
 # load variable selection results 
 load('./Writeup/IFPRI 2016 Report Ethiopia/WriteupData/VariableSelection/vsmaize_4.RData')
 
-form_1_maz = paste(attr(vsmaize4$terms,'term.labels')[vsmaize4$varselect.pred], collapse='+')
-form_1_maz = as.formula(paste('MAIZEOPH_W ~',form_1_maz,sep=' '))
-
-form_1_maz_w = paste(c(attr(vsmaize4$terms,'term.labels')[vsmaize4$varselect.pred],'lag(data_in_plm$MAIZEOPH_W,1)',
-                       "factor(W_CODE)"), collapse='+')
-form_1_maz_w = as.formula(paste('MAIZEOPH_W ~',form_1_maz_w,sep=' '))
-
-form_1_maz_z = paste(c(attr(vsmaize4$terms,'term.labels')[vsmaize4$varselect.pred],'lag(data_in_plm$MAIZEOPH_W,1)',
+form_1_maz_z_NC = paste(c(attr(vsmaize4$terms,'term.labels')[vsmaize4$varselect.pred],'lag(data_in_plm$MAIZEOPH_W,1)',
                        "factor(Z_CODE)"), collapse='+')
-form_1_maz_z = as.formula(paste('MAIZEOPH_W ~',form_1_maz_z,sep=' '))
+form_1_maz_z_NC = as.formula(paste('MAIZEOPH_W ~',form_1_maz_z_NC,sep=' '))
 
- 
 data_in_plm$Fert_Amt_Per_Area = data_in_plm$MAIZEFERT_CHEMICAL_AMT / (data_in_plm$MAIZEFERT_CHEMICAL_AREA+1)
  
-
-agss_lag_maz_z = MAIZEOPH_W ~ lag(data_in_plm$MAIZEOPH_W, 1)   +G_mx + G_mx_Qnt + G_AUC_leading+
+agss_lag_maz_z_NC = MAIZEOPH_W ~ lag(data_in_plm$MAIZEOPH_W, 1)   +G_mx + G_mx_Qnt + G_AUC_leading+
   lag(MAIZEIMSEED,1) + lag(MAIZEDAMAGEAREA_P,1)  +  lag(Fert_Amt_Per_Area,1) +
   lag(MAIZEEXTAREA,1) + PPT_G_mx_Qnt+
  bs(elevation,3) + factor(Z_CODE) 
-agss_lag_maz_z <- plm(agss_lag_maz_z, data = data_in_plm, model = "random")
+agss_lag_maz_z_NC <- plm(agss_lag_maz_z_NC, data = data_in_plm, model = "random")
 
-# store for text pasting 
-sum.maz.re3 = summary(agss_lag_maz_z)
-coeff.maz.re3 = sum.maz.re3[1]$coefficients
-sum.maz.re3
+# # store for text pasting 
+# sum.maz.re_NC = summary(agss_lag_maz_z)
+# coeff.maz.re_NC = sum.maz.re3[1]$coefficients
+# sum.maz.re_NC
 
-form_4_maz_z = MAIZEOPH_W ~    lag(data_in_plm$MAIZEOPH_W, 1)  +G_mn + A_mn + 
-  A_Qnt  + A_max_Qnt  + PPT_G_AUC_Qnt + PET_G_AUC_diff_mn   + PET_A_min+ PPT_G_mx_Qnt+
-  c(Year) +  X_COORD + bs(elevation,3) + factor(Z_CODE) 
-maz.re4 <- plm(form_4_maz_z, data = data_in_plm, model = "random")
+agss_lag_maz_z2_NC = MAIZEOPH_W ~   lag(data_in_plm$MAIZEOPH_W, 1)   +G_mx + G_mx_Qnt + G_AUC_leading+
+  lag(MAIZEIMSEED,1) + lag(MAIZEDAMAGEAREA_P,1)  +  lag(Fert_Amt_Per_Area,1) +
+  lag(MAIZEEXTAREA,1) + 
+  bs(elevation,3) + factor(Z_CODE) 
+agss_lag_maz_z2_NC <- plm(agss_lag_maz_z2_NC, data = data_in_plm, model = "random")
 
+
+stargazer(agss_lag_maz_z_NC, agss_lag_maz_z2_NC, 
+          title="Panel RE regression", type="text", 
+          column.labels=c("Full", "Final"), 
+          df=FALSE, digits=4,omit = "Z_CODE",omit.labels = 'Zone Dummy',no.space=T)
 
 
 

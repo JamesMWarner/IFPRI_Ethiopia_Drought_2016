@@ -56,7 +56,7 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
   product ='NDVI'
 
 
-# Extract polygon or points data from stacks -------------------------------------
+#  DONE  Extract polygon or points data from stacks -------------------------------------
 
   library(data.table)
   setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Data Stacks/WO Clouds Clean LC/') # don't load smoothed...
@@ -137,7 +137,7 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
 
 
 
-  # COMBINE DATA BACK FROM EXTRACT ----------------------------------------------------------------
+  # DONE COMBINE DATA BACK FROM EXTRACT ----------------------------------------------------------------
 
   # Combine all extracted values into a single list 
   setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Processed Panel/ExtractRaw/')
@@ -161,7 +161,7 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
 										'_panel_ExtractRaw2.RData',sep='') )
 
 
-  # Summary Functions --------------------------------------------------------
+  # DONE Summary Functions --------------------------------------------------------
  
   setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Processed Panel/ExtractRaw/')
   product = 'NDVI'
@@ -207,7 +207,7 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
 
 
 
-# pull data to polygons --------------------------------------------------------
+# DONE pull data to polygons --------------------------------------------------------
   setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
   # load all EA data
   Polys_sub = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasSIN',
@@ -247,8 +247,8 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
 #  setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
 #  ##pull to polygons
 #  load(paste('./PET/PET_stack_V',version,'.RData',sep=''))
-#  Poly_PET_Ext_sub = extract_value_point_polygon(Polys_sub,PET_stack,12)
-#  save(Poly_PET_Ext_sub,
+#  all_eas_PET = extract_value_point_polygon(Polys_sub,PET_stack,12)
+#  save(all_eas_PET,
 #  	 file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
 #  	 'AllEas_Poly_PET_Ext_V',version,'.RData',sep=''))
 #  rm(list=c('Poly_PET_Ext_sub','PET_stack'))
@@ -297,157 +297,145 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
 
 
 
-  ## deal with CHIRPS PPT data downloaded and stacked w/ 1a-DownloadCHIRPSFTP_Rcurl.R
+ ## DONE deal with CHIRPS PPT data downloaded and stacked w/ 1a-DownloadCHIRPSFTP_Rcurl.R
 #  part1 = 1:30000
-  part2 = 30001:50000
-  part3 = 50001:length(Polys_sub)
+#  part2 = 30001:50000
+#  part3 = 50001:length(Polys_sub)
 
-  load('./Data Stacks/Rain Stacks/Rain_Stack_h21v07_h21v08_h22v07_h22v08.RData')
+#  load('./Data Stacks/Rain Stacks/Rain_Stack_h21v07_h21v08_h22v07_h22v08.RData')
 #  Poly_PPT_Ext_sub = extract_value_point_polygon(Polys_sub[part1,],rain_stack,12)
 #  save(Poly_PPT_Ext_sub,
 #  	 file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
 #  	 'AllEas_Poly_PPT_Ext_V',version,'part1.RData',sep=''))
 #  rm(list=c('Poly_PPT_Ext_sub','rain_stack'))
 
-  Poly_PPT_Ext_sub = extract_value_point_polygon(Polys_sub[part2,],rain_stack,12)
-  save(Poly_PPT_Ext_sub,
-         file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
-         'AllEas_Poly_PPT_Ext_V',version,'part2.RData',sep=''))
-  rm(list=c('Poly_PPT_Ext_sub'))
-
-  Poly_PPT_Ext_sub = extract_value_point_polygon(Polys_sub[part3,],rain_stack,12)
-  save(Poly_PPT_Ext_sub,
-         file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
-         'AllEas_Poly_PPT_Ext_V',version,'part3.RData',sep=''))
-  rm(list=c('Poly_PPT_Ext_sub'))
-
-
-
-
-
-  # combine back PPT parts   # part 2 not complete? 
-  load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
-         'AllEas_Poly_PPT_Ext_V',version,'part1.RData',sep=''))
-  all_eas_PPT_part1 = Poly_PPT_Ext_sub
-  load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
-         'AllEas_Poly_PPT_Ext_V',version,'part2.RData',sep=''))
-  all_eas_PPT_part2 = Poly_PPT_Ext_sub
-   
-   all_eas_PPT = c(all_eas_PPT_part1,all_eas_PPT_part2)
-#
-#  save(all_eas_ETA,
+#  Poly_PPT_Ext_sub = extract_value_point_polygon(Polys_sub[part2,],rain_stack,12)
+#  save(Poly_PPT_Ext_sub,
 #         file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
-#         'AllEas_Poly_ETA_Ext_V',version,'.RData',sep=''))
-#  rm(list=c('all_eas_ETA_part1','all_eas_ETA_part2','all_eas_ETA_part3'))
+#         'AllEas_Poly_PPT_Ext_V',version,'part2.RData',sep=''))
+#  rm(list=c('Poly_PPT_Ext_sub'))
+
+#  Poly_PPT_Ext_sub = extract_value_point_polygon(Polys_sub[part3,],rain_stack,12)
+#  save(Poly_PPT_Ext_sub,
+#         file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+#         'AllEas_Poly_PPT_Ext_V',version,'part3.RData',sep=''))
+#  rm(list=c('Poly_PPT_Ext_sub'))
 
 
 
-
-  #fix date NO LONGER NEEDED, intrgrated into 1a-... .R
-  #Poly_PPT_Ext_sub=  lapply(1:length(Poly_PPT_Ext_sub),function(x){
-  #     date = paste('X',format(strptime(
-##         gsub("^.*X([0-9]{4}.[0-9]{2}.[0-9]{2}).*$", "\\1", names(Poly_PPT_Ext_sub[[x]])),'%Y.%m.%d'),
-#          '%Y%j'),sep='')
-#	names(Poly_PPT_Ext_sub[[x]])=date
-#        return(Poly_PPT_Ext_sub[[x]])
-#	})
- #save(Poly_PPT_Ext_sub,
- #	 file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
- #	 'Poly_PPT_Ext_sub_V',version,'.RData',sep=''))
-
-
-  #remove x2013001 from ETA because it is missing data
-  #Poly_ETA_Ext_sub = lapply(1:length(Poly_ETA_Ext_sub), function(x){
-#               Poly_ETA_Ext_sub[[x]][,!(names(Poly_ETA_Ext_sub[[x]]) %in% 'X2013001')]
-#	})
-#  save(Poly_ETA_Ext_sub,
-#        file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
-#        'Poly_ETA_Ext_sub_V',version,'.RData',sep=''))
+  # DONE combine back PPT parts
+#  load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+#         'AllEas_Poly_PPT_Ext_V',version,'part1.RData',sep=''))
+#  all_eas_PPT_part1 = Poly_PPT_Ext_sub
+#  load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+#         'AllEas_Poly_PPT_Ext_V',version,'part2.RData',sep=''))
+#  all_eas_PPT_part2 = Poly_PPT_Ext_sub
+# load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+#         'AllEas_Poly_PPT_Ext_V',version,'part3.RData',sep=''))
+#  all_eas_PPT_part3 = Poly_PPT_Ext_sub
+#
+#  all_eas_PPT = c(all_eas_PPT_part1,all_eas_PPT_part2,all_eas_PPT_part3)
+#
+#  save(all_eas_PPT,
+#         file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
+#         'AllEas_Poly_PPT_Ext_V',version,'.RData',sep=''))
+#  rm(list=c('all_eas_PPT_part1','all_eas_PPT_part2','all_eas_PPT_part3'))
 
 
- # # reload and summarize by NDVI timing
+
+ # DONE  reload and summarize by NDVI timing
   setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
-  load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
- 	 'AllEas_Poly_PET_Ext_V',version,'.RData',sep=''))
- # load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
- #	 'Poly_ETA_Ext_sub_V',version,'.RData',sep=''))
- # load(paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/',
- #	 'Poly_PPT_Ext_sub_V',version,'.RData',sep=''))
-  load(paste('./Processed Panel/Processed Panel/ExtractRaw_Combined_AllEAs/AllEAs_NDVI_panel_summary.RData'))  # needed for Annual_Summary_Functions_OtherData
- # load('./Data Stacks/WO Clouds Clean LC/NDVI_stack_h21v07_WO_Clouds_Clean_LC_V4.RData') # used for spline dates
-#
+  load(paste('./Outputs/', 'AllEas_Poly_PPT_Ext_V',version,'.RData',sep=''))
+  load(paste('./Outputs/','AllEas_Poly_ETA_Ext_V',version,'.RData',sep=''))
+  load(paste('./Outputs/','AllEas_Poly_PET_Ext_V',version,'.RData',sep=''))
 
-#
-#  # Get summary statistics lists using plant harvest dates obtained from NDVI
-   extr_values = Poly_PET_Ext_sub
-   Veg_Annual_Summary = NDVI_summary_all_EAs
-#  Veg_Stack = NDVI_stack_h21v07_WO_Clouds_Clean_LC # used for spline dates
-#  name_prefix = 'PET'
-#  Quant_percentile=0.90
-#  num_workers = 10
-#  spline_spar=.05 # good = 0.05
-#  aggregate=T
-#  return_df=T
-#  PET_summary =  Annual_Summary_Functions_OtherData(extr_values, PlantHarvestTable,Veg_Stack,Veg_Annual_Summary,name_prefix,
-#                                                  Quant_percentile,return_df,num_workers,aggregate,spline_spar)
-#
-#  extr_values= Poly_ETA_Ext_sub
-#  name_prefix = 'ETA'
-#  ETA_summary =  Annual_Summary_Functions_OtherData(extr_values, PlantHarvestTable,Veg_Stack,Veg_Annual_Summary,name_prefix,
-#                                                  Quant_percentile,return_df,num_workers,aggregate,spline_spar)
-#  save(PET_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/PET_summary_V',version,'.Rdata',sep=''))
-#  save(ETA_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/ETA_summary_V',version,'.Rdata',sep=''))
-#
-#  extr_values= Poly_PPT_Ext_sub
-#  name_prefix = 'PPT'
-#  PPT_summary =  Annual_Summary_Functions_OtherData(extr_values, PlantHarvestTable, Veg_Stack,Veg_Annual_Summary,name_prefix,
-#                                                  Quant_percentile,return_df,num_workers,aggregate,spline_spar)
-#  save(PPT_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/PPT_summary_V',version,'.Rdata',sep=''))
+  load(paste('./Processed Panel/Processed Panel/ExtractRaw_Combined_AllEAs/'
+	,'AllEAs_',product,'_panel_summary2.RData',sep='') )
+  load('./Data Stacks/WO Clouds Clean LC/NDVI_stack_h21v07_WO_Clouds_Clean_LC_V4.RData') # used for spline dates
+
+
+
+ # Get summary statistics lists using plant harvest dates obtained from NDVI
+  Veg_Annual_Summary = NDVI_summary_all_EAs
+  Veg_Stack = NDVI_stack_h21v07_WO_Clouds_Clean_LC # used for spline dates
+  name_prefix = 'PET'
+  extr_values = get(paste('all_eas_',name_prefix,sep=''))
+
+  Quant_percentile=0.90
+  num_workers = 10
+  spline_spar=.05 # good = 0.05
+  aggregate=T
+  return_df=T
+  all_eas_PET_summary =  Annual_Summary_Functions_OtherData(extr_values, PlantHarvestTable,Veg_Stack,Veg_Annual_Summary,name_prefix,
+                                                  Quant_percentile,return_df,num_workers,aggregate,spline_spar)
+  save(all_eas_PET_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/all_eas_PET_summary_V',version,'.Rdata',sep=''))
+
+  name_prefix = 'ETA'
+  extr_values = get(paste('all_eas_',name_prefix,sep=''))
+  all_eas_ETA_summary =  Annual_Summary_Functions_OtherData(extr_values, PlantHarvestTable,Veg_Stack,Veg_Annual_Summary,name_prefix,
+                                                  Quant_percentile,return_df,num_workers,aggregate,spline_spar)
+  save(all_eas_ETA_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/all_eas_ETA_summary_V',version,'.Rdata',sep=''))
+
+
+  name_prefix = 'PPT'
+  extr_values = get(paste('all_eas_',name_prefix,sep=''))
+  all_eas_PPT_summary =  Annual_Summary_Functions_OtherData(extr_values, PlantHarvestTable, Veg_Stack,Veg_Annual_Summary,name_prefix,
+                                                  Quant_percentile,return_df,num_workers,aggregate,spline_spar)
+  save(all_eas_PPT_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/all_eas_PPT_summary_V',version,'.Rdata',sep=''))
+
+
+
+
+
 
 # Convert data to panel format --------------------------------------------
 
   # Load data
   setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
-  load(paste('./Outputs/PET_summary_V',version,'.Rdata',sep=''))
-  load(paste('./Outputs/ETA_summary_V',version,'.Rdata',sep=''))
-  load(paste('./Outputs/PPT_summary_V',version,'.Rdata',sep=''))
-  load(paste('./Outputs/NDVI_summary_V',version,sep=''))
+  load(paste('./Outputs/all_eas_PET_summary_V',version,'.Rdata',sep=''))
+  load(paste('./Outputs/all_eas_ETA_summary_V',version,'.Rdata',sep=''))
+  load(paste('./Outputs/all_eas_PPT_summary_V',version,'.Rdata',sep=''))
+  load(paste('./Processed Panel/Processed Panel/ExtractRaw_Combined_AllEAs/'
+        ,'AllEAs_',product,'_panel_summary2.RData',sep=''))
 
-  Polys_sub = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasSIN_sub_agss_codes_wdata',
-                    stringsAsFactors = F)
+  all_eas_Polys = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasSIN',
+                      stringsAsFactors = F)
+
+
   # calculate area of eas in hectares
-  Polys_sub$Area_Ha = sapply(Polys_sub@polygons, function(x) x@Polygons[[1]]@area*0.0001)
-  Polys_sub_data = Polys_sub@data
-  Polys_sub_data$i = 1:dim(Polys_sub_data)[1]  # add id to join to
+  all_eas_Polys$Area_Ha = sapply(all_eas_Polys@polygons, function(x) x@Polygons[[1]]@area*0.0001)
+  all_eas_Polys_data = all_eas_Polys@data
+  all_eas_Polys_data$i = 1:dim(all_eas_Polys_data)[1]  # add 'i' to join to
 
   # define years to include
   year_start = 2009
   year_end   = 2016
 
   holder_list = list()
-  for(i in 1:dim(Polys_sub_data)[1]){
+  for(i in 1:dim(all_eas_Polys)[1]){
         print(paste('working on row ', i))
         holder_summary = data.frame(row = seq(year_start,year_end),i=i)
-        holder_summary = join(holder_summary,Polys_sub_data[i,!(names(Polys_sub_data) %in% c('Remark','UK_NAME','UK_CODE',
+        holder_summary = join(holder_summary,all_eas_Polys_data[i,!(names(all_eas_Polys_data) %in% c('Remark','UK_NAME','UK_CODE',
                 'EA_ID','UK_ID','EA_CODE','W_cod_t','KK_cd_T','KK_NAME','KK_CODE'))],by=c('i'),type='left')
         # join NDVI data
-        if(length(NDVI_summary[[i]])!=1 ){  # avoid missing values
-                holder_summary = join(holder_summary,NDVI_summary[[i]],by=c('i','row'),type='left')} # join shp to vegetation data
+        if(length(NDVI_summary_all_EAs[[i]])!=1 ){  # avoid missing values
+                holder_summary = join(holder_summary,NDVI_summary_all_EAs[[i]],by=c('i','row'),type='left')} # join shp to vegetation data
         # join PET data
-        if(length(PET_summary[[i]])!=1){
-        holder_summary = join(holder_summary,PET_summary[[i]][,!(names(PET_summary[[i]]) %in% c('PET_plant_dates',
+        if(length(all_eas_PET_summary[[i]])!=1 & class(all_eas_PET_summary[[i]])[1]!='simpleError'){
+        holder_summary = join(holder_summary,all_eas_PET_summary[[i]][,!(names(all_eas_PET_summary[[i]]) %in% c('PET_plant_dates',
                 'PET_harvest_dates','PET_A_max_Qnt',
                 'PET_A_AUC_Qnt','PET_G_mx_dates','PET_G_mx_Qnt','PET_G_AUC_Qnt','PET_T_G_Qnt'))],by=c('i','row'),type='left')}
         # join ETA data
-        if(length(ETA_summary[[i]])!=1){
-        holder_summary = join(holder_summary, ETA_summary[[i]][,!(names(ETA_summary[[i]]) %in% c('ETA_plant_dates',
+        if(length(all_eas_ETA_summary[[i]])!=1){
+        holder_summary = join(holder_summary, all_eas_ETA_summary[[i]][,!(names(all_eas_ETA_summary[[i]]) %in% c('ETA_plant_dates',
                 'ETA_harvest_dates','ETA_A_max_Qnt',
                 'ETA_A_AUC_Qnt','ETA_G_mx_dates','ETA_G_mx_Qnt','ETA_G_AUC_Qnt','ETA_T_G_Qnt'))],by=c('i','row'),type='left')}
         # join PPT data
-        if(length(PPT_summary[[i]])!=1 & class(PPT_summary[[i]])[1] =='data.frame'){
+        if(length(all_eas_PPT_summary[[i]])!=1 & class(all_eas_PPT_summary[[i]])[1] =='data.frame'){
         holder_summary = join(holder_summary,
-            PPT_summary[[i]][,!(names(PPT_summary[[i]]) %in% c('PPT_plant_dates','PPT_harvest_dates','PPT_A_min','PPT_A_AUC','PPT_A_Qnt',
-                 'PPT_A_max_Qnt','PPT_A_AUC_Qnt','PPT_G_min','PPT_G_AUC PPT_G_Qnt',' PPT_G_mx_Qnt'))],by=c('i','row'),type='left')  }
+            	all_eas_PPT_summary[[i]][,!(names(all_eas_PPT_summary[[i]]) %in% c('PPT_plant_dates','PPT_harvest_dates','PPT_A_min',
+		'PPT_A_AUC','PPT_A_Qnt', 'PPT_A_max_Qnt','PPT_A_AUC_Qnt','PPT_G_min','PPT_G_AUC PPT_G_Qnt',
+		' PPT_G_mx_Qnt'))],by=c('i','row'),type='left')  }
         # rename to year and move to second column
         names(holder_summary)[names(holder_summary)=='row']='Year'
         holder_summary = arrange.vars(holder_summary, c("Year"=2))
@@ -457,9 +445,8 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
   library(data.table)
   output = rbindlist(holder_list, fill=T)
 
-  write.csv(output,paste('./Outputs/EA_NDVI_ET_panel_V',version,'.csv',sep=''))
-  write.csv(output,paste('../IFPRI_Ethiopia_Drought_2016/Outputs4Pred/EA_NDVI_ET_panel_V',version,'.csv',sep=''))
-  write.dta(output,paste('../IFPRI_Ethiopia_Drought_2016/Outputs4Pred/EA_NDVI_ET_panel_V',version,'.dta',sep=''))
-
-
+  write.csv(output,paste('./Outputs/all_eas_NDVI_ET_panel_V',version,'.csv',sep=''))
+  save(output,file=paste('../IFPRI_Ethiopia_Drought_2016/Outputs4Pred/all_eas_NDVI_ET_panel_V',version,'.RData',sep=''))
+  library(readstata13)
+  save.dta13(output,file=paste('../IFPRI_Ethiopia_Drought_2016/Outputs4Pred/all_eas_NDVI_ET_panel_V',version,'.dta',sep=''))
 
