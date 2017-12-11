@@ -1247,22 +1247,17 @@ For the case of teff, we see relatively poor identification of reported losses w
 
 ```{r Predict Damages to all EAs,  echo=FALSE, message=FALSE, warning=FALSE,fig.height=7, include=FALSE} 
   # Read in all EA data
-
-  # all_eas = readOGR("/home/mmann1123/Documents/IFPRI_Ethiopia_Drought_2016/Data/EnumerationAreas/", "EnumerationAreasSIN")
-  # plot(all_eas)
-  # all_eas = all_eas[!(all_eas$R_NAME %in% c('SOMALI','Addis Ababa','SOMALIE')),]
-  # all_eas@data$id = rownames(all_eas@data)
-  # all_eas_df = fortify(all_eas, region="id")
-  # all_eas_df = join(all_eas_df, all_eas@data, by="id")
-  # save(all_eas_df,file = './Outputs4Pred/all_eas_df.RData')
-#   load('./Outputs4Pred/all_eas_df.RData')
-#   
-# 
-# ggplot(all_eas_df,aes(long,lat,group=id  ))+  #fill=dist_rcap,colour=dist_rcap) + color = 'gray',
-#   geom_polygon(fill = 'white',colour='black') +coord_quickmap()
-#   
-# load('../../../Data/Processed Panel/Processed Panel/ExtractRaw_Combined_AllEAs/AllEAs_NDVI_panel_summary.RData') 
-# NDVI_summary_all_EAs[[1]]
+   library(sf)
+   setwd(Home_dir)  
+   nc <- st_read("../Data/EnumerationAreas/EnumerationAreasSIN.shp")
+   load('./Outputs4Pred/all_eas_NDVI_ET_panel_V4.RData')
+   all_eas_data = get('output')
+   rm(output)
+   
+   #load damage model
+   load('./Outputs4Pred/tef.rf.TEFFDAMAGEAREA_P_GT.3_zone.RData')
+   all_eas_data$pred_maz = predict(tef.rf, all_eas_data)
+    
 
 ```
 

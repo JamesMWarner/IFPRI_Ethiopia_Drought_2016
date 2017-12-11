@@ -13,7 +13,8 @@ R
 
 rm(list=ls())
 #source('R:\\Mann Research\\IFPRI_Ethiopia_Drought_2016\\IFPRI_Ethiopia_Drought_Code\\ModisDownload.R')
-source('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/IFPRI_Ethiopia_Drought_2016/SummaryFunctions.R')
+#source('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/IFPRI_Ethiopia_Drought_2016/SummaryFunctions.R')
+source('~/Documents/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_2016/SummaryFunctions.R')
 # R/3.0.2 seems to work maybe
 
 
@@ -344,7 +345,7 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
 
 
  # DONE  reload and summarize by NDVI timing
-  setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
+  setwd("/home/mmann1123/Documents/IFPRI_Ethiopia_Drought_2016/Data")
   load(paste('./Outputs/', 'AllEas_Poly_PPT_Ext_V',version,'.RData',sep=''))
   load(paste('./Outputs/','AllEas_Poly_ETA_Ext_V',version,'.RData',sep=''))
   load(paste('./Outputs/','AllEas_Poly_PET_Ext_V',version,'.RData',sep=''))
@@ -389,17 +390,16 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
 
 
 # Convert data to panel format --------------------------------------------
-
+  version = 4
+  product = 'NDVI'
   # Load data
-  setwd('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/')
+  setwd('./Documents/IFPRI_Ethiopia_Drought_2016/Data/')
   load(paste('./Outputs/all_eas_PET_summary_V',version,'.Rdata',sep=''))
   load(paste('./Outputs/all_eas_ETA_summary_V',version,'.Rdata',sep=''))
   load(paste('./Outputs/all_eas_PPT_summary_V',version,'.Rdata',sep=''))
   load(paste('./Processed Panel/Processed Panel/ExtractRaw_Combined_AllEAs/'
         ,'AllEAs_',product,'_panel_summary2.RData',sep=''))
-
-  all_eas_Polys = readOGR('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/EnumerationAreas/','EnumerationAreasSIN',
-                      stringsAsFactors = F)
+  all_eas_Polys = readOGR('./EnumerationAreas/','EnumerationAreasSIN', stringsAsFactors = F)
 
 
   # calculate area of eas in hectares
