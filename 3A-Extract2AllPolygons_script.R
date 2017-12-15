@@ -353,10 +353,10 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
   load(paste('./Processed Panel/Processed Panel/ExtractRaw_Combined_AllEAs/'
 	,'AllEAs_',product,'_panel_summary2.RData',sep='') )
   load('./Data Stacks/WO Clouds Clean LC/NDVI_stack_h21v07_WO_Clouds_Clean_LC_V4.RData') # used for spline dates
+ 
 
 
-
- # Get summary statistics lists using plant harvest dates obtained from NDVI
+ # DONE Get summary statistics lists using plant harvest dates obtained from NDVI
   Veg_Annual_Summary = NDVI_summary_all_EAs
   Veg_Stack = NDVI_stack_h21v07_WO_Clouds_Clean_LC # used for spline dates
   name_prefix = 'PET'
@@ -373,8 +373,9 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
 
   name_prefix = 'ETA'
   extr_values = get(paste('all_eas_',name_prefix,sep=''))
+  rm(all_eas_ETA)
   all_eas_ETA_summary =  Annual_Summary_Functions_OtherData(extr_values, PlantHarvestTable,Veg_Stack,Veg_Annual_Summary,name_prefix,
-                                                  Quant_percentile,return_df,num_workers,aggregate,spline_spar)
+                                                  Quant_percentile,return_df,num_workers=1,aggregate,spline_spar)
   save(all_eas_ETA_summary, file=paste('/groups/manngroup/IFPRI_Ethiopia_Dought_2016/Data/Outputs/all_eas_ETA_summary_V',version,'.Rdata',sep=''))
 
 
@@ -389,7 +390,7 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
 
 
 
-# Convert data to panel format --------------------------------------------
+# DONE Convert data to panel format --------------------------------------------
   version = 4
   product = 'NDVI'
   # Load data
@@ -415,8 +416,8 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
   for(i in 1:dim(all_eas_Polys)[1]){
         print(paste('working on row ', i))
         holder_summary = data.frame(row = seq(year_start,year_end),i=i)
-        holder_summary = join(holder_summary,all_eas_Polys_data[i,!(names(all_eas_Polys_data) %in% c('Remark','UK_NAME','UK_CODE',
-                'EA_ID','UK_ID','EA_CODE','W_cod_t','KK_cd_T','KK_NAME','KK_CODE'))],by=c('i'),type='left')
+        holder_summary = join(holder_summary,all_eas_Polys_data[i,!(names(all_eas_Polys_data) %in% c('Remark',
+                'UK_ID','W_cod_t','KK_cd_T','KK_NAME','KK_CODE'))],by=c('i'),type='left')
         # join NDVI data
         if(length(NDVI_summary_all_EAs[[i]])!=1 ){  # avoid missing values
                 holder_summary = join(holder_summary,NDVI_summary_all_EAs[[i]],by=c('i','row'),type='left')} # join shp to vegetation data
@@ -426,7 +427,7 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
                 'PET_harvest_dates','PET_A_max_Qnt',
                 'PET_A_AUC_Qnt','PET_G_mx_dates','PET_G_mx_Qnt','PET_G_AUC_Qnt','PET_T_G_Qnt'))],by=c('i','row'),type='left')}
         # join ETA data
-        if(length(all_eas_ETA_summary[[i]])!=1){
+        if(length(all_eas_ETA_summary[[i]])!=1 & class(all_eas_ETA_summary[[i]])[1]!='simpleError'){
         holder_summary = join(holder_summary, all_eas_ETA_summary[[i]][,!(names(all_eas_ETA_summary[[i]]) %in% c('ETA_plant_dates',
                 'ETA_harvest_dates','ETA_A_max_Qnt',
                 'ETA_A_AUC_Qnt','ETA_G_mx_dates','ETA_G_mx_Qnt','ETA_G_AUC_Qnt','ETA_T_G_Qnt'))],by=c('i','row'),type='left')}
@@ -444,9 +445,10 @@ lapply(1:length(functions_in), function(x){cmpfun(get(functions_in[[x]]))})  # b
 
   library(data.table)
   output = rbindlist(holder_list, fill=T)
-
-  write.csv(output,paste('./Outputs/all_eas_NDVI_ET_panel_V',version,'.csv',sep=''))
   save(output,file=paste('../IFPRI_Ethiopia_Drought_2016/Outputs4Pred/all_eas_NDVI_ET_panel_V',version,'.RData',sep=''))
   library(readstata13)
   save.dta13(output,file=paste('../IFPRI_Ethiopia_Drought_2016/Outputs4Pred/all_eas_NDVI_ET_panel_V',version,'.dta',sep=''))
 
+
+  
+  

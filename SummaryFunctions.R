@@ -1015,8 +1015,8 @@ Annual_Summary_Functions_OtherData = function(extr_values, PlantHarvestTable,Veg
      registerDoParallel(num_workers)
      result_summary=foreach(i = 1:length(extr_values),.packages=c('raster','zoo'),.inorder=T,.errorhandling='pass') %dopar%{
  	print(i)
-       if(sum(is.na(extr_values[[i]]))>0|is.null(dim(Veg_Annual_Summary[[i]]))){print('Empty Object');return(NA)} # avoid empties
-
+       if(is.null(dim(Veg_Annual_Summary[[i]]))){print('Empty Object');return(NA)} # avoid empties
+         # [prob dont use this filter sum(is.na(extr_values[[i]]))>0|   ]
         # if aggregate = T, summarize multiple pixels per polygon into one smooth time series
         # create a mean value for input data
       	if(aggregate == T){
