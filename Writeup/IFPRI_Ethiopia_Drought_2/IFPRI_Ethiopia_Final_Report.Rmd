@@ -35,7 +35,7 @@ library(dplyr)
 library(splines)
 library(stargazer)
 library(rasterVis)
-library(e1071)
+#library(e1071)
 library(randomForest)
 library(caret)
 library(doMC)
@@ -45,7 +45,10 @@ library(kernlab)
 library(RANN)
 library(pdp)
 library(pander)
-
+library(tidyr)
+library(dplyr)
+library(sf)
+library(data.table)
 # set up numbering for figures/graphs etc
 Table_number = 1
 Figure_number = 1
@@ -778,7 +781,7 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
  maz_dam1_w_ea = factor(MAIZEDAMAGEAREA_P<0.3) ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
 	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+ZONECODE
          
-  registerDoMC(cores = 6)
+  registerDoMC(cores = 4)
   
   # sample from EAs 
   set.seed(17516)
@@ -792,10 +795,14 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
 
   
   # Impute values 
-  library(RANN)
   set.seed(123)
-  pp.train = predict(preProcess(train, method = "knnImpute",k=25),train)
+  # preProcValues = preProcess(train, method = "knnImpute",k=25 )
+  # pp.train = predict(preProcValues, train)
+  # pp.test  = predict(preProcValues, train)
+
+  pp.train = na.omit(predict(preProcess(train, method = "knnImpute",k=25),train))
   pp.test  = predict(preProcess(test, method = "knnImpute",k=25),train)
+  
   #data_in.maz.imputed.full <- rfImpute(maz_dam1_wo_zones,   data_in[!is.na(data_in$MAIZEOPH_W),])
   #save(data_in.maz.imputed.full,file = './Outputs4Pred/data_in.maz.imputed.full.RData')
 
@@ -806,28 +813,31 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
   # 
   
   #set up seeds for multicore
-  # set.seed(123)
-  # seeds <- vector(mode = "list", length = 16)
-  # for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
-  # 
-  #set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
-  # groups = groupKFold(train$EACODE, k = 15)
-  # 
-   #train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
-  # maz.rf<-train(maz_dam1_w_ea,data=pp.train,method="rf",
-  #                 trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
-  #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(2,10,1)))
-  # print(maz.rf)
-  # varImp(maz.rf)
+  set.seed(123)
+  seeds <- vector(mode = "list", length = 16)
+  for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
+
+  # set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
+  groups = groupKFold(train$EACODE, k = 15)
+
+  # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
+  maz.rf<-train(maz_dam1_w_ea,data=pp.train,method="rf",
+                  trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
+                  prox=T,allowParallel=T,tuneGrid = expand.grid(mtry=seq(2,15,1)))
+  print(maz.rf)
+  varImp(maz.rf)
   # 
   # save(maz.rf,file = './Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P>.3_zone.RData')
-  load('./Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P<.3_zone.RData')
-  pp.test$pred = predict(maz.rf,pp.test)
+  save(maz.rf,file = './Outputs4Pred/test.RData')
+  load('./Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P_GT.3_zone.RData')
+  
   # write save predictions for james
   # model_data$pred_MAIZEDAMAGE = predict(maz.rf, predict(preProcess(model_data, method = "knnImpute",k=25),model_data) )
   # write.csv(model_data[,c('EACODE','Year','pred_MAIZEDAMAGE')],'./Outputs4Share/maz.rfMAIZEDAMAGEAREA_pred.csv',row.names = F)
   # get accuracy measures 
+  pp.test$pred = predict(maz.rf,pp.test)
   cm_maz = confusionMatrix(data =  pp.test$pred, reference = (pp.test$MAIZEDAMAGEAREA_P<0.3), mode = "prec_recall")
+  cm_maz
 
 ```
 ### Maize Damages
@@ -948,7 +958,7 @@ maz.rf %>% partial(pred.var = thrd_imp_maz) %>% autoplot(rug = F, train = pp.tra
   #                prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
   # print(wht.rf)
   # save(wht.rf,file = './Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P>.3_zone_v2.RData')
-  load('./Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P>.3_zone_v2.RData')
+  load('./Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P_GT.3_zone_v2.RData')
   
   pp.test$pred = predict(wht.rf,pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
@@ -1050,7 +1060,7 @@ sor_dam1_w_ea = factor(SORGHUMDAMAGEAREA_P<0.3) ~  A_mn + A_min + A_max + A_AUC 
   train <- model_data[model_data$EACODE %in% train_eas, ]
   test <- model_data[!(model_data$EACODE %in% train_eas), ]
   
-  # Impute values 
+  # Impute values   THIS ALSO CENTERS DATA 
   set.seed(123)
   pp.train = predict(preProcess(train, method = "knnImpute",k=25),train)
   pp.test  = predict(preProcess(test, method = "knnImpute",k=25),train)
@@ -1069,7 +1079,7 @@ sor_dam1_w_ea = factor(SORGHUMDAMAGEAREA_P<0.3) ~  A_mn + A_min + A_max + A_AUC 
   #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
   # print(sor.rf)
   # save(sor.rf,file = './Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P>.3_zone_v2.RData')
-  load('./Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P>.3_zone_v2.RData')
+  load('./Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P_GT.3_zone_v2.RData')
   
   pp.test$pred = predict(sor.rf, pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
@@ -1147,7 +1157,7 @@ bar_dam1_w_ea = factor(BARLEYDAMAGEAREA_P<0.3) ~  A_mn + A_min + A_max + A_AUC +
   #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
   # print(bar.rf)
   # save(bar.rf,file = './Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P>.3_zone_v2.RData')
-  load('./Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P>.3_zone_v2.RData')
+  load('./Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P_GT.3_zone_v2.RData')
   
   pp.test$pred = predict(bar.rf, pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
@@ -1245,19 +1255,98 @@ The confusion matrix compares predicted values against the observed (reference).
 For the case of teff, we see relatively poor identification of reported losses with a recall rate of only `r round(cm_tef$byClass['Recall'],2)`, indicating that only`r round(cm_tef$byClass['Recall'],2)*100`% of all substantial loss cases were predicted in our independent *testing* data. In all, `r cm_tef$table['FALSE','FALSE']` out of `r cm_tef$table['FALSE','FALSE']+ cm_tef$table['TRUE','FALSE']` reported cases were predicted, and  `r cm_tef$table['FALSE','TRUE']` cases were falsely predicted as crop failure areas. 
    
 
+## Predict damages out of sample 
 ```{r Predict Damages to all EAs,  echo=FALSE, message=FALSE, warning=FALSE,fig.height=7, include=FALSE} 
   # Read in all EA data
-   library(sf)
-   setwd(Home_dir)  
-   nc <- st_read("../Data/EnumerationAreas/EnumerationAreasSIN.shp")
-   load('./Outputs4Pred/all_eas_NDVI_ET_panel_V4.RData')
-   all_eas_data = get('output')
-   rm(output)
-   
-   #load damage model
-   load('./Outputs4Pred/tef.rf.TEFFDAMAGEAREA_P_GT.3_zone.RData')
-   all_eas_data$pred_maz = predict(tef.rf, all_eas_data)
+  setwd(Home_dir)  
+  EAs_poly = st_read("../Data/EnumerationAreas/EnumerationAreasSIN.shp") # use EA_code_merge as unique id
+  load('~/Documents/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_2016/Outputs4Pred/all_eas_NDVI_ET_panel_V4.RData')
+  all_eas_data = get('output')
+  all_eas_data$ZONECODE = as.numeric(all_eas_data$Z_CODE)
+  all_eas_data$EACODE = as.numeric(all_eas_data$EA_CODE)
+  all_eas_data$EA_CODE_Year = paste(all_eas_data$EA_CODE,all_eas_data$Year,sep="_")
+  rm(output)
+
+  # create a unqiue key for both
+  all_eas_data$EA_merge = paste(all_eas_data$W_CODE,gsub("-","", all_eas_data$EA_NAME),sep='')
+  EAs_poly$EA_merge = paste(EAs_poly$W_CODE,gsub("-","", EAs_poly$EA_NAME),sep='')
+  # find non-matching codes
+  anti_join(all_eas_data, EAs_poly, by="EA_merge")
+
+  # before prediction, scale and center 
+  all_eas_data = predict(preProcess(all_eas_data, method = c("center", "scale")),all_eas_data)
+
+  # load & predict damage model
+  load('./Outputs4Pred/tef.rf.TEFFDAMAGEAREA_P_GT.3_zone.RData')
+  all_eas_data$pred_dam_tef = predict(tef.rf, all_eas_data)
+  load('./Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P_GT.3_zone_v2.RData')
+  all_eas_data$pred_dam_bar = predict(bar.rf, all_eas_data)
+  load('./Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P_GT.3_zone_v2.RData')
+  all_eas_data$pred_dam_sor = predict(sor.rf, all_eas_data)
+  load('./Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P_GT.3_zone_v2.RData')
+  all_eas_data$pred_dam_wht = predict(wht.rf, all_eas_data)
+  load('./Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P_GT.3_zone.RData')
+  all_eas_data$pred_dam_maz = predict(maz.rf, all_eas_data)
+  rm(list = c('tef.rf','bar.rf','sor.rf','wht.rf','maz.rf'))
+
+  # store predicted damages in wide format
+  all_eas_dam_sor =  spread(unique(all_eas_data[,list(Year,RK_NAME,RK_CODE,R_NAME,R_CODE,Z_NAME,Z_CODE,W_NAME,
+     W_CODE,EA_NAME,EA_merge,pred_dam_sor) ]), key = Year, value = pred_dam_sor)
+  names(all_eas_dam_sor)[names(all_eas_dam_sor)  %in% 2009:2016] =
+     paste(names(all_eas_dam_sor)[names(all_eas_dam_sor)  %in% 2009:2016],'dam_sor',sep='_')
+  all_eas_dam_bar =  spread(unique(all_eas_data[,list(Year,RK_NAME,RK_CODE,R_NAME,R_CODE,Z_NAME,Z_CODE,W_NAME,
+     W_CODE,EA_NAME,EA_merge,pred_dam_bar) ]), key = Year, value = pred_dam_bar)
+  names(all_eas_dam_bar)[names(all_eas_dam_bar)  %in% 2009:2016] =
+      paste(names(all_eas_dam_bar)[names(all_eas_dam_bar)  %in% 2009:2016],'dam_bar',sep='_')
+  all_eas_dam_wht =  spread(unique(all_eas_data[,list(Year,RK_NAME,RK_CODE,R_NAME,R_CODE,Z_NAME,Z_CODE,W_NAME,
+      W_CODE,EA_NAME,EA_merge,pred_dam_wht) ]), key = Year, value = pred_dam_wht)
+  names(all_eas_dam_wht)[names(all_eas_dam_wht)  %in% 2009:2016] =
+      paste(names(all_eas_dam_wht)[names(all_eas_dam_wht)  %in% 2009:2016],'dam_wht',sep='_')
+
+  # remove duplicates from Maize and Teff
+  all_eas_dam_maz_sub = all_eas_data[,list(Year,RK_NAME,RK_CODE,R_NAME,R_CODE,Z_NAME,Z_CODE,W_NAME,
+           W_CODE,EA_NAME,EA_merge,pred_dam_maz) ]
+  all_eas_dam_maz_sub = all_eas_dam_maz_sub %>% distinct(Year, RK_CODE, .keep_all =T)
+  all_eas_dam_maz = spread(all_eas_dam_maz_sub, key = Year, value = pred_dam_maz)
+  names(all_eas_dam_maz)[names(all_eas_dam_maz)  %in% 2009:2016] =
+      paste(names(all_eas_dam_maz)[names(all_eas_dam_maz)  %in% 2009:2016],'dam_maz',sep='_')
+  rm()
+  all_eas_dam_tef_sub = all_eas_data[,list(Year,RK_NAME,RK_CODE,R_NAME,R_CODE,Z_NAME,Z_CODE,W_NAME,
+           W_CODE,EA_NAME,EA_merge,pred_dam_tef) ]
+  all_eas_dam_tef_sub = all_eas_dam_tef_sub %>% distinct(Year, RK_CODE, .keep_all =T)
+  all_eas_dam_tef = spread(all_eas_dam_tef_sub, key = Year, value = pred_dam_tef)
+  names(all_eas_dam_tef)[names(all_eas_dam_tef)  %in% 2009:2016] =
+      paste(names(all_eas_dam_tef)[names(all_eas_dam_tef)  %in% 2009:2016],'dam_tef',sep='_')
+  rm(list=c('all_eas_dam_tef_sub','all_eas_dam_maz_sub','all_eas_data'))
+
+  # join to ea polygon selected variables
+  # get EA codes from polgon and join to that
+  jnd.tbl = data.frame(EA_merge = unique(EAs_poly$EA_merge))
+  jnd.tbl = all_eas_dam_sor %>% select(matches('20|EA_merge')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge')
+  jnd.tbl = all_eas_dam_bar %>% select(matches('20|EA_merge')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge')
+  jnd.tbl = all_eas_dam_wht %>% select(matches('20|EA_merge')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge')
+  jnd.tbl = all_eas_dam_maz %>% select(matches('20|EA_merge')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge')
+  jnd.tbl = all_eas_dam_tef %>% select(matches('20|EA_merge')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge')
+  EAs_poly = left_join(EAs_poly,jnd.tbl,by='EA_merge')
+  #saveRDS(EAs_poly,'./Outputs4Pred/all_eas_damage_V4.rds')
+
+  # rm(list=c('all_eas_dam_sor','all_eas_dam_sor','all_eas_dam_bar','all_eas_dam_wht','all_eas_dam_maz','all_eas_dam_tef',
+              # "all_eas_dam_maz_sub", "all_eas_dam_tef_sub","all_eas_data",'jnd.tbl'))
+  EAs_poly = readRDS('./Outputs4Pred/all_eas_damage_V4.rds')  
+ 
+  # check number of damaged EAs 
+  EAs_poly  %>% as.data.frame() %>% select(matches('tef')) %>% apply(.,2,function(x) as.numeric(as.character(x))) %>% colSums( na.rm = T)
     
+    
+  
+  # import joined damage data 
+  EAs_poly = readRDS("./Outputs4Pred/all_eas_damage_V4.rds")
+  
+  # plot results 
+  ggplot(EAs_poly) +  geom_sf(aes(fill = '2009_dam_tef',colour=NULL))
+
+  
+   
 
 ```
 
