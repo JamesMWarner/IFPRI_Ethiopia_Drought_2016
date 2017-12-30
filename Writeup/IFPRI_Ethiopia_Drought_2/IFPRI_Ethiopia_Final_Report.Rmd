@@ -772,17 +772,41 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
   data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v",version,".dta",sep=''))
   data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
 
+  # add temporal lags 
+  data_in_plm = pdata.frame(data_in, index=c("EACODE","Year"), drop.index=F, row.names=TRUE)
+  data_in$G_height =      data_in_plm$G_mx-data_in_plm$G_min
+  data_in$G_height_diff = as.numeric(lag(data_in_plm$G_mx-data_in_plm$G_min,1))
+  data_in$A_height =      data_in_plm$A_max-data_in_plm$A_min
+  data_in$A_height_diff = as.numeric(lag(data_in_plm$A_max-data_in_plm$A_min,1))
+  data_in$G_max_diff =    as.numeric(lag(data_in_plm$G_mx,1))
+  data_in$A_max_diff  =   as.numeric(lag(data_in_plm$A_max,1))
+  data_in$A_Qnt_diff =    as.numeric(lag(data_in_plm$A_Qnt,1))
+  data_in$G_Qnt_diff  =   as.numeric(lag(data_in_plm$G_Qnt,1))
+  data_in$PPT_G_AUC_Qnt_diff = as.numeric(lag(data_in_plm$PPT_G_AUC_Qnt,1))
+  data_in$PPT_G_mn_diff = as.numeric(lag(data_in_plm$PPT_G_mn,1))
+  rm(data_in_plm)
+  
   # remove EA with less than 4 observations
   counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(MAIZEOPH_W))) %>% filter(non_na_count<4))
   data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
+  # remove eas
  
   #lag(data_in_plm$MAIZEOPH_W, 1) + c(year)MAIZEDAMAGEAREA_P
   # doing DAMAGE < 0.3 TO DEAL WITH ISSUES AROUND FACTOR LEVELS 
   
-threshold = '0.2'
+threshold = '0.25'
 
-maz_dam1_w_ea = factor(MAIZEDAMAGEAREA_P< 0.2 ) ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
-	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+ZONECODE
+maz_dam1_w_ea = factor(MAIZEDAMAGEAREA_P< 0.25 ) ~A_height+A_height_diff+G_height+G_height_diff+ G_max_diff+A_max_diff+
+  A_Qnt_diff+G_Qnt_diff+ REGIONCODE+
+  PPT_G_AUC_Qnt_diff+PPT_G_mn_diff+A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + 
+  G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn +
+  G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
+	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn +
+  PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + 
+  ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn +
+  ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt +
+  PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + 
+  PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+ZONECODE 
          
   registerDoMC(cores = 4)
   
@@ -824,13 +848,13 @@ maz_dam1_w_ea = factor(MAIZEDAMAGEAREA_P< 0.2 ) ~  A_mn + A_min + A_max + A_AUC 
   # set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
   groups = groupKFold(train$EACODE, k = num_groups)   # 15 works
 
-  # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
-  # maz.rf<-train(maz_dam1_w_ea,data=pp.train,method="rf",metric="Recall",stratify=T,
+  #train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
+  # maz.rf<-train(maz_dam1_w_ea,data=pp.train,method="rf",metric="Kappa",stratify=T,
   #                 trControl=trainControl(method="oob", seeds=seeds,index = groups), #number iterations+1
-  #                 prox=T,allowParallel=T,tuneGrid = expand.grid(mtry=seq(5,15,1)))
+  #                 prox=T,allowParallel=T,tuneGrid = expand.grid(mtry=seq(5,12,1)))
   # 
-  # save(maz.rf,file = './Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P_GT.2_zone.RData')
-  load('./Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P_GT.2_zone.RData')
+  # save(maz.rf,file = './Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P_GT.25_zone_diff.RData')
+  load('./Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P_GT.25_zone_diff.RData')
   
   
   #https://www.hackerearth.com/practice/machine-learning/machine-learning-algorithms/beginners-tutorial-on-xgboost-parameter-tuning-r/tutorial/
@@ -862,8 +886,9 @@ maz_dam1_w_ea = factor(MAIZEDAMAGEAREA_P< 0.2 ) ~  A_mn + A_min + A_max + A_AUC 
   # get accuracy measures 
   pp.test$pred = predict(maz.rf,pp.test)
   cm_maz = confusionMatrix(data =  pp.test$pred, reference = (pp.test$MAIZEDAMAGEAREA_P<threshold), mode = "prec_recall")
-
+  cm_maz
   # results summary 
+  #cutoff 0.50, metric="Kappa", accuracy 0.89, recall 0.18  
   #cutoff 0.30, metric="Kappa", accuracy 0.66, recall 0.24  
   #cutoff 0.25, metric="Kappa", accuracy 0.72, recall 0.34  
   #cutoff 0.2, metric="Kappa", accuracy 0.669, recall 0.43  
@@ -894,14 +919,22 @@ Figure `r paste(Figure_number)`: Variable importance plot for maize damage predi
 # store variable importance values
 varImp_maz = varImp(maz.rf)
 # plot importance 
-dotPlot(varImp_maz)
+#dotPlot(varImp_maz)  # DOESN"T WORK PROPERLY!!! 
+
 # sort by importance
 varImp_maz$importance$name = rownames(varImp_maz$importance)
 varImp_maz$importance = varImp_maz$importance[order(varImp_maz$importance[,1],decreasing = T),]
+
 # store top 2 
 most_imp_maz = varImp_maz$importance$name[1]
 secd_imp_maz = varImp_maz$importance$name[6]
 thrd_imp_maz = varImp_maz$importance$name[7]
+
+# plot imporance
+top_ten = varImp_maz$importance[1:10,]
+top_ten = top_ten[order(top_ten[,1],decreasing = F),]
+dotchart(top_ten[,'Overall'],labels=top_ten[,'name'],cex=.7,xlab="Importance")
+
 ```
 From the figure above we can see that `r most_imp_maz` has the highest relative importance in the random forest model. `r most_imp_maz` is **measured as the maximum NDVI value for the growing season. As such the highest NDVI value likely reflects a measure of plant health, with higher `r  rownames(varImp_maz$importance)[which.max(varImp_maz$importance$Overall)]` values corresponding to strong plant health at some point in the growing season.** We can also see that the most important variables are largely comprised of variables summarizing NDVI, with the exception of **PPT_G_mn which is the mean value of precipitation for each 10 day period across the growing season.**  
 
@@ -986,7 +1019,7 @@ maz.rf %>% partial(pred.var = thrd_imp_maz) %>% autoplot(rug = F, train = pp.tra
   #set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
   groups = groupKFold(train$EACODE, k = 15)
   # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
-  # wht.rf<-train(wht_dam1_w_ea,data=pp.train,method="rf",
+  # wht.rf<-train(wht_dam1_w_ea,data=pp.train,method="rf",metric="Kappa",stratify=T,
   #                trControl=trainControl(method="oob", seeds=seeds,index = groups), #number iterations+1
   #                prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
   # print(wht.rf)
@@ -1024,7 +1057,8 @@ Figure `r paste(Figure_number)`: Variable importance plot for maize damage predi
 # store variable importance values
 varImp_wht = varImp(wht.rf)
 # plot importance 
-dotPlot(varImp_wht)
+#dotPlot(varImp_wht) doesnt work properly
+
 # sort by importance
 varImp_wht$importance$name = rownames(varImp_wht$importance)
 varImp_wht$importance = varImp_wht$importance[order(varImp_wht$importance[,1],decreasing = T),]
@@ -1032,6 +1066,11 @@ varImp_wht$importance = varImp_wht$importance[order(varImp_wht$importance[,1],de
 most_imp_wht = varImp_wht$importance$name[1]
 secd_imp_wht = varImp_wht$importance$name[6]
 thrd_imp_wht = varImp_wht$importance$name[5]
+
+# plot imporance
+top_ten = varImp_wht$importance[1:10,]
+top_ten = top_ten[order(top_ten[,1],decreasing = F),]
+dotchart(top_ten[,'Overall'],labels=top_ten[,'name'],cex=.7,xlab="Importance")
 ```
 
 From the figure above we can see that `r most_imp_wht` has the highest relative importance in the random forest model. `r most_imp_wht` is **measured as the maximum NDVI value for the growing season. As such the highest NDVI value likely reflects a measure of plant health, with higher `r  rownames(varImp_wht$importance)[which.max(varImp_wht$importance$Overall)]` values corresponding to strong plant health at some point in the growing season.** We can also see that the most important variables are largely comprised of variables summarizing NDVI, with the exception of **PPT_G_mn which is the mean value of precipitation for each 10 day period across the growing season.**  
@@ -1110,7 +1149,7 @@ sor_dam1_w_ea = factor(SORGHUMDAMAGEAREA_P<0.2) ~  A_mn + A_min + A_max + A_AUC 
   groups = groupKFold(train$EACODE, k = 15)
   
   # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
-  # sor.rf<-train(sor_dam1_w_ea,data=pp.train,method="rf",
+  # sor.rf<-train(sor_dam1_w_ea,data=pp.train,method="rf",metric="Kappa",stratify=T,
   #                 trControl=trainControl(method="oob", seeds=seeds,index = groups), #number iterations+1
   #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
   # print(sor.rf)
@@ -1191,7 +1230,7 @@ bar_dam1_w_ea = factor(BARLEYDAMAGEAREA_P<0.2) ~  A_mn + A_min + A_max + A_AUC +
   groups = groupKFold(train$EACODE, k = 15)
   
   # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
-  # bar.rf<-train(bar_dam1_w_ea,data=pp.train,method="rf",
+  # bar.rf<-train(bar_dam1_w_ea,data=pp.train,method="rf",metric="Kappa",stratify=T,
   #                 trControl=trainControl(method="oob", seeds=seeds,index = groups), #number iterations+1
   #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
   # print(bar.rf)
@@ -1270,7 +1309,7 @@ tef_dam1_w_ea = factor(TEFFDAMAGEAREA_P<0.2) ~  A_mn + A_min + A_max + A_AUC + A
   groups = groupKFold(train$EACODE, k = 15)
   
   # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
-  # tef.rf<-train(tef_dam1_w_ea,data=pp.train,method="rf",
+  # tef.rf<-train(tef_dam1_w_ea,data=pp.train,method="rf",metric="Kappa",stratify=T,
   #                 trControl=trainControl(method="oob", seeds=seeds,index = groups), #number iterations+1
   #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
   # print(tef.rf)
