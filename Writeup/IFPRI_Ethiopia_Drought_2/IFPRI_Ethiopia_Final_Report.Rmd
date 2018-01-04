@@ -775,30 +775,31 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
   # add temporal lags 
   data_in_plm = pdata.frame(data_in, index=c("EACODE","Year"), drop.index=F, row.names=TRUE)
   data_in$G_height =      data_in_plm$G_mx-data_in_plm$G_min
-  data_in$G_height_diff = as.numeric(lag(data_in_plm$G_mx-data_in_plm$G_min,1))
+  data_in$G_height_diff = as.numeric(diff(data_in_plm$G_mx-data_in_plm$G_min,1))
   data_in$A_height =      data_in_plm$A_max-data_in_plm$A_min
-  data_in$A_height_diff = as.numeric(lag(data_in_plm$A_max-data_in_plm$A_min,1))
-  data_in$G_max_diff =    as.numeric(lag(data_in_plm$G_mx,1))
-  data_in$A_max_diff  =   as.numeric(lag(data_in_plm$A_max,1))
-  data_in$A_Qnt_diff =    as.numeric(lag(data_in_plm$A_Qnt,1))
-  data_in$G_Qnt_diff  =   as.numeric(lag(data_in_plm$G_Qnt,1))
-  data_in$PPT_G_AUC_Qnt_diff = as.numeric(lag(data_in_plm$PPT_G_AUC_Qnt,1))
-  data_in$PPT_G_mn_diff = as.numeric(lag(data_in_plm$PPT_G_mn,1))
+  data_in$A_height_diff = as.numeric(diff(data_in_plm$A_max-data_in_plm$A_min,1))
+  data_in$G_max_diff =    as.numeric(diff(data_in_plm$G_mx,1))
+  data_in$A_max_diff  =   as.numeric(diff(data_in_plm$A_max,1))
+  data_in$A_Qnt_diff =    as.numeric(diff(data_in_plm$A_Qnt,1))
+  data_in$G_Qnt_diff  =   as.numeric(diff(data_in_plm$G_Qnt,1))
+  data_in$PPT_G_AUC_Qnt_diff = as.numeric(diff(data_in_plm$PPT_G_AUC_Qnt,1))
+  data_in$A_sd_diff = as.numeric(diff(data_in_plm$A_sd,1))  
+  data_in$G_sd_diff = as.numeric(diff(data_in_plm$G_sd,1))  
+  data_in$PPT_G_mn_diff = as.numeric(diff(data_in_plm$PPT_G_mn,1))
   rm(data_in_plm)
   
   # remove EA with less than 4 observations
   counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(MAIZEOPH_W))) %>% filter(non_na_count<4))
   data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
-  # remove eas
- 
-  #lag(data_in_plm$MAIZEOPH_W, 1) + c(year)MAIZEDAMAGEAREA_P
-  # doing DAMAGE < 0.3 TO DEAL WITH ISSUES AROUND FACTOR LEVELS 
   
-threshold = '0.25'
+  # remove eas with NAs still in Damage
+  data_in = data_in[!is.na(data_in$MAIZEDAMAGEAREA_P),]
+ 
+  threshold = '0.25'
 
-maz_dam1_w_ea = factor(MAIZEDAMAGEAREA_P< 0.25 ) ~A_height+A_height_diff+G_height+G_height_diff+ G_max_diff+A_max_diff+
-  A_Qnt_diff+G_Qnt_diff+ REGIONCODE+
-  PPT_G_AUC_Qnt_diff+PPT_G_mn_diff+A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + 
+maz_dam1_w_ea = factor(MAIZEDAMAGEAREA_P< 0.25 ) ~ A_height+A_height_diff+G_height+G_height_diff+ G_max_diff+A_max_diff+
+  A_Qnt_diff+G_Qnt_diff+ PPT_G_AUC_Qnt_diff+PPT_G_mn_diff+ REGIONCODE+ 
+  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + 
   G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn +
   G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
 	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn +
@@ -814,34 +815,22 @@ maz_dam1_w_ea = factor(MAIZEDAMAGEAREA_P< 0.25 ) ~A_height+A_height_diff+G_heigh
   set.seed(17516)
   # limit to variables of interest by EA 
   model_data = data_in[,names(data_in) %in%   c(all.vars(maz_dam1_w_ea),'EACODE','Year')]   
-  num_eas <- floor(0.75 * length(unique(model_data$EACODE)))
+  num_eas <- floor(0.85 * length(unique(model_data$EACODE)))
   train_eas <- sample(unique(model_data$EACODE), size = num_eas)
   
   train <- model_data[model_data$EACODE %in% train_eas, ]
   test <- model_data[!(model_data$EACODE %in% train_eas), ]
 
-  
   # Impute values 
   set.seed(123)
   preProcValues = preProcess(train, method = "medianImpute" )
   pp.train = predict(preProcValues, train)
+  preProcValues = preProcess(test, method = "medianImpute" )
   pp.test  = predict(preProcValues, test)
 
-  # pp.train = na.omit(predict(preProcess(train, method = "knnImpute",k=25),train))
-  # pp.test  = predict(preProcess(test, method = "knnImpute",k=25),train)
-  
-  #data_in.maz.imputed.full <- rfImpute(maz_dam1_wo_zones,   data_in[!is.na(data_in$MAIZEOPH_W),])
-  #save(data_in.maz.imputed.full,file = './Outputs4Pred/data_in.maz.imputed.full.RData')
-
-    
-  # maz.rf <- randomForest(maz_dam1_w_ea, pp.train,mtry=3)
-  # varImpPlot(maz.rf)
-  # save(maz.rf,file = './Outputs4Pred/maz.rf.RData')
-  # 
-  
   #set up seeds for multicore
   set.seed(123)
-  num_groups = 50 
+  num_groups = 50
   seeds <- vector(mode = "list", length = num_groups+1)
   for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
 
@@ -849,36 +838,12 @@ maz_dam1_w_ea = factor(MAIZEDAMAGEAREA_P< 0.25 ) ~A_height+A_height_diff+G_heigh
   groups = groupKFold(train$EACODE, k = num_groups)   # 15 works
 
   #train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
-  # maz.rf<-train(maz_dam1_w_ea,data=pp.train,method="rf",metric="Kappa",stratify=T,
-  #                 trControl=trainControl(method="oob", seeds=seeds,index = groups), #number iterations+1
-  #                 prox=T,allowParallel=T,tuneGrid = expand.grid(mtry=seq(5,12,1)))
-  # 
+  maz.rf<-train(maz_dam1_w_ea,data=pp.train,method="rf",metric="Kappa",stratify=T,
+                    trControl=trainControl(method="oob", seeds=seeds,index = groups), #number iterations+1
+                    prox=T,allowParallel=T,tuneGrid = expand.grid(mtry=seq(5,12,1)))
+
   # save(maz.rf,file = './Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P_GT.25_zone_diff.RData')
   load('./Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P_GT.25_zone_diff.RData')
-  
-  
-  #https://www.hackerearth.com/practice/machine-learning/machine-learning-algorithms/beginners-tutorial-on-xgboost-parameter-tuning-r/tutorial/
-  #https://analyticsdataexploration.com/xgboost-model-tuning-in-crossvalidation-using-caret-in-r/
-  
-  
-   # maz.xg<-train(maz_dam1_w_ea,data=pp.train,method="xgbTree",   metric="Kappa",
-   #                trControl=trainControl( index = groups,method = "cv",number = 3, allowParallel = T),  #
-   #                prox=T, tuneGrid =  expand.grid(nrounds = 75, max_depth = c(4, 6,  10),
-   #                eta = c(0.01), gamma = c(0), colsample_bytree = c(0.5, 0.75, 1.0),  # eta learning rate (0.01,0.001)
-   #                min_child_weight = c(1, 2),subsample=c(1) ))
-
-  #  maz.xg<-train(maz_dam1_w_ea,data=pp.train,method="xgbTree",metric="Recall",objective = "binary:logistic",stratify=T,
-  #                 trControl=trainControl( index = groups,method = "cv",number = 3,allowParallel=T),   
-  #                 prox=T, tuneGrid =  expand.grid(nrounds = 75, max_depth = c(6),
-  #                 eta = c(0.2), gamma = c(0), colsample_bytree = c( 1.0),  # eta learning rate (0.01,0.001)
-  #                 min_child_weight = c(1),subsample=c(1) ))
-  # save(maz.xg,file = './Outputs4Pred/maz.xg.MAIZEDAMAGEAREA_P_GT_.2_zone.RData')
-
-  #print(maz.rf)
-  #varImp(maz.rf)
-  
-  
-
   
   # write save predictions for james
   # model_data$pred_MAIZEDAMAGE = predict(maz.rf, predict(preProcess(model_data, method = "knnImpute",k=25),model_data) )
@@ -886,30 +851,23 @@ maz_dam1_w_ea = factor(MAIZEDAMAGEAREA_P< 0.25 ) ~A_height+A_height_diff+G_heigh
   # get accuracy measures 
   pp.test$pred = predict(maz.rf,pp.test)
   cm_maz = confusionMatrix(data =  pp.test$pred, reference = (pp.test$MAIZEDAMAGEAREA_P<threshold), mode = "prec_recall")
-  cm_maz
-  # results summary 
-  #cutoff 0.50, metric="Kappa", accuracy 0.89, recall 0.18  
-  #cutoff 0.30, metric="Kappa", accuracy 0.66, recall 0.24  
-  #cutoff 0.25, metric="Kappa", accuracy 0.72, recall 0.34  
-  #cutoff 0.2, metric="Kappa", accuracy 0.669, recall 0.43  
-  #cutoff 0.2, metric="Recall", accuracy 0.669, recall 0.43  
-  #cutoff 0.1, metric="Kappa", accuracy 0.646, recall 0.7798  
-
+  pp.train$pred_insp = predict(maz.rf,pp.train)
+  cm_maz_insp = confusionMatrix(data =  pp.train$pred_insp, reference = (pp.train$MAIZEDAMAGEAREA_P<threshold), mode = "prec_recall")
+  
 ```
 
-
 ### Maize Damages
-We can evaluate accuracy with a number of metrics on our independent testing data set described in the "Testing Data: Out-of-sample Performance" section above. The first, the confusion matrix compares predicted values against the observed (reference). We also report the a) overall accuracy, 2) Kappa coefficient, and 3) the recall rate[^3] as seen in table `r paste(Table_number)` below:
+We can evaluate accuracy with a number of metrics on our independent testing data set described in the "Testing Data: Out-of-sample Performance" section above. Here we compare both in-sample and out-of-sample performance. The first, the confusion matrix compares predicted values against the observed (reference). We also report the a) overall accuracy, 2) Kappa coefficient, and 3) the recall rate[^3] as seen in table `r paste(Table_number)` below:
 
-*Table `r paste(Table_number)`: Confusion matrix for reported damages > `r paste(threshold,'%',sep='')` for Maize*   
+*Table `r paste(Table_number)`: Confusion matrix for reported damages > `r paste(threshold,'%',sep='')` for Maize Out-Of-Sample*   
 *FALSE = Crop damages greater than `r paste(threshold,'%',sep='')` for Maize* 
 
 `r  Table_number=Table_number+1`
 `r library(pander); pander(cm_maz$table)`
 *Table `r paste(Table_number)`: Performance metrics for reported damages > `r paste(threshold,'%',sep='')` for Maize* `r  Table_number=Table_number+1`
-`r pander(data.frame(Accuracy=round(cm_maz$overall['Accuracy'],2), Kappa=round(cm_maz$overall['Kappa'],2), Recall=round(cm_maz$byClass['Recall'],2),row.names ='Value'))`
+`r pander(data.frame(Accuracy=c(round(cm_maz$overall['Accuracy'],2),round(cm_maz_insp$overall['Accuracy'],2)), Kappa=c(round(cm_maz$overall['Kappa'],2),round(cm_maz_insp$overall['Kappa'],2)), Recall=c(round(cm_maz$byClass['Recall'],2),round(cm_maz_insp$byClass['Recall'],2)),row.names =c('Out-Of-Sample','In-Sample')))`
  
-We see reasonable identification of reported maize crop losses with a recall rate of `r round(cm_maz$byClass['Recall'],2)`, indicating that `r round(cm_maz$byClass['Recall'],2)*100`% of all substantial loss cases were predicted in our completely independent *testing* data. In all, `r cm_maz$table['FALSE','FALSE']` out of `r cm_maz$table['FALSE','FALSE']+ cm_maz$table['TRUE','FALSE']` reported cases were predicted, and only `r cm_maz$table['FALSE','TRUE']` cases were falsely predicted as crop failure areas. 
+Overall, we find a high level of accuracy in our completely independent *testing* data with overall accuracy of `r round(cm_maz$overall['Accuracy'],2)*100` percent. We see reasonable identification of reported maize crop losses with a recall rate of `r round(cm_maz$byClass['Recall'],2)`, indicating that `r round(cm_maz$byClass['Recall'],2)*100`% of all substantial loss cases were predicted. In all, `r cm_maz$table['FALSE','FALSE']` out of `r cm_maz$table['FALSE','FALSE']+ cm_maz$table['TRUE','FALSE']` reported cases were predicted, and `r cm_maz$table['FALSE','TRUE']` cases were falsely predicted as crop failure areas. 
  
 We can also examine the relative importance of each variable to each model, as well as its estimated non-linear relationship with the dependent variable through partial dependency plots. First, let's examine the relative importance of each variable in the random forest through the role it played in Gini coefficient loss.
 
@@ -928,12 +886,12 @@ varImp_maz$importance = varImp_maz$importance[order(varImp_maz$importance[,1],de
 # store top 2 
 most_imp_maz = varImp_maz$importance$name[1]
 secd_imp_maz = varImp_maz$importance$name[6]
-thrd_imp_maz = varImp_maz$importance$name[7]
+thrd_imp_maz = varImp_maz$importance$name[10]
 
 # plot imporance
 top_ten = varImp_maz$importance[1:10,]
 top_ten = top_ten[order(top_ten[,1],decreasing = F),]
-dotchart(top_ten[,'Overall'],labels=top_ten[,'name'],cex=.7,xlab="Importance")
+dotchart(top_ten[,'Overall'],labels=top_ten[,'name'],cex=1,xlab="Importance")
 
 ```
 From the figure above we can see that `r most_imp_maz` has the highest relative importance in the random forest model. `r most_imp_maz` is **measured as the maximum NDVI value for the growing season. As such the highest NDVI value likely reflects a measure of plant health, with higher `r  rownames(varImp_maz$importance)[which.max(varImp_maz$importance$Overall)]` values corresponding to strong plant health at some point in the growing season.** We can also see that the most important variables are largely comprised of variables summarizing NDVI, with the exception of **PPT_G_mn which is the mean value of precipitation for each 10 day period across the growing season.**  
@@ -943,25 +901,25 @@ We can now look at the partial dependence plots to help understand the non-linea
 Figure `r paste(Figure_number)`: Partial dependency plot for influence of `r most_imp_maz` on maize damage prediction`r Figure_number =Figure_number+1 `
 
 ```{r Partial Dependency Maize first, echo=FALSE, message=FALSE, warning=FALSE,fig.width=7}
-maz.rf %>% partial(pred.var = most_imp_maz) %>% autoplot(rug = F, train = pp.train,x)+ labs(y='Likelihood of loss',x = paste(most_imp_maz, '\n (centered & scaled)'))
+maz.rf %>% partial(pred.var = most_imp_maz) %>% autoplot(rug = F, train = pp.train,x)+ labs(y='Likelihood of loss',x = paste(most_imp_maz, ''))
 ```
-In the figure above, **we can see how the likelihood of reporting maize losses decreases rapidly after one standard deviation below the mean value of `r most_imp_maz`, with the likelihood of losses increasing at the upper end of the distribution. These losses at upper end of the distribution might reflect excess rainfall, or late season losses from lodging or frost. Ideally additional variables would capture the effects of these late season dynamics in ways that maximum NDVI cannot.** Similarly, we can look at the partial dependence plot for other variables of interest such as `r secd_imp_maz`.
+In the figure above, we can see how the likelihood of reporting maize losses decreases rapidly as the first difference of G_Qnt approaches zero. G_Qnt, itself, measures the 90th percentile of NDVI values over the Meher growing season. Negative values of the first difference therefore indicate this the current year is lower than the previous, and possitive, higher. Therefore G_Qnt_diff picks up on the changes in peak values of NDVI. Similarly, we can look at the partial dependence plot for other variables of interest such as `r secd_imp_maz`.
 
 Figure `r paste(Figure_number)`: Partial dependency plot for influence of `r secd_imp_maz` on maize damage prediction`r Figure_number =Figure_number+1 `
 
 ```{r Partial_Dependency_Maize_second, echo=FALSE, message=FALSE, warning=FALSE,fig.width=7}
-maz.rf %>% partial(pred.var = secd_imp_maz) %>% autoplot(rug = F, train = pp.train,x)+ labs(y='Likelihood of loss',x = paste(secd_imp_maz, '\n (centered & scaled)'))
+maz.rf %>% partial(pred.var = secd_imp_maz) %>% autoplot(rug = F, train = pp.train,x)+ labs(y='Likelihood of loss',x = paste(secd_imp_maz, ''))
 ```
-**`r secd_imp_maz` tracks the effects of the average 10-day precipitation across the growing season. We can see that low levels of precipitation have the highest likelihood of crop damage. The likelihood of failure declines rapidly at about one standard deviation below the mean, and reaches its lowest likelihood around +0.5 sd above the mean precipitation rate. Past above +1 sd higher rainfall rates again increase the likelihood of damage, but at a slower rate.** We can see how variance in NDVI corresponds to crop failures with variables such as `r thrd_imp_maz`.
+`r secd_imp_maz` is a measure of variability in NDVI across the entire year (including both the Meher and Belg seasons). We see a near linear decrease in the likelihood of damage starting from a value of around 600, with a minima near 1750. The high likelihood of failure corresponding with very low values of NDVI variance likely relates to early season trouble including a failure to germinate, or early damage leading to crop failure. These early catastrophic losses would have little change in NDVI across the year and therefore very low values of `r secd_imp_maz`. The minima in losses indicates relatively high variance, this is likely related to the fact that a plot of healthy plants that is harvested and tilled, will likely have relatively high variance (especially in dual-cropping Meher and Belg areas). We can see values around 2000 that extremely high variance again corresponds to increased likelihood of losses, as dramatic shifts in plant health would likely correspond to the highest levels of variance. We can see how variance in NDVI corresponds to crop failures with variables such as `r thrd_imp_maz`.
 
 Figure `r paste(Figure_number)`: Partial dependency plot for influence of `r thrd_imp_maz` on maize damage prediction`r Figure_number =Figure_number+1 `
 
 ```{r Partial Dependency Maize third, echo=FALSE, message=FALSE, warning=FALSE,fig.width=7}
-maz.rf %>% partial(pred.var = thrd_imp_maz) %>% autoplot(rug = F, train = pp.train,x)+ labs(y='Likelihood of loss',x = paste(thrd_imp_maz, '\n (centered & scaled)'))
+maz.rf %>% partial(pred.var = thrd_imp_maz) %>% autoplot(rug = F, train = pp.train,x)+ labs(y='Likelihood of loss',x = paste(thrd_imp_maz, ''))
 ```
-
-`r thrd_imp_maz` **is a measure of variability in NDVI across the entire year (including both the Meher and Belg seasons). We see a near linear decrease in the likelihood of damage starting from 1.5 sd below the mean, with a minima near one sd above. The high likelihood of failure corresponding with very low values of NDVI variance likely relates to early season trouble including a failure to germinate, or early damage leading to crop failure. These early catastrophic losses would have little change in NDVI across the year and therefore very low values of `r thrd_imp_maz`. After the minima, we see a minima in damages around +1 sd. This is likely related to the fact that a plot of healthy plants that is harvested and tilled, will likely have relatively high variance (especially in dual-cropping Meher and Belg areas). We can see around +2 sd that extremely high variance again corresponds to increased likelihood of losses, as dramatic shifts in plant health would likely correspond to.** 
-
+`r thrd_imp_maz` tracks the effects of the average 10-day precipitation across the growing season. We can see that low levels of precipitation have the highest likelihood of crop damage. The likelihood of failure declines rapidly around a value of twenty, and reaches its lowest likelihood around 40mm. Past this we again see an increase the likelihood of damage, but at a slower rate. This later increase in the likelihood of damages likely points to the effects of excess precipitation or damaging storms.
+ 
+ 
 ```{r Predict Damages Wheat Regression, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
 
 #### Predict damages WHEAT ----------------------------------------------------
@@ -975,66 +933,74 @@ maz.rf %>% partial(pred.var = thrd_imp_maz) %>% autoplot(rug = F, train = pp.tra
  # read data
   data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v",version,".dta",sep=''))
   data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
+  
+   # add temporal lags 
+  data_in_plm = pdata.frame(data_in, index=c("EACODE","Year"), drop.index=F, row.names=TRUE)
+  data_in$G_height =      data_in_plm$G_mx-data_in_plm$G_min
+  data_in$G_height_diff = as.numeric(diff(data_in_plm$G_mx-data_in_plm$G_min,1))
+  data_in$A_height =      data_in_plm$A_max-data_in_plm$A_min
+  data_in$A_height_diff = as.numeric(diff(data_in_plm$A_max-data_in_plm$A_min,1))
+  data_in$G_max_diff =    as.numeric(diff(data_in_plm$G_mx,1))
+  data_in$A_max_diff  =   as.numeric(diff(data_in_plm$A_max,1))
+  data_in$A_Qnt_diff =    as.numeric(diff(data_in_plm$A_Qnt,1))
+  data_in$G_Qnt_diff  =   as.numeric(diff(data_in_plm$G_Qnt,1))
+  data_in$PPT_G_AUC_Qnt_diff = as.numeric(diff(data_in_plm$PPT_G_AUC_Qnt,1))
+  data_in$PPT_G_mn_diff = as.numeric(diff(data_in_plm$PPT_G_mn,1))
+  rm(data_in_plm)
 
   # remove EA with less than 4 observations
   counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(WHEATOPH_W))) %>% filter(non_na_count<4))
   data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
   
+    # remove eas with NAs still in Damage
+  data_in = data_in[!is.na(data_in$WHEATDAMAGEAREA_P),]
+ 
   #set as < because caret reverses the outcome variable 
-  wht_dam1_w_ea =  factor(WHEATDAMAGEAREA_P<0.2) ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
+  wht_dam1_w_ea =  factor(WHEATDAMAGEAREA_P<0.25) ~  A_height+A_height_diff+G_height+G_height_diff+ G_max_diff+A_max_diff+
+  A_Qnt_diff+G_Qnt_diff+ PPT_G_AUC_Qnt_diff+PPT_G_mn_diff+ REGIONCODE+ 
+    A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
 	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+ZONECODE
         
   registerDoMC(cores = 4)
 
   # sample from EAs 
-  set.seed(17516)
-  
   # limit to variables of interest by EA 
   model_data = data_in[,names(data_in) %in%   c(all.vars(wht_dam1_w_ea),'EACODE','Year')]   
-  num_eas <- floor(0.75 * length(unique(model_data$EACODE)))
-  train_eas <- sample(unique(model_data$EACODE), size = num_eas)
+  set.seed(17516)
+  num_eas = floor(0.85 * length(unique(model_data$EACODE)))
+  train_eas = sample(unique(model_data$EACODE), size = num_eas)
   
-  train <- model_data[model_data$EACODE %in% train_eas, ]
-  test <- model_data[!(model_data$EACODE %in% train_eas), ]
+  train = model_data[model_data$EACODE %in% train_eas, ]
+  test  = model_data[!(model_data$EACODE %in% train_eas), ]
 
     # Impute values 
   set.seed(123)
   preProcValues = preProcess(train, method = "medianImpute" )
   pp.train = predict(preProcValues, train)
+  preProcValues = preProcess(test, method = "medianImpute" )
   pp.test  = predict(preProcValues, test)
-  
-  # test plots REMOVE
-   # wht.rftest <- randomForest(wht_dam1_w_ea, pp.train,mtry=3)
-   # varImpPlot(wht.rftest)
-   # partialPlot(wht.rftest,pp.train,x.var='PPT_G_mn')
-   # partialPlot(wht.rftest,pp.train,x.var='G_mx')
-
-  
   
   #set up seeds for multicore
   set.seed(123)
-  seeds <- vector(mode = "list", length = 16)
+  seeds <- vector(mode = "list", length = num_groups+1)
   for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
   
   #set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
-  groups = groupKFold(train$EACODE, k = 15)
+  groups = groupKFold(train$EACODE, k = num_groups)
   # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
   # wht.rf<-train(wht_dam1_w_ea,data=pp.train,method="rf",metric="Kappa",stratify=T,
   #                trControl=trainControl(method="oob", seeds=seeds,index = groups), #number iterations+1
   #                prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
   # print(wht.rf)
-  # save(wht.rf,file = './Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P_GT_.2_zone_v2.RData')
-  load('./Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P_GT_.2_zone_v2.RData')
+  #save(wht.rf,file = './Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P_GT_.25_zone_diff.RData')
+  load('./Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P_GT_.25_zone_diff.RData')
   
-  pp.test$pred = predict(wht.rf,pp.test)
-  #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
-   #write save predictions for james
-  # model_data$pred_WHEATDAMAGE = predict(wht.rf, predict(preProcess(model_data, method = "knnImpute",k=25),model_data) )
-  # write.csv(model_data[,c('EACODE','Year','pred_WHEATDAMAGE')],'./Outputs4Share/wht.rfWHEATDAMAGEAREA_pred.csv',row.names = F)
-  # 
+ pp.test$pred = predict(wht.rf,pp.test)
  cm_wht =  confusionMatrix(data =  pp.test$pred, reference = (pp.test$WHEATDAMAGEAREA_P<threshold), mode = "prec_recall") 
-
   
+ pp.train$pred_insp = predict(wht.rf,pp.train)
+ cm_wht_insp = confusionMatrix(data =  pp.train$pred_insp, reference = (pp.train$WHEATDAMAGEAREA_P<threshold), mode = "prec_recall")
+ 
 ```
 
 ### Wheat Damages
@@ -1045,9 +1011,9 @@ The confusion matrix compares predicted values against the observed (reference).
 `r  Table_number=Table_number+1`
 `r library(pander); pander(cm_wht$table )`
 *Table `r paste(Table_number)`: Performance metrics for reported damages > `r paste(threshold,'%',sep='')` for Wheat* `r  Table_number=Table_number+1`
-`r pander(data.frame(Accuracy=round(cm_wht$overall['Accuracy'],2), Kappa=round(cm_wht$overall['Kappa'],2), Recall=round(cm_wht$byClass['Recall'],2),row.names ='Value'))`
+`r pander(data.frame(Accuracy=c(round(cm_wht$overall['Accuracy'],2),round(cm_wht_insp$overall['Accuracy'],2)), Kappa=c(round(cm_wht$overall['Kappa'],2),round(cm_wht_insp$overall['Kappa'],2)), Recall=c(round(cm_wht$byClass['Recall'],2),round(cm_wht_insp$byClass['Recall'],2)),row.names =c('Out-Of-Sample','In-Sample')))`
  
-For the case of wheat, we see impressive identification of reported wheat crop losses with a recall rate of `r round(cm_wht$byClass['Recall'],2)`, indicating that `r round(cm_wht$byClass['Recall'],2)*100`% of all substantial loss cases were predicted in our completely independent *testing* data. In all, `r cm_wht$table['FALSE','FALSE']` out of `r cm_wht$table['FALSE','FALSE']+ cm_wht$table['TRUE','FALSE']` reported cases were predicted, and only `r cm_wht$table['FALSE','TRUE']` cases were falsely predicted as crop failure areas. 
+Overall, we find a high level of accuracy in our completely independent *testing* data with overall accuracy of `r round(cm_wht$overall['Accuracy'],2)*100` percent. For the case of wheat, we see a decent identification of reported wheat crop losses with a recall rate of `r round(cm_wht$byClass['Recall'],2)`, indicating that `r round(cm_wht$byClass['Recall'],2)*100`% of all substantial loss cases were predicted. In all, `r cm_wht$table['FALSE','FALSE']` out of `r cm_wht$table['FALSE','FALSE']+ cm_wht$table['TRUE','FALSE']` reported cases were predicted, and `r cm_wht$table['FALSE','TRUE']` cases were falsely predicted as crop failure areas. 
  
 We can also examine the relative importance of each variable to each model, as well as its estimated non-linear relationship with the dependent variable through partial dependency plots. First, let's examine the relative importance of each variable in the random forest through the role it played in Gini coefficient loss.
 
@@ -1064,13 +1030,13 @@ varImp_wht$importance$name = rownames(varImp_wht$importance)
 varImp_wht$importance = varImp_wht$importance[order(varImp_wht$importance[,1],decreasing = T),]
 # store top 2 
 most_imp_wht = varImp_wht$importance$name[1]
-secd_imp_wht = varImp_wht$importance$name[6]
-thrd_imp_wht = varImp_wht$importance$name[5]
+secd_imp_wht = varImp_wht$importance$name[3]
+thrd_imp_wht = varImp_wht$importance$name[9]
 
 # plot imporance
 top_ten = varImp_wht$importance[1:10,]
 top_ten = top_ten[order(top_ten[,1],decreasing = F),]
-dotchart(top_ten[,'Overall'],labels=top_ten[,'name'],cex=.7,xlab="Importance")
+dotchart(top_ten[,'Overall'],labels=top_ten[,'name'],cex=1,xlab="Importance")
 ```
 
 From the figure above we can see that `r most_imp_wht` has the highest relative importance in the random forest model. `r most_imp_wht` is **measured as the maximum NDVI value for the growing season. As such the highest NDVI value likely reflects a measure of plant health, with higher `r  rownames(varImp_wht$importance)[which.max(varImp_wht$importance$Overall)]` values corresponding to strong plant health at some point in the growing season.** We can also see that the most important variables are largely comprised of variables summarizing NDVI, with the exception of **PPT_G_mn which is the mean value of precipitation for each 10 day period across the growing season.**  
@@ -1080,25 +1046,27 @@ We can now look at the partial dependence plots to help understand the non-linea
 Figure `r paste(Figure_number)`: Partial dependency plot for influence of `r most_imp_wht` on wheat damage prediction`r Figure_number =Figure_number+1 `
 
 ```{r Partial Dependency Wheat first, echo=FALSE, message=FALSE, warning=FALSE,fig.width=7}
-wht.rf %>% partial(pred.var = most_imp_wht) %>% autoplot(rug = F, train = pp.train,x)+ labs(y='Likelihood of loss',x = paste(most_imp_wht, '\n (centered & scaled)'))
+wht.rf %>% partial(pred.var = most_imp_wht) %>% autoplot(rug = F, train = pp.train,x)+ labs(y='Likelihood of loss',x = paste(most_imp_wht, ''))
 ```
-In the figure above, **we can see, similar to maize, how the likelihood of reporting maize losses decreases rapidly after one standard deviation below the mean value of `r most_imp_wht`, with the likelihood of losses increasing at the upper end of the distribution. These losses at upper end of the distribution might reflect excess rainfall, or late season losses from lodging or frost. Ideally additional variables would capture the effects of these late season dynamics in ways that maximum NDVI cannot.** Similarly, we can look at the partial dependence plot for other variables of interest such as `r secd_imp_wht`.
+In the figure above, we can see with `r most_imp_wht`, similar to maize, how the likelihood of reporting maize losses decreases rapidly after -1000, with a minima near zero. The likelihood of losses increase at the upper end of the distribution. These losses at upper end of the distribution might reflect poor management such as failure to control weeds, or excessively narrow row spacing. Similarly, we can look at the partial dependence plot for other variables of interest such as `r secd_imp_wht`.
 
 Figure `r paste(Figure_number)`: Partial dependency plot for influence of `r secd_imp_wht` on wheat damage prediction`r Figure_number =Figure_number+1 `
 
 ```{r Partial Dependency Wheat second, echo=FALSE, message=FALSE, warning=FALSE,fig.width=7}
-wht.rf %>% partial(pred.var = secd_imp_wht) %>% autoplot(rug = F, train = pp.train,x)+ labs(y='Likelihood of loss',x = paste(secd_imp_wht, '\n (centered & scaled)'))
+wht.rf %>% partial(pred.var = secd_imp_wht) %>% autoplot(rug = F, train = pp.train,x)+ labs(y='Likelihood of loss',x = paste(secd_imp_wht, ''))
 ```
 
-In the figure above, **we can see some interesting similarities and differences between the wheat and maize response to mean precipitation over the growing season. Of particular interest is between the mean and two standard deviations above the mean. The likelihood that substantial losses are reported doesn't increase meaningfully until over +2sd above the mean. In comparison, maize losses increased rapidly at +1sd. Past 3 standard deviation the likelihood of lossess increases rapidly. Would likely be linked to losses from rust or mold, or physical damage from storms all of which increase with excess rainfall.** Similarly, we can look at the partial dependence plot for other variables of interest such as `r thrd_imp_wht`.
+In the figure above, **we can see some interesting similarities and differences between the wheat and maize response to variability in greeness. Of particular interest is the broader range of variability that has no substantial influence on the likelihood of losses. This is not nescessarily pointing out that wheat is more resiliant to changes, but might be an indication of a broader range of natural variability in greeness that is expected for wheat. ** Similarly, we can look at the partial dependence plot for other variables of interest such as `r thrd_imp_wht`.
 
 Figure `r paste(Figure_number)`: Partial dependency plot for influence of `r thrd_imp_wht` on wheat damage prediction`r Figure_number =Figure_number+1 `
 
 ```{r Partial Dependency Wheat third, echo=FALSE, message=FALSE, warning=FALSE,fig.width=7}
-wht.rf %>% partial(pred.var = thrd_imp_wht) %>% autoplot(rug = F, train = pp.train,x)+ labs(y='Likelihood of loss',x = paste(thrd_imp_wht, '\n (centered & scaled)'))
+wht.rf %>% partial(pred.var = thrd_imp_wht) %>% autoplot(rug = F, train = pp.train,x)+ labs(y='Likelihood of loss',x = paste(thrd_imp_wht, ''))
 ```
+In the figure above, we can see some interesting similarities and differences between the wheat and maize response to mean precipitation over the growing season. Of particular interest is in areas greater than 40mm. The likelihood that substantial losses are reported doesn't increase meaningfully until over 60mm. In comparison, maize losses increased rapidly past 40mm. Here the likelihood of lossess does not increase rapidly until 60mm. Althogh these damages would likely be linked to losses from rust or mold, or physical damage from storms all of which increase with excess rainfall. The differences between maize and wheat however demonstrate the resiliance of wheat to changes in precipitation.
 
-In the figure above, **we can see some interesting similarities and differences between the wheat and maize response to variability in greeness. Of particular interest is the broader range of variability that has no substantial influence on the likelihood of losses. This is not nescessarily pointing out that wheat is more resiliant to changes, but might be an indication of a broader range of natural variability in greeness that is expected for wheat. **
+
+
 
 ```{r Predict Damages Sorghum Regression, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
 
@@ -1113,12 +1081,31 @@ In the figure above, **we can see some interesting similarities and differences 
   data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v",version,".dta",sep=''))
   data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
 
+   # add temporal lags 
+  data_in_plm = pdata.frame(data_in, index=c("EACODE","Year"), drop.index=F, row.names=TRUE)
+  data_in$G_height =      data_in_plm$G_mx-data_in_plm$G_min
+  data_in$G_height_diff = as.numeric(diff(data_in_plm$G_mx-data_in_plm$G_min,1))
+  data_in$A_height =      data_in_plm$A_max-data_in_plm$A_min
+  data_in$A_height_diff = as.numeric(diff(data_in_plm$A_max-data_in_plm$A_min,1))
+  data_in$G_max_diff =    as.numeric(diff(data_in_plm$G_mx,1))
+  data_in$A_max_diff  =   as.numeric(diff(data_in_plm$A_max,1))
+  data_in$A_Qnt_diff =    as.numeric(diff(data_in_plm$A_Qnt,1))
+  data_in$G_Qnt_diff  =   as.numeric(diff(data_in_plm$G_Qnt,1))
+  data_in$PPT_G_AUC_Qnt_diff = as.numeric(diff(data_in_plm$PPT_G_AUC_Qnt,1))
+  data_in$PPT_G_mn_diff = as.numeric(diff(data_in_plm$PPT_G_mn,1))
+  rm(data_in_plm)
+  
   # remove EA with less than 4 observations
   counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(SORGHUMOPH_W))) %>% filter(non_na_count<4))
   data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
+  
+      # remove eas with NAs still in Damage
+  data_in = data_in[!is.na(data_in$SORGHUMDAMAGEAREA_P),]
  
    #set as < because caret reverses the outcome variable 
-sor_dam1_w_ea = factor(SORGHUMDAMAGEAREA_P<0.2) ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
+sor_dam1_w_ea = factor(SORGHUMDAMAGEAREA_P<0.25) ~  A_height+A_height_diff+G_height+G_height_diff+ G_max_diff+A_max_diff+
+  A_Qnt_diff+G_Qnt_diff+ PPT_G_AUC_Qnt_diff+PPT_G_mn_diff+ REGIONCODE+ 
+  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
 	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+ZONECODE
         
   registerDoMC(cores = 4)
@@ -1128,7 +1115,7 @@ sor_dam1_w_ea = factor(SORGHUMDAMAGEAREA_P<0.2) ~  A_mn + A_min + A_max + A_AUC 
   
   # limit to variables of interest by EA 
   model_data = data_in[,names(data_in) %in%   c(all.vars(sor_dam1_w_ea),'EACODE','Year')]   
-  num_eas <- floor(0.75 * length(unique(model_data$EACODE)))
+  num_eas <- floor(0.85 * length(unique(model_data$EACODE)))
   train_eas <- sample(unique(model_data$EACODE), size = num_eas)
   
   train <- model_data[model_data$EACODE %in% train_eas, ]
@@ -1142,27 +1129,25 @@ sor_dam1_w_ea = factor(SORGHUMDAMAGEAREA_P<0.2) ~  A_mn + A_min + A_max + A_AUC 
   
   #set up seeds for multicore
   set.seed(123)
-  seeds <- vector(mode = "list", length = 16)
+  seeds <- vector(mode = "list", length = num_groups+1)
   for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
   
   #set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
-  groups = groupKFold(train$EACODE, k = 15)
+  groups = groupKFold(train$EACODE, k = num_groups)
   
   # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
   # sor.rf<-train(sor_dam1_w_ea,data=pp.train,method="rf",metric="Kappa",stratify=T,
   #                 trControl=trainControl(method="oob", seeds=seeds,index = groups), #number iterations+1
   #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
   # print(sor.rf)
-  # save(sor.rf,file = './Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P_GT_.2_zone_v2.RData')
-  load('./Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P_GT_.2_zone_v2.RData')
+  #save(sor.rf,file = './Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P_GT_.25_zone_diff.RData')
+  load('./Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P_GT_.25_zone_diff.RData')
   
   pp.test$pred = predict(sor.rf, pp.test)
-  #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
-     #write save predictions for james
-  # model_data$pred_SORGDAMAGE = predict(sor.rf, predict(preProcess(model_data, method = "knnImpute",k=25),model_data) )
-  # write.csv(model_data[,c('EACODE','Year','pred_SORGDAMAGE')],'./Outputs4Share/sor.rfSORGDAMAGEAREA_pred.csv',row.names = F)
-
- cm_sor = confusionMatrix(data =  pp.test$pred, reference = (pp.test$SORGHUMDAMAGEAREA_P<threshold), mode = "prec_recall")
+  cm_sor = confusionMatrix(data =  pp.test$pred, reference = (pp.test$SORGHUMDAMAGEAREA_P<threshold), mode = "prec_recall")
+  pp.train$pred_insp = predict(sor.rf,pp.train)
+  cm_sor_insp = confusionMatrix(data =  pp.train$pred_insp, reference = (pp.train$SORGHUMDAMAGEAREA_P<threshold), mode = "prec_recall")
+ 
 ```
 
 ### Sorghum Damages
@@ -1173,9 +1158,9 @@ The confusion matrix compares predicted values against the observed (reference).
 `r  Table_number=Table_number+1`
 `r library(pander); pander(cm_sor$table)`
 *Table `r paste(Table_number)`: Performance metrics for reported damages > `r paste(threshold,'%',sep='')` for Sorghum* `r  Table_number=Table_number+1`
-`r pander(data.frame(Accuracy=round(cm_sor$overall['Accuracy'],2), Kappa=round(cm_sor$overall['Kappa'],2), Recall=round(cm_sor$byClass['Recall'],2),row.names ='Value'))`
+`r pander(data.frame(Accuracy=c(round(cm_sor$overall['Accuracy'],2),round(cm_sor_insp$overall['Accuracy'],2)), Kappa=c(round(cm_sor$overall['Kappa'],2),round(cm_sor_insp$overall['Kappa'],2)), Recall=c(round(cm_sor$byClass['Recall'],2),round(cm_sor_insp$byClass['Recall'],2)),row.names =c('Out-Of-Sample','In-Sample')))`
  
-For the case of Sorghum, we see impressive identification of reported Sorghum crop losses with a recall rate of `r round(cm_sor$byClass['Recall'],2)`, indicating that `r round(cm_sor$byClass['Recall'],2)*100`% of all substantial loss cases were predicted in our completely independent *testing* data. In all, `r cm_sor$table['FALSE','FALSE']` out of `r cm_sor$table['FALSE','FALSE']+ cm_sor$table['TRUE','FALSE']` reported cases were predicted, and only `r cm_sor$table['FALSE','TRUE']` cases were falsely predicted as crop failure areas. 
+Overall, we find a high level of accuracy in our completely independent *testing* data with overall accuracy of `r round(cm_sor$overall['Accuracy'],2)*100` percent. For the case of Sorghum, we see a decent identification of reported Sorghum crop losses with a recall rate of `r round(cm_sor$byClass['Recall'],2)`, indicating that `r round(cm_sor$byClass['Recall'],2)*100`% of all substantial loss cases were predicted in our completely independent *testing* data. In all, `r cm_sor$table['FALSE','FALSE']` out of `r cm_sor$table['FALSE','FALSE']+ cm_sor$table['TRUE','FALSE']` reported cases were predicted, and  `r cm_sor$table['FALSE','TRUE']` cases were falsely predicted as crop failure areas. 
 
 
 
@@ -1192,14 +1177,33 @@ For the case of Sorghum, we see impressive identification of reported Sorghum cr
  # read data
   data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v",version,".dta",sep=''))
   data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
+  
+   # add temporal lags 
+  data_in_plm = pdata.frame(data_in, index=c("EACODE","Year"), drop.index=F, row.names=TRUE)
+  data_in$G_height =      data_in_plm$G_mx-data_in_plm$G_min
+  data_in$G_height_diff = as.numeric(diff(data_in_plm$G_mx-data_in_plm$G_min,1))
+  data_in$A_height =      data_in_plm$A_max-data_in_plm$A_min
+  data_in$A_height_diff = as.numeric(diff(data_in_plm$A_max-data_in_plm$A_min,1))
+  data_in$G_max_diff =    as.numeric(diff(data_in_plm$G_mx,1))
+  data_in$A_max_diff  =   as.numeric(diff(data_in_plm$A_max,1))
+  data_in$A_Qnt_diff =    as.numeric(diff(data_in_plm$A_Qnt,1))
+  data_in$G_Qnt_diff  =   as.numeric(diff(data_in_plm$G_Qnt,1))
+  data_in$PPT_G_AUC_Qnt_diff = as.numeric(diff(data_in_plm$PPT_G_AUC_Qnt,1))
+  data_in$PPT_G_mn_diff = as.numeric(diff(data_in_plm$PPT_G_mn,1))
+  rm(data_in_plm)
 
   # remove EA with less than 4 observations
   counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(BARLEYOPH_W))) %>% filter(non_na_count<4))
   data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
   
+        # remove eas with NAs still in Damage
+  data_in = data_in[!is.na(data_in$BARLEYDAMAGEAREA_P),]
+  
    #set as < because caret reverses the outcome variable 
 
-bar_dam1_w_ea = factor(BARLEYDAMAGEAREA_P<0.2) ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
+bar_dam1_w_ea = factor(BARLEYDAMAGEAREA_P<0.25) ~  A_height+A_height_diff+G_height+G_height_diff+ G_max_diff+A_max_diff+
+  A_Qnt_diff+G_Qnt_diff+ PPT_G_AUC_Qnt_diff+PPT_G_mn_diff+ REGIONCODE+ 
+  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
 	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+ZONECODE
         
   registerDoMC(cores = 4)
@@ -1209,7 +1213,7 @@ bar_dam1_w_ea = factor(BARLEYDAMAGEAREA_P<0.2) ~  A_mn + A_min + A_max + A_AUC +
   
   # limit to variables of interest by EA 
   model_data = data_in[,names(data_in) %in%   c(all.vars(bar_dam1_w_ea),'EACODE','Year')]   
-  num_eas <- floor(0.75 * length(unique(model_data$EACODE)))
+  num_eas <- floor(0.85 * length(unique(model_data$EACODE)))
   train_eas <- sample(unique(model_data$EACODE), size = num_eas)
   
   train <- model_data[model_data$EACODE %in% train_eas, ]
@@ -1223,26 +1227,26 @@ bar_dam1_w_ea = factor(BARLEYDAMAGEAREA_P<0.2) ~  A_mn + A_min + A_max + A_AUC +
   
   #set up seeds for multicore
   set.seed(123)
-  seeds <- vector(mode = "list", length = 16)
+  seeds <- vector(mode = "list", length = num_groups+1)
   for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
   
   #set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
-  groups = groupKFold(train$EACODE, k = 15)
+  groups = groupKFold(train$EACODE, k = num_groups)
   
   # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
   # bar.rf<-train(bar_dam1_w_ea,data=pp.train,method="rf",metric="Kappa",stratify=T,
   #                 trControl=trainControl(method="oob", seeds=seeds,index = groups), #number iterations+1
   #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
   # print(bar.rf)
-  # save(bar.rf,file = './Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P_GT_.2_zone_v2.RData')
-  load('./Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P_GT_.2_zone_v2.RData')
+  # save(bar.rf,file = './Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P_GT_.25_zone_diff.RData')
+   load('./Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P_GT_.25_zone_diff.RData')
   
   pp.test$pred = predict(bar.rf, pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
      #write save predictions for james
   # model_data$pred_BARLEYDAMAGE = predict(bar.rf, predict(preProcess(model_data, method = "knnImpute",k=25),model_data) )
   # write.csv(model_data[,c('EACODE','Year','pred_BARLEYDAMAGE')],'./Outputs4Share/bar.rfBARLEYDAMAGEAREA_pred.csv',row.names = F)
-cm_bar =  confusionMatrix(data =  pp.test$pred, reference = (pp.test$BARLEYDAMAGEAREA_P<threshold), mode = "prec_recall")
+  cm_bar =  confusionMatrix(data =  pp.test$pred, reference = (pp.test$BARLEYDAMAGEAREA_P<threshold), mode = "prec_recall")
 ```
    
 ### Barley Damages
@@ -1255,7 +1259,7 @@ The confusion matrix compares predicted values against the observed (reference).
 *Table `r paste(Table_number)`: Performance metrics for reported damages > `r paste(threshold,'%',sep='')` for barley* `r  Table_number=Table_number+1`
 `r pander(data.frame(Accuracy=round(cm_bar$overall['Accuracy'],2), Kappa=round(cm_bar$overall['Kappa'],2), Recall=round(cm_bar$byClass['Recall'],2),row.names ='Value'))`
  
-For the case of barley, we see relatively poor identification of reported losses with a recall rate of only `r round(cm_bar$byClass['Recall'],2)`, indicating that only`r round(cm_bar$byClass['Recall'],2)*100`% of all substantial loss cases were predicted in our independent *testing* data. In all, `r cm_bar$table['FALSE','FALSE']` out of `r cm_bar$table['FALSE','FALSE']+ cm_bar$table['TRUE','FALSE']` reported cases were predicted, and  `r cm_bar$table['FALSE','TRUE']` cases were falsely predicted as crop failure areas. 
+Overall, we find a high level of accuracy in our completely independent *testing* data with overall accuracy of `r round(cm_bar$overall['Accuracy'],2)*100` percent. For the case of barley, we see a reasonable identification of reported losses with a recall rate of only `r round(cm_bar$byClass['Recall'],2)`, indicating that `r round(cm_bar$byClass['Recall'],2)*100`% of all substantial loss cases were predicted in our independent *testing* data. In all, `r cm_bar$table['FALSE','FALSE']` out of `r cm_bar$table['FALSE','FALSE']+ cm_bar$table['TRUE','FALSE']` reported cases were predicted, and  `r cm_bar$table['FALSE','TRUE']` cases were falsely predicted as crop failure areas. 
    
    
 ```{r Predict Damages Teff Regression, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
@@ -1272,13 +1276,32 @@ For the case of barley, we see relatively poor identification of reported losses
   data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v",version,".dta",sep=''))
   data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
 
+   # add temporal lags 
+  data_in_plm = pdata.frame(data_in, index=c("EACODE","Year"), drop.index=F, row.names=TRUE)
+  data_in$G_height =      data_in_plm$G_mx-data_in_plm$G_min
+  data_in$G_height_diff = as.numeric(diff(data_in_plm$G_mx-data_in_plm$G_min,1))
+  data_in$A_height =      data_in_plm$A_max-data_in_plm$A_min
+  data_in$A_height_diff = as.numeric(diff(data_in_plm$A_max-data_in_plm$A_min,1))
+  data_in$G_max_diff =    as.numeric(diff(data_in_plm$G_mx,1))
+  data_in$A_max_diff  =   as.numeric(diff(data_in_plm$A_max,1))
+  data_in$A_Qnt_diff =    as.numeric(diff(data_in_plm$A_Qnt,1))
+  data_in$G_Qnt_diff  =   as.numeric(diff(data_in_plm$G_Qnt,1))
+  data_in$PPT_G_AUC_Qnt_diff = as.numeric(diff(data_in_plm$PPT_G_AUC_Qnt,1))
+  data_in$PPT_G_mn_diff = as.numeric(diff(data_in_plm$PPT_G_mn,1))
+  rm(data_in_plm)
+  
   # remove EA with less than 4 observations
   counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(TEFFOPH_W))) %>% filter(non_na_count<4))
   data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
+  
+  # remove eas with NAs still in Damage
+  data_in = data_in[!is.na(data_in$TEFFDAMAGEAREA_P),]
    
   #set as < because caret reverses the outcome variable 
 
-tef_dam1_w_ea = factor(TEFFDAMAGEAREA_P<0.2) ~  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
+tef_dam1_w_ea = factor(TEFFDAMAGEAREA_P<0.25) ~  A_height+A_height_diff+G_height+G_height_diff+ G_max_diff+A_max_diff+
+  A_Qnt_diff+G_Qnt_diff+ PPT_G_AUC_Qnt_diff+PPT_G_mn_diff+ REGIONCODE+ 
+  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
 	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+ZONECODE
         
   registerDoMC(cores = 6)
@@ -1288,7 +1311,7 @@ tef_dam1_w_ea = factor(TEFFDAMAGEAREA_P<0.2) ~  A_mn + A_min + A_max + A_AUC + A
   
   # limit to variables of interest by EA 
   model_data = data_in[,names(data_in) %in%   c(all.vars(tef_dam1_w_ea),'EACODE','Year')]   
-  num_eas <- floor(0.75 * length(unique(model_data$EACODE)))
+  num_eas <- floor(0.85 * length(unique(model_data$EACODE)))
   train_eas <- sample(unique(model_data$EACODE), size = num_eas)
   
   train <- model_data[model_data$EACODE %in% train_eas, ]
@@ -1302,26 +1325,28 @@ tef_dam1_w_ea = factor(TEFFDAMAGEAREA_P<0.2) ~  A_mn + A_min + A_max + A_AUC + A
   
   #set up seeds for multicore
   set.seed(123)
-  seeds <- vector(mode = "list", length = 16)
+  seeds <- vector(mode = "list", length = num_groups+1)
   for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
   
   #set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
-  groups = groupKFold(train$EACODE, k = 15)
+  groups = groupKFold(train$EACODE, k = num_groups)
   
   # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
-  # tef.rf<-train(tef_dam1_w_ea,data=pp.train,method="rf",metric="Kappa",stratify=T,
+  # tef.rf = train(tef_dam1_w_ea,data=pp.train,method="rf",metric="Kappa",stratify=T,
   #                 trControl=trainControl(method="oob", seeds=seeds,index = groups), #number iterations+1
   #                 prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
   # print(tef.rf)
-  # save(tef.rf,file = './Outputs4Pred/tef.rf.TEFFDAMAGEAREA_P_GT_.2_zone_v2.RData')
-  load('./Outputs4Pred/tef.rf.TEFFDAMAGEAREA_P_GT_.2_zone_v2.RData')
-  
+  # save(tef.rf,file = './Outputs4Pred/tef.rf.TEFFDAMAGEAREA_P_GT_.25_zone_diff.RData')
+  load('./Outputs4Pred/tef.rf.TEFFDAMAGEAREA_P_GT_.25_zone_diff.RData')
+                       
   pp.test$pred = predict(tef.rf, pp.test)
   #confusionMatrix(data = (as.numeric(as.character(pp.test$pred))>0), reference = (pp.test$MAIZEDAMAGE_DROUGHT_DUM>0), mode = "prec_recall")
   # model_data$pred_TEFFDAMAGE = predict(tef.rf, predict(preProcess(model_data, method = "knnImpute",k=25),model_data) )
   # write.csv(model_data[,c('EACODE','Year','pred_TEFFDAMAGE')],'./Outputs4Share/tef.rfTEFFDAMAGEAREA_pred.csv',row.names = F)
  
   cm_tef =   confusionMatrix(data =  pp.test$pred, reference = (pp.test$TEFFDAMAGEAREA_P<threshold), mode = "prec_recall")
+  cm_tef
+  0.29
 ```
 
 
@@ -1335,50 +1360,69 @@ The confusion matrix compares predicted values against the observed (reference).
 *Table `r paste(Table_number)`: Performance metrics for reported damages > `r paste(threshold,'%',sep='')` for teff* `r  Table_number=Table_number+1`
 `r pander(data.frame(Accuracy=round(cm_tef$overall['Accuracy'],2), Kappa=round(cm_tef$overall['Kappa'],2), Recall=round(cm_tef$byClass['Recall'],2),row.names ='Value'))`
  
-For the case of teff, we see relatively poor identification of reported losses with a recall rate of only `r round(cm_tef$byClass['Recall'],2)`, indicating that only`r round(cm_tef$byClass['Recall'],2)*100`% of all substantial loss cases were predicted in our independent *testing* data. In all, `r cm_tef$table['FALSE','FALSE']` out of `r cm_tef$table['FALSE','FALSE']+ cm_tef$table['TRUE','FALSE']` reported cases were predicted, and  `r cm_tef$table['FALSE','TRUE']` cases were falsely predicted as crop failure areas. 
+Overall, we find a high level of accuracy in our completely independent *testing* data with overall accuracy of `r round(cm_tef$overall['Accuracy'],2)*100` percent. For the case of teff, we see relatively good identification of reported losses with a recall rate of only `r round(cm_tef$byClass['Recall'],2)`, indicating that `r round(cm_tef$byClass['Recall'],2)*100`% of all substantial loss cases were predicted in our independent *testing* data. In all, `r cm_tef$table['FALSE','FALSE']` out of `r cm_tef$table['FALSE','FALSE']+ cm_tef$table['TRUE','FALSE']` reported cases were predicted, and `r cm_tef$table['FALSE','TRUE']` cases were falsely predicted as crop failure areas. 
    
 
 ## Predict damages out of sample 
-```{r Predict Damages to all EAs, eval=FALSE, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
+```{r Predict Damages to all EAs, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
   # Read in all EA data
   setwd(Home_dir)  
-  EAs_poly = st_read("../Data/EnumerationAreas/EnumerationAreasSIN.shp") # use EA_code_merge as unique id
-  Reg_poly = st_read("../Data/AdminBoundaries/ETH_adm2_UTM.shp") # use EA_code_merge as unique id
+  EAs_poly = st_read("../Data/EnumerationAreas/EnumerationAreasSIN.shp") # use EA_code_merge as unique id  75582 features
+  Reg_poly = st_read("../Data/AdminBoundaries/ETH_adm1_UTM.shp") # use EA_code_merge as unique id
   Reg_poly = st_transform(Reg_poly,"+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs")
   #EAs_poly = readOGR("../Data/EnumerationAreas/EnumerationAreasSIN_Regions",'EnumerationAreasSIN_R_NAME_Addis Ababa') # use EA_code_merge as unique id
+ 
+  # load all eas exacted data 
   load('~/Documents/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_2016/Outputs4Pred/all_eas_NDVI_ET_panel_V4.RData')
   all_eas_data = get('output')
   all_eas_data$ZONECODE = as.numeric(all_eas_data$Z_CODE)
   all_eas_data$EACODE = as.numeric(all_eas_data$EA_CODE)
   all_eas_data$EA_CODE_Year = paste(all_eas_data$EA_CODE,all_eas_data$Year,sep="_")
   rm(output)
-  # impute missing values  
+  # impute missing values
   all_eas_data = subset(all_eas_data, select=-c(plant_dates,harvest_dates,G_mx_dates)) # must remove date variables before impute
-  preProcValues = preProcess(all_eas_data, method = "medianImpute" ) 
+  preProcValues = preProcess(all_eas_data, method = "medianImpute" )
   all_eas_data = predict(preProcValues, all_eas_data)
-  
-  
+
+
   # create a unqiue key for both
   all_eas_data$EA_merge = paste(all_eas_data$W_CODE,gsub("-","", all_eas_data$EA_NAME),sep='')
   EAs_poly$EA_merge = paste(EAs_poly$W_CODE,gsub("-","", EAs_poly$EA_NAME),sep='')
   # find non-matching codes
   #anti_join(all_eas_data, EAs_poly, by="EA_merge")
 
+   # add temporal lags
+  all_eas_data_plm = pdata.frame(all_eas_data, index=c("EACODE","Year"), drop.index=F, row.names=TRUE)
+  all_eas_data$G_height =      all_eas_data_plm$G_mx-all_eas_data_plm$G_min
+  all_eas_data$G_height_diff = as.numeric(diff(all_eas_data_plm$G_mx-all_eas_data_plm$G_min,1))
+  all_eas_data$A_height =      all_eas_data_plm$A_max-all_eas_data_plm$A_min
+  all_eas_data$A_height_diff = as.numeric(diff(all_eas_data_plm$A_max-all_eas_data_plm$A_min,1))
+  all_eas_data$G_max_diff =    as.numeric(diff(all_eas_data_plm$G_mx,1))
+  all_eas_data$A_max_diff  =   as.numeric(diff(all_eas_data_plm$A_max,1))
+  all_eas_data$A_Qnt_diff =    as.numeric(diff(all_eas_data_plm$A_Qnt,1))
+  all_eas_data$G_Qnt_diff  =   as.numeric(diff(all_eas_data_plm$G_Qnt,1))
+  all_eas_data$PPT_G_AUC_Qnt_diff = as.numeric(diff(all_eas_data_plm$PPT_G_AUC_Qnt,1))
+  all_eas_data$PPT_G_mn_diff = as.numeric(diff(all_eas_data_plm$PPT_G_mn,1))
+  all_eas_data$REGIONCODE = as.numeric(all_eas_data$R_CODE)  # swap names to match
+  rm(all_eas_data_plm)
+
   # load & predict damage model
-  load('./Outputs4Pred/tef.rf.TEFFDAMAGEAREA_P_GT_.2_zone_v2.RData')
+  setwd(Home_dir)
+
+  load('./Outputs4Pred/tef.rf.TEFFDAMAGEAREA_P_GT_.25_zone_diff.RData')
   all_eas_data$pred_dam_tef = predict(tef.rf, all_eas_data)
-  load('./Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P_GT_.2_zone_v2.RData')
+  load('./Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P_GT_.25_zone_diff.RData')
   all_eas_data$pred_dam_bar = predict(bar.rf, all_eas_data)
-  load('./Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P_GT_.2_zone_v2.RData')
+  load('./Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P_GT_.25_zone_diff.RData')
   all_eas_data$pred_dam_sor = predict(sor.rf, all_eas_data)
-  load('./Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P_GT_.2_zone_v2.RData')
+  load('./Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P_GT_.25_zone_diff.RData')
   all_eas_data$pred_dam_wht = predict(wht.rf, all_eas_data)
-  load('./Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P_GT.2_zone.RData')
+  load('./Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P_GT.25_zone_diff.RData')
   all_eas_data$pred_dam_maz = predict(maz.rf, all_eas_data)
   rm(list = c('tef.rf','bar.rf','sor.rf','wht.rf','maz.rf'))
 
-  table(all_eas_data$pred_dam_sor, exclude = NULL) 
-  
+  table(all_eas_data$pred_dam_sor, exclude = NULL)
+
   # store predicted damages in wide format
   # remove duplicates also
   all_eas_dam_sor =    unique(all_eas_data[,list(Year,RK_NAME,RK_CODE,R_NAME,R_CODE,Z_NAME,Z_CODE,W_NAME,
@@ -1387,18 +1431,24 @@ For the case of teff, we see relatively poor identification of reported losses w
   all_eas_dam_sor = all_eas_dam_sor %>% distinct(Year, RK_CODE, .keep_all =T) %>% spread(key = Year, value = pred_dam_sor) # wide format
   names(all_eas_dam_sor)[names(all_eas_dam_sor)  %in% 2009:2016] =
      paste(names(all_eas_dam_sor)[names(all_eas_dam_sor)  %in% 2009:2016],'dam_sor',sep='_') # rename
+  all_eas_dam_sor$DamageSum_s =  all_eas_dam_sor %>% select(matches('dam'))  %>% rowSums( na.rm = T)
+  
   all_eas_dam_bar =  unique(all_eas_data[,list(Year,RK_NAME,RK_CODE,R_NAME,R_CODE,Z_NAME,Z_CODE,W_NAME,
-     W_CODE,EA_NAME,EA_merge,pred_dam_bar) ]) 
+     W_CODE,EA_NAME,EA_merge,pred_dam_bar) ])
   all_eas_dam_bar$pred_dam_bar = all_eas_dam_bar$pred_dam_bar == T
-  all_eas_dam_bar = all_eas_dam_bar %>% distinct(Year, RK_CODE, .keep_all =T) %>% spread(key = Year, value = pred_dam_bar) 
+  all_eas_dam_bar = all_eas_dam_bar %>% distinct(Year, RK_CODE, .keep_all =T) %>% spread(key = Year, value = pred_dam_bar)
   names(all_eas_dam_bar)[names(all_eas_dam_bar)  %in% 2009:2016] =
       paste(names(all_eas_dam_bar)[names(all_eas_dam_bar)  %in% 2009:2016],'dam_bar',sep='_')
+  all_eas_dam_bar$DamageSum_b =  all_eas_dam_bar %>% select(matches('dam'))  %>% rowSums( na.rm = T)
+
   all_eas_dam_wht =  unique(all_eas_data[,list(Year,RK_NAME,RK_CODE,R_NAME,R_CODE,Z_NAME,Z_CODE,W_NAME,
       W_CODE,EA_NAME,EA_merge,pred_dam_wht) ])
   all_eas_dam_wht$pred_dam_wht = all_eas_dam_wht$pred_dam_wht == T
   all_eas_dam_wht = all_eas_dam_wht %>% distinct(Year, RK_CODE, .keep_all =T) %>% spread(key = Year, value = pred_dam_wht)
   names(all_eas_dam_wht)[names(all_eas_dam_wht)  %in% 2009:2016] =
       paste(names(all_eas_dam_wht)[names(all_eas_dam_wht)  %in% 2009:2016],'dam_wht',sep='_')
+  all_eas_dam_wht$DamageSum_w =  all_eas_dam_wht %>% select(matches('dam'))  %>% rowSums( na.rm = T)
+
   all_eas_dam_maz_sub = all_eas_data[,list(Year,RK_NAME,RK_CODE,R_NAME,R_CODE,Z_NAME,Z_CODE,W_NAME,
            W_CODE,EA_NAME,EA_merge,pred_dam_maz) ]
   all_eas_dam_maz_sub$pred_dam_maz = all_eas_dam_maz_sub$pred_dam_maz == T
@@ -1406,7 +1456,8 @@ For the case of teff, we see relatively poor identification of reported losses w
   all_eas_dam_maz = spread(all_eas_dam_maz_sub, key = Year, value = pred_dam_maz)
   names(all_eas_dam_maz)[names(all_eas_dam_maz)  %in% 2009:2016] =
       paste(names(all_eas_dam_maz)[names(all_eas_dam_maz)  %in% 2009:2016],'dam_maz',sep='_')
-  rm()
+  all_eas_dam_maz$DamageSum_m =  all_eas_dam_maz %>% select(matches('dam'))  %>% rowSums( na.rm = T)
+
   all_eas_dam_tef_sub = all_eas_data[,list(Year,RK_NAME,RK_CODE,R_NAME,R_CODE,Z_NAME,Z_CODE,W_NAME,
            W_CODE,EA_NAME,EA_merge,pred_dam_tef) ]
   all_eas_dam_tef_sub$pred_dam_tef = all_eas_dam_tef_sub$pred_dam_tef == T
@@ -1414,50 +1465,193 @@ For the case of teff, we see relatively poor identification of reported losses w
   all_eas_dam_tef = spread(all_eas_dam_tef_sub, key = Year, value = pred_dam_tef)
   names(all_eas_dam_tef)[names(all_eas_dam_tef)  %in% 2009:2016] =
       paste(names(all_eas_dam_tef)[names(all_eas_dam_tef)  %in% 2009:2016],'dam_tef',sep='_')
+  all_eas_dam_tef$DamageSum_t =  all_eas_dam_tef %>% select(matches('dam'))  %>% rowSums( na.rm = T)
+
   rm(list=c('all_eas_dam_tef_sub','all_eas_dam_maz_sub','all_eas_data'))
 
   # join to ea polygon selected variables
   # get EA codes from polgon and join to that
   jnd.tbl = data.frame(EA_merge = unique(EAs_poly$EA_merge))
-  jnd.tbl = all_eas_dam_sor %>% select(matches('20|EA_merge')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge')
-  jnd.tbl = all_eas_dam_bar %>% select(matches('20|EA_merge')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge')
-  jnd.tbl = all_eas_dam_wht %>% select(matches('20|EA_merge')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge')
-  jnd.tbl = all_eas_dam_maz %>% select(matches('20|EA_merge')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge')
-  jnd.tbl = all_eas_dam_tef %>% select(matches('20|EA_merge')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge') %>% as.data.frame()
+  jnd.tbl = all_eas_dam_sor %>% select(matches('20|EA_merge|DamageSum')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge')
+  jnd.tbl = all_eas_dam_bar %>% select(matches('20|EA_merge|DamageSum')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge')
+  jnd.tbl = all_eas_dam_wht %>% select(matches('20|EA_merge|DamageSum')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge')
+  jnd.tbl = all_eas_dam_maz %>% select(matches('20|EA_merge|DamageSum')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge')
+  jnd.tbl = all_eas_dam_tef %>% select(matches('20|EA_merge|DamageSum')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge') %>% as.data.frame()
+  # all crops damage summaries 
+  jnd.tbl$DamageSum_allcrops =  jnd.tbl %>% select(matches('DamageSum'))  %>% rowSums( na.rm = T)
+  jnd.tbl$DamageSum_allcrops_2009 = jnd.tbl %>% select(matches('2009')) %>% rowSums( na.rm = T)
+  jnd.tbl$DamageSum_allcrops_2010 = jnd.tbl %>% select(matches('2010')) %>% rowSums( na.rm = T)
+  jnd.tbl$DamageSum_allcrops_2011 = jnd.tbl %>% select(matches('2011')) %>% rowSums( na.rm = T)
+  jnd.tbl$DamageSum_allcrops_2012 = jnd.tbl %>% select(matches('2012')) %>% rowSums( na.rm = T)
+  jnd.tbl$DamageSum_allcrops_2013 = jnd.tbl %>% select(matches('2013')) %>% rowSums( na.rm = T)
+  jnd.tbl$DamageSum_allcrops_2014 = jnd.tbl %>% select(matches('2014')) %>% rowSums( na.rm = T)
+  jnd.tbl$DamageSum_allcrops_2015 = jnd.tbl %>% select(matches('2015')) %>% rowSums( na.rm = T)
+  jnd.tbl$DamageSum_allcrops_2016 = jnd.tbl %>% select(matches('2016')) %>% rowSums( na.rm = T)
+
   EAs_poly = left_join(EAs_poly,jnd.tbl,by='EA_merge')
+  
   # only use if reading in via readOGR EAs_poly@data = join(EAs_poly@data,jnd.tbl,by='EA_merge',type='left')
- 
+
   rm(list=c('all_eas_dam_sor','all_eas_dam_sor','all_eas_dam_bar','all_eas_dam_wht','all_eas_dam_maz','all_eas_dam_tef',
                "all_eas_dam_maz_sub", "all_eas_dam_tef_sub","all_eas_data",'jnd.tbl'))
-  
+
   # check number of damaged EAs ( Damaged is == FALSE)
   EAs_poly  %>% as.data.frame() %>% select(matches('bar')) %>% apply(.,2,function(x) x==F ) %>% colSums( na.rm = T)
-   table(EAs_poly$`2012_dam_bar`, exclude = NULL) 
+   table(EAs_poly$`2012_dam_bar`, exclude = NULL)
 
-  # plot results as points 
+  # plot results as points
   EAs_point = st_centroid(EAs_poly)
+  saveRDS(EAs_point,'~/Documents/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_2016/Outputs4Pred/allEAs_point_merge_agss.rds')
+  # load processed predictions
+  EAs_point = readRDS('~/Documents/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_2016/Outputs4Pred/allEAs_point_merge_agss.rds')
+  
+```
 
+```{r All_Crops_Predict_Damages_to_all_EAs_by_year, echo=FALSE, fig.width=7, message=FALSE, warning=FALSE}
+   setwd(Home_dir)
+  EAs_point_DamageSum_allcrops_year = EAs_point %>% select(matches('DamageSum_allcrops_20')) %>% na.omit()
+  names(EAs_point_DamageSum_allcrops_year)[names(EAs_point_DamageSum_allcrops_year)  %in% paste('DamageSum_allcrops',2009:2016 ,sep='_')] = 2009:2016
+  EAs_point_DamageSum_allcrops_year =  EAs_point_DamageSum_allcrops_year  %>% gather('2009','2010','2011','2012','2013','2014','2015','2016',   key = "Year", value = "Failed_crop_count")
   
+  # subset by year to speed up plotting
+  set.seed(10)
+  EAs_point_DamageSum_allcrops_year = EAs_point_DamageSum_allcrops_year%>% group_by(Year) %>% sample_n( 10000)
+
+  # plot it 
+  plot_dam_all_year = ggplot()+  geom_sf(data=Reg_poly,  aes( ),fill = 'grey20',size=0.25 ) +  
+    geom_sf(data= EAs_point_DamageSum_allcrops_year ,  aes(color = Failed_crop_count ),size=0.25, alpha=0.5)+ facet_wrap( ~ Year, ncol=2) +  geom_sf(data=Reg_poly,  aes( ),colour='grey80',fill = NA,size=0.25 ) + scale_colour_gradientn(colours=rev(rainbow(4)))
+                                      
+  plot(plot_dam_all_year)
+
+```
+
+```{r All_Crops_Predict_Damages_to_all_EAs, echo=FALSE,  message=FALSE, warning=FALSE}
+  
+# subset to speed up plotting
+  set.seed(10)
+  EAs_point_smp = sample_n(EAs_point,50000)
+
+  # plot it 
+  plot_dam_maz = ggplot()+  geom_sf(data=Reg_poly,  aes( ),fill = 'grey20',size=0.25 ) +  
+    geom_sf(data= EAs_point_smp ,  aes(color = DamageSum_allcrops ),size=0.25, alpha=0.5) +  geom_sf(data=Reg_poly,  aes( ),colour='grey80',fill = NA,size=0.25 ) + scale_colour_gradientn(colours=rev(rainbow(4)))
+                                      
+  plot(plot_dam_maz)
+
+```
+
+Figure `r paste(Figure_number)`: paste('Maize: Predicted Damage > ',threshold,'%',sep='')`r Figure_number =Figure_number+1 `
+
+```{r MAIZE_Predict_Damages_to_all_EAs, echo=FALSE,  message=FALSE, warning=FALSE}
+
+  # MAIZE
   # subset for one crop and facet grid it
+  setwd(Home_dir)
+  EAs_point_maz = EAs_point %>% select(matches('maz')) %>% na.omit()
+  names(EAs_point_maz)[names(EAs_point_maz)  %in% paste(2009:2016 ,'dam_maz',sep='_')] = 2009:2016
+  EAs_point_maz =  EAs_point_maz  %>%
+    gather('2009','2010','2011','2012','2013','2014','2015','2016',   key = "Year", value = "Successful_crop")
+  # subset to speed up plotting
+  set.seed(10)
+  EAs_point_maz = EAs_point_maz%>% group_by(Year) %>% sample_n( 20000)
+
+  # plot it 
+  plot_dam_maz = ggplot()+  geom_sf(data=Reg_poly,  aes( ),fill = 'grey20',size=0.25 ) +  
+    geom_sf(data=subset(EAs_point_maz, Successful_crop == F),  aes(color = Successful_crop ),size=0.25, alpha=0.5) +  geom_sf(data=Reg_poly,  aes( ),colour='grey80',fill = NA,size=0.25 )+ facet_wrap( ~ Year, ncol=4)+ theme(legend.position="none")
+  xys = as.data.frame(st_coordinates(subset(EAs_point_maz, Successful_crop == F)))
+  xys$Year = subset(EAs_point_maz, Successful_crop == F)$Year
+  xys= xys[xys$Year>2012,]
+ plot_dam_maz = ggplot()+  geom_sf(data=Reg_poly,  aes( ),fill = 'grey20',size=0.25 )+geom_bin2d(data=xys,aes(X,Y),bins=20) + scale_fill_gradientn(colours=rev(rainbow(4)),na.value = 0 )  + facet_wrap( ~ Year, ncol=4)
   
+  plot(plot_dam_maz)
+  # ggsave(plot = plot_dam_maz,'./Writeup/IFPRI_Ethiopia_Drought_2/plot_dam_maz.pdf')
+```
+
+Figure `r paste(Figure_number)`: paste('Barley: Predicted Damage > ',threshold,'%',sep='')`r Figure_number =Figure_number+1 `
+
+```{r BARLEY_Predict_Damages_to_all_EAs, echo=FALSE, message=FALSE, warning=FALSE}
+  # BARLEY
+  # subset for one crop and facet grid it
   EAs_point_bar = EAs_point %>% select(matches('bar')) %>% na.omit()
   names(EAs_point_bar)[names(EAs_point_bar)  %in% paste(  2009:2016 ,'dam_bar',sep='_')] = 2009:2016
   EAs_point_bar =  EAs_point_bar  %>%
     gather('2009','2010','2011','2012','2013','2014','2015','2016',   key = "Year", value = "Successful_crop")
-      
-  plot_dam_bar =  ggplot() +  geom_sf(data=subset(EAs_point_bar, Successful_crop == T), aes(color = Successful_crop ),size=1, alpha=0.5) +
-    geom_sf(data=subset(EAs_point_bar, Successful_crop == F),  aes(color = Successful_crop ),size=1, alpha=0.5) + 
-     geom_sf(data=Reg_poly,  aes( ),fill = NA )+ 
-      facet_wrap( ~ Year, ncol=4)+ggtitle('Barley: Predicted Damage > 20%') 
-  saveRDS(plot_dam_bar,'./Writeup/IFPRI_Ethiopia_Drought_2/plot_dam_bar.rds')
-  plot_dam_bar = readRDS('./Writeup/IFPRI_Ethiopia_Drought_2/plot_dam_bar.rds')
+  # subset to speed up plotting
+  set.seed(10)
+  EAs_point_maz = EAs_point_maz%>% group_by(Year) %>% sample_n( 20000)
+
+  # plot it 
+  plot_dam_bar = ggplot()+  geom_sf(data=Reg_poly,  aes( ),fill = 'grey20',size=0.25 ) +  
+    geom_sf(data=subset(EAs_point_bar, Successful_crop == F),  aes(color = Successful_crop ),size=0.25, alpha=0.5) +  geom_sf(data=Reg_poly,  aes( ),colour='grey80',fill = NA,size=0.25 )+ facet_wrap( ~ Year, ncol=4)+ theme(legend.position="none")
   
-  #plot(plot_dam_bar)
-  ggsave(plot_dam_bar,"~/Documents/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_2016/Writeup/IFPRI_Ethiopia_Drought_2/plot_dam_bar.png")
+  plot(plot_dam_bar)
+  # ggsave(plot = plot_dam_bar,'./Writeup/IFPRI_Ethiopia_Drought_2/plot_dam_bar.pdf')
 ```
 
+Figure `r paste(Figure_number)`: paste('Wheat: Predicted Damage > ',threshold,'%',sep='')`r Figure_number =Figure_number+1 `
 
+```{r WHEAT_Predict_Damages_to_all_EAs, echo=FALSE,  message=FALSE, warning=FALSE}
+  
+  # WHEAT 
+  # subset for one crop and facet grid it
+  EAs_point_wht = EAs_point %>% select(matches('wht')) %>% na.omit()
+  names(EAs_point_wht)[names(EAs_point_wht)  %in% paste(2009:2016 ,'dam_wht',sep='_')] = 2009:2016
+  EAs_point_wht =  EAs_point_wht  %>%
+    gather('2009','2010','2011','2012','2013','2014','2015','2016',   key = "Year", value = "Successful_crop")
+  # subset to speed up plotting
+  set.seed(10)
+  EAs_point_maz = EAs_point_maz%>% group_by(Year) %>% sample_n( 20000)
 
+  # plot it 
+  plot_dam_wht = ggplot()+  geom_sf(data=Reg_poly,  aes( ),fill = 'grey20',size=0.25 ) +  
+    geom_sf(data=subset(EAs_point_wht, Successful_crop == F),  aes(color = Successful_crop ),size=0.25, alpha=0.5) +  geom_sf(data=Reg_poly,  aes( ),colour='grey80',fill = NA,size=0.25 )+ facet_wrap( ~ Year, ncol=4)+  theme(legend.position="none")
+                          
+  plot(plot_dam_wht)
+  # ggsave(plot = plot_dam_wht,'./Writeup/IFPRI_Ethiopia_Drought_2/plot_dam_wht.pdf')
+```
+
+Figure `r paste(Figure_number)`: paste('Sorghum: Predicted Damage > ',threshold,'%',sep='')`r Figure_number =Figure_number+1 `
+
+```{r SORGHUM_Predict_Damages_to_all_EAs, echo=FALSE,  message=FALSE, warning=FALSE}
+
+  # SORGHUM 
+  # subset for one crop and facet grid it
+  EAs_point_sor = EAs_point %>% select(matches('sor')) %>% na.omit()
+  names(EAs_point_sor)[names(EAs_point_sor)  %in% paste(2009:2016 ,'dam_sor',sep='_')] = 2009:2016
+  EAs_point_sor =  EAs_point_sor  %>%
+    gather('2009','2010','2011','2012','2013','2014','2015','2016',   key = "Year", value = "Successful_crop")
+  # subset to speed up plotting
+  set.seed(10)
+  EAs_point_maz = EAs_point_maz%>% group_by(Year) %>% sample_n( 20000)
+
+  # plot it 
+  plot_dam_sor = ggplot()+  geom_sf(data=Reg_poly,  aes( ),fill = 'grey20',size=0.25 ) +  
+    geom_sf(data=subset(EAs_point_sor, Successful_crop == F),  aes(color = Successful_crop ),size=0.25, alpha=0.5) +  geom_sf(data=Reg_poly,  aes( ),colour='grey80',fill = NA,size=0.25 )+ facet_wrap( ~ Year, ncol=4)+  theme(legend.position="none")
+  
+  plot(plot_dam_sor)
+  # ggsave(plot = plot_dam_sor,'./Writeup/IFPRI_Ethiopia_Drought_2/plot_dam_sor.pdf')
+```
+
+Figure `r paste(Figure_number)`: paste('Teff: Predicted Damage > ',threshold,'%',sep='')`r Figure_number =Figure_number+1 `
+
+```{r TEFF_Predict_Damages_to_all_EAs, echo=FALSE, message=FALSE, warning=FALSE}
+  
+  # TEFF 
+  # subset for one crop and facet grid it
+  EAs_point_tef = EAs_point %>% select(matches('tef')) %>% na.omit()
+  names(EAs_point_tef)[names(EAs_point_tef)  %in% paste(2009:2016 ,'dam_tef',sep='_')] = 2009:2016
+  EAs_point_tef =  EAs_point_tef  %>%
+    gather('2009','2010','2011','2012','2013','2014','2015','2016',   key = "Year", value = "Successful_crop")
+  # subset to speed up plotting
+  set.seed(10)
+  EAs_point_maz = EAs_point_maz%>% group_by(Year) %>% sample_n( 20000)
+
+  # plot it 
+  plot_dam_tef = ggplot()+  geom_sf(data=Reg_poly,  aes( ),fill = 'grey20',size=0.25 ) +  
+    geom_sf(data=subset(EAs_point_tef, Successful_crop == F),  aes(color = Successful_crop ),size=0.25, alpha=0.5) +  geom_sf(data=Reg_poly,  aes( ),colour='grey80',fill = NA,size=0.25 )+ facet_wrap( ~ Year, ncol=4)+  theme(legend.position="none")
+  
+  plot(plot_dam_tef)
+  # ggsave(plot = plot_dam_tef,'./Writeup/IFPRI_Ethiopia_Drought_2/plot_dam_tef.pdf')
+  
  
 ```
 
