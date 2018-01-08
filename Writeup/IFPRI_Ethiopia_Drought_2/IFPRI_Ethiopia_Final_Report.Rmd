@@ -853,99 +853,6 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
   cm_maz = confusionMatrix(data =  pp.test$pred, reference = (pp.test$MAIZEDAMAGE_DROUGHT_AREA_P<threshold), mode = "prec_recall")
 ```
 
-```{r Predict Damages Maize Regression_by_region, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
-#### Predict damages MAIZE ----------------------------------------------------
-  # read data
-for(region_iter in c(1,3,4,7)){
-    setwd(Home_dir) 
-    ######## MAIZE   
-    # region code  1= Tigray 3=amhara  4=oromia 7 = SNNP
-  
-    # read data
-    data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v4.dta",sep=''))
-    data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
-    data_in = data_in[data_in$REGIONCODE==region_iter,  ]
-    name_lookup = data.table(region_id = c(1,3,4,7),region_name=c('Tigray','Amhara','Oromia','SNNP'))
-    region_name = name_lookup[region_id ==region_iter,]$region_name
-    
-    # add temporal lags 
-    data_in_plm = pdata.frame(data_in, index=c("EACODE","Year"), drop.index=F, row.names=TRUE)
-    data_in$G_height =      data_in_plm$G_mx-data_in_plm$G_min
-    data_in$G_height_diff = as.numeric(diff(data_in_plm$G_mx-data_in_plm$G_min,1))
-    data_in$A_height =      data_in_plm$A_max-data_in_plm$A_min
-    data_in$A_height_diff = as.numeric(diff(data_in_plm$A_max-data_in_plm$A_min,1))
-    data_in$G_max_diff =    as.numeric(diff(data_in_plm$G_mx,1))
-    data_in$A_max_diff  =   as.numeric(diff(data_in_plm$A_max,1))
-    data_in$A_Qnt_diff =    as.numeric(diff(data_in_plm$A_Qnt,1))
-    data_in$G_Qnt_diff  =   as.numeric(diff(data_in_plm$G_Qnt,1))
-    data_in$PPT_G_AUC_Qnt_diff = as.numeric(diff(data_in_plm$PPT_G_AUC_Qnt,1))
-    data_in$A_sd_diff = as.numeric(diff(data_in_plm$A_sd,1))  
-    data_in$G_sd_diff = as.numeric(diff(data_in_plm$G_sd,1))  
-    data_in$PPT_G_mn_diff = as.numeric(diff(data_in_plm$PPT_G_mn,1))
-    rm(data_in_plm)
-    
-    # remove EA with less than 4 observations
-    counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(MAIZEOPH_W))) %>% filter(non_na_count<4))
-    data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
-    
-    # remove eas with NAs still in Damage
-    data_in = data_in[!is.na(data_in$MAIZEDAMAGEAREA_P),]
-   
-    threshold = '0.25'
-  
-    maz_dam1_w_ea = factor(MAIZEDAMAGE_DROUGHT_AREA_P< 0.25 ) ~ A_height+A_height_diff+G_height+G_height_diff+ G_max_diff+A_max_diff+
-    A_Qnt_diff+G_Qnt_diff+ PPT_G_AUC_Qnt_diff+PPT_G_mn_diff+ REGIONCODE+ 
-    A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + 
-    G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn +
-    G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
-  	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn +
-    PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + 
-    ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn +
-    ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt +
-    PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + 
-    PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+ZONECODE 
-           
-    registerDoMC(cores = 4)
-    
-    # sample from EAs 
-    set.seed(17516)
-    # limit to variables of interest by EA 
-    model_data = data_in[,names(data_in) %in%   c(all.vars(maz_dam1_w_ea),'EACODE','Year')]   
-    num_eas <- floor(0.75 * length(unique(model_data$EACODE)))
-    train_eas <- sample(unique(model_data$EACODE), size = num_eas)
-    
-    train <- model_data[model_data$EACODE %in% train_eas, ]
-    test <- model_data[!(model_data$EACODE %in% train_eas), ]
-  
-    # Impute values 
-    set.seed(123)
-    preProcValues = preProcess(train, method = "medianImpute" )
-    pp.train = predict(preProcValues, train)
-    preProcValues = preProcess(test, method = "medianImpute" )
-    pp.test  = predict(preProcValues, test)
-  
-    #set up seeds for multicore
-    set.seed(123)
-    num_groups = 50
-    seeds <- vector(mode = "list", length = num_groups+1)
-    for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
-  
-    # set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
-    groups = groupKFold(train$EACODE, k = num_groups)   # 15 works
-  
-    #train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
-    maz.rf<-train(maz_dam1_w_ea,data=pp.train,method="rf",metric="Kappa",stratify=T,
-                      trControl=trainControl(method="oob", seeds=seeds,index = groups), #number iterations+1
-                      prox=T,allowParallel=T,tuneGrid = expand.grid(mtry=seq(5,12,1)))
-    pp.test$pred = predict(maz.rf,pp.test)
-    
-    # assign to cm_maz_region_name
-    assign(x = paste('cm_maz',region_name,sep='_'),value = confusionMatrix(data =  pp.test$pred, reference =   (pp.test$MAIZEDAMAGE_DROUGHT_AREA_P<threshold), mode = "prec_recall"))
- 
-}
-
-```
-
 ### Maize Damages
 We can evaluate accuracy with a number of metrics on our independent testing data set described in the "Testing Data: Out-of-sample Performance" section above. Here we compare both in-sample and out-of-sample performance. The first, the confusion matrix compares predicted values against the observed (reference). We also report the a) overall accuracy, 2) Kappa coefficient, and 3) the recall rate[^3] as seen in table `r paste(Table_number)` below:
 
@@ -958,17 +865,6 @@ We can evaluate accuracy with a number of metrics on our independent testing dat
 `r pander(data.frame(Accuracy=round(cm_maz$overall['Accuracy'],2), Kappa=round(cm_maz$overall['Kappa'],2), Recall=round(cm_maz$byClass['Recall'],2),row.names ='Value'))` 
 
 Overall, we find a high level of accuracy in our completely independent *testing* data with overall accuracy of `r round(cm_maz$overall['Accuracy'],2)*100` percent. We see reasonable identification of reported maize crop losses with a recall rate of `r round(cm_maz$byClass['Recall'],2)`, indicating that `r round(cm_maz$byClass['Recall'],2)*100`% of all substantial loss cases were predicted. In all, `r cm_maz$table['FALSE','FALSE']` out of `r cm_maz$table['FALSE','FALSE']+ cm_maz$table['TRUE','FALSE']` reported cases were predicted, and `r cm_maz$table['FALSE','TRUE']` cases were falsely predicted as crop failure areas. Although the recall rate is relatively low, we can still say that we can identify healthly maize harvest `r cm_maz$table['TRUE','TRUE']` out of `r cm_maz$table['TRUE','TRUE']+ cm_maz$table['FALSE','TRUE']` times, or `r round(cm_maz$table['TRUE','TRUE'] /(cm_maz$table['TRUE','TRUE']+ cm_maz$table['FALSE','TRUE']),2)*100`% of the time.
- 
- *Table `r paste(Table_number)`: Region specific model performance metrics for reported damages > `r paste(threshold,'%',sep='')` for Maize* `r  Table_number=Table_number+1`
-```{r Predict Damages Maize results by region, echo=FALSE, message=FALSE, warning=FALSE}
-maz_reg = data.frame( 
-Accuracy=c(round(cm_maz_Amhara$overall['Accuracy'],2),round(cm_maz_Oromia$overall['Accuracy'],2),round(cm_maz_SNNP$overall['Accuracy'],2),round(cm_maz_Tigray$overall['Accuracy'],2)    ), Kappa=c(round(cm_maz_Amhara$overall['Kappa'],2),round(cm_maz_Oromia$overall['Kappa'],2),round(cm_maz_SNNP$overall['Kappa'],2),round(cm_maz_Tigray$overall['Kappa'],2)    ), 
-Recall=c(round(cm_maz_Amhara$byClass['Recall'],2),round(cm_maz_Oromia$byClass['Recall'],2),round(cm_maz_SNNP$byClass['Recall'],2),round(cm_maz_Tigray$byClass['Recall'],2)    ),
-row.names =c('Amhara','Oromia','SNNP','Tirgray'))
-pander(maz_reg)
-```
-
-Looking at models trained and tested independently by region we can see that model accuracy varies substantially by region. We see maximum overall accuracy of `r max(maz_reg$Accuracy)*100`%, and a maximum recall rate (the percent of substantial losses correctly identified) of `r max(maz_reg$Recall)*100`% for `r row.names(maz_reg[maz_reg$Recall==max(maz_reg$Recall),])`. This variation in performance by region is likely due to difficulties in field delination with a 250m pixel, and problems with land cover identification. These problems could likely be alleviated by moving toward higher resolutions data products, like the 30m Harmonized Landsat Sentinel data (HLS) once available. 
  
 We can also examine the relative importance of each variable to the national-level model, as well as its estimated non-linear relationship with the dependent variable through partial dependency plots. First, let's examine the relative importance of each variable in the random forest through the role it played in Gini coefficient loss.
 
@@ -1101,88 +997,7 @@ maz.rf %>% partial(pred.var = thrd_imp_maz) %>% autoplot(rug = F, train = pp.tra
  cm_wht_insp = confusionMatrix(data =  pp.train$pred_insp, reference = (pp.train$WHEATDAMAGE_DROUGHT_AREA_P<threshold), mode = "prec_recall")
  
 ```
-
-```{r Predict Damages Wheat Regression region loop, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
-#### Predict damages WHEAT ----------------------------------------------------
-for(region_iter in c(1,3,4,7)){  # read data
-    setwd(Home_dir) 
-  
-   ######## WHEAT
-    # read data
-    # region code 7 = SNNP 1= Tigrey 3=amhara  4=oromia
-  
-    data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v4.dta",sep=''))
-    data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
-    data_in = data_in[data_in$REGIONCODE==region_iter,  ]
-
-    name_lookup = data.table(region_id = c(1,3,4,7),region_name=c('Tigray','Amhara','Oromia','SNNP'))
-    region_name = name_lookup[region_id ==region_iter,]$region_name
-
-    # add temporal lags 
-    data_in_plm = pdata.frame(data_in, index=c("EACODE","Year"), drop.index=F, row.names=TRUE)
-    data_in$G_height =      data_in_plm$G_mx-data_in_plm$G_min
-    data_in$G_height_diff = as.numeric(diff(data_in_plm$G_mx-data_in_plm$G_min,1))
-    data_in$A_height =      data_in_plm$A_max-data_in_plm$A_min
-    data_in$A_height_diff = as.numeric(diff(data_in_plm$A_max-data_in_plm$A_min,1))
-    data_in$G_max_diff =    as.numeric(diff(data_in_plm$G_mx,1))
-    data_in$A_max_diff  =   as.numeric(diff(data_in_plm$A_max,1))
-    data_in$A_Qnt_diff =    as.numeric(diff(data_in_plm$A_Qnt,1))
-    data_in$G_Qnt_diff  =   as.numeric(diff(data_in_plm$G_Qnt,1))
-    data_in$PPT_G_AUC_Qnt_diff = as.numeric(diff(data_in_plm$PPT_G_AUC_Qnt,1))
-    data_in$PPT_G_mn_diff = as.numeric(diff(data_in_plm$PPT_G_mn,1))
-    rm(data_in_plm)
-  
-    # remove EA with less than 4 observations
-    counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(WHEATOPH_W))) %>% filter(non_na_count<4))
-    data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
-    
-      # remove eas with NAs still in Damage
-    data_in = data_in[!is.na(data_in$WHEATDAMAGEAREA_P),]
-   
-    #set as < because caret reverses the outcome variable 
-    wht_dam1_w_ea =  factor(WHEATDAMAGE_DROUGHT_AREA_P<0.25) ~  A_height+A_height_diff+G_height+G_height_diff+ G_max_diff+A_max_diff+
-    A_Qnt_diff+G_Qnt_diff+ PPT_G_AUC_Qnt_diff+PPT_G_mn_diff+ REGIONCODE+ 
-      A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
-  	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+ZONECODE
-          
-    registerDoMC(cores = 4)
-  
-    # sample from EAs 
-    # limit to variables of interest by EA 
-    model_data = data_in[,names(data_in) %in%   c(all.vars(wht_dam1_w_ea),'EACODE','Year')]   
-    set.seed(17516)
-    num_eas = floor(0.75 * length(unique(model_data$EACODE)))
-    train_eas = sample(unique(model_data$EACODE), size = num_eas)
-    
-    train = model_data[model_data$EACODE %in% train_eas, ]
-    test  = model_data[!(model_data$EACODE %in% train_eas), ]
-  
-      # Impute values 
-    set.seed(123)
-    preProcValues = preProcess(train, method = "medianImpute" )
-    pp.train = predict(preProcValues, train)
-    preProcValues = preProcess(test, method = "medianImpute" )
-    pp.test  = predict(preProcValues, test)
-    
-    #set up seeds for multicore
-    set.seed(123)
-    seeds <- vector(mode = "list", length = num_groups+1)
-    for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
-    
-    #set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
-    groups = groupKFold(train$EACODE, k = num_groups)
-    # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
-    wht.rf<-train(wht_dam1_w_ea,data=pp.train,method="rf",metric="Kappa",stratify=T,
-                   trControl=trainControl(method="oob", seeds=seeds,index = groups), #number iterations+1
-                   prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
-    
-    
-   pp.test$pred = predict(wht.rf,pp.test)
-    # assign to cm_maz_region_name
-    assign(x = paste('cm_wht',region_name,sep='_'),value = confusionMatrix(data =  pp.test$pred, reference =   (pp.test$WHEATDAMAGE_DROUGHT_AREA_P<threshold), mode = "prec_recall"))    
-}
-
-```
+ 
 ### Wheat Damages
 The confusion matrix compares predicted values against the observed (reference). We also report the a) overall accuracy, 2) Kappa coefficient, and 3) the recall rate[^3] as seen in table `r paste(Table_number)` below:
 
@@ -1194,17 +1009,6 @@ The confusion matrix compares predicted values against the observed (reference).
 `r pander(data.frame(Accuracy=round(cm_wht$overall['Accuracy'],2), Kappa=round(cm_wht$overall['Kappa'],2), Recall=round(cm_wht$byClass['Recall'],2),row.names ='Value'))`
 
 Overall, we find a high level of accuracy in our completely independent *testing* data with overall accuracy of `r round(cm_wht$overall['Accuracy'],2)*100` percent. For the case of wheat, we see a decent identification of reported wheat crop losses with a recall rate of `r round(cm_wht$byClass['Recall'],2)`, indicating that `r round(cm_wht$byClass['Recall'],2)*100`% of all substantial loss cases were predicted. In all, `r cm_wht$table['FALSE','FALSE']` out of `r cm_wht$table['FALSE','FALSE']+ cm_wht$table['TRUE','FALSE']` reported cases were predicted, and `r cm_wht$table['FALSE','TRUE']` cases were falsely predicted as crop failure areas. Although the recall rate is relatively low, we can still say that we can identify healthly maize harvest `r cm_wht$table['TRUE','TRUE']` out of `r cm_wht$table['TRUE','TRUE']+ cm_wht$table['FALSE','TRUE']` times, or `r round(cm_wht$table['TRUE','TRUE'] /(cm_wht$table['TRUE','TRUE']+ cm_wht$table['FALSE','TRUE']),2)*100`% of the time.
- 
-*Table `r paste(Table_number)`: Region specific model performance metrics for reported damages > `r paste(threshold,'%',sep='')` for Wheat* `r  Table_number=Table_number+1`
-```{r Predict Damages Wheat results by region, echo=FALSE, message=FALSE, warning=FALSE}
-wht_reg = data.frame( 
-Accuracy=c(round(cm_wht_Amhara$overall['Accuracy'],2),round(cm_wht_Oromia$overall['Accuracy'],2),round(cm_wht_SNNP$overall['Accuracy'],2),round(cm_wht_Tigray$overall['Accuracy'],2)    ), Kappa=c(round(cm_wht_Amhara$overall['Kappa'],2),round(cm_wht_Oromia$overall['Kappa'],2),round(cm_wht_SNNP$overall['Kappa'],2),round(cm_wht_Tigray$overall['Kappa'],2)    ), 
-Recall=c(round(cm_wht_Amhara$byClass['Recall'],2),round(cm_wht_Oromia$byClass['Recall'],2),round(cm_wht_SNNP$byClass['Recall'],2),round(cm_wht_Tigray$byClass['Recall'],2)    ),
-row.names =c('Amhara','Oromia','SNNP','Tirgray'))
-pander(wht_reg)
-```
-
-Looking at models trained and tested independently by region we can see that model accuracy varies substantially by region. We see maximum overall accuracy of `r max(wht_reg$Accuracy)*100`% for `r row.names(wht_reg[wht_reg$Accuracy==max(wht_reg$Accuracy),])`, and a maximum recall rate (% of substantial losses correctly identified) of `r max(wht_reg$Recall)*100`% for `r row.names(wht_reg[wht_reg$Recall==max(wht_reg$Recall),])`. This variation in performance by region is likely due to difficulties in field delination with a 250m pixel, and problems with land cover identification in an extremely heterogenous environment.
  
 We can also examine the relative importance of each variable to the national-level model, as well as its estimated non-linear relationship with the dependent variable through partial dependency plots. First, let's examine the relative importance of each variable in the random forest through the role it played in Gini coefficient loss.
 
@@ -1333,84 +1137,6 @@ In the figure above, we can see some interesting similarities and differences be
    
 ```
 
-
-```{r Predict Damages Sorghum Regression by region, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
-#### Predict damages Sorghum  ----------------------------------------------------
-for(region_iter in c(1,3,4,7)){  
-  setwd(Home_dir) 
-  
-  # read data
-  data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v4.dta",sep=''))
-  data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
-  data_in = data_in[data_in$REGIONCODE==region_iter,  ]
-  name_lookup = data.table(region_id = c(1,3,4,7),region_name=c('Tigray','Amhara','Oromia','SNNP'))
-  region_name = name_lookup[region_id ==region_iter,]$region_name
-  
-  # add temporal lags 
-  data_in_plm = pdata.frame(data_in, index=c("EACODE","Year"), drop.index=F, row.names=TRUE)
-  data_in$G_height =      data_in_plm$G_mx-data_in_plm$G_min
-  data_in$G_height_diff = as.numeric(diff(data_in_plm$G_mx-data_in_plm$G_min,1))
-  data_in$A_height =      data_in_plm$A_max-data_in_plm$A_min
-  data_in$A_height_diff = as.numeric(diff(data_in_plm$A_max-data_in_plm$A_min,1))
-  data_in$G_max_diff =    as.numeric(diff(data_in_plm$G_mx,1))
-  data_in$A_max_diff  =   as.numeric(diff(data_in_plm$A_max,1))
-  data_in$A_Qnt_diff =    as.numeric(diff(data_in_plm$A_Qnt,1))
-  data_in$G_Qnt_diff  =   as.numeric(diff(data_in_plm$G_Qnt,1))
-  data_in$PPT_G_AUC_Qnt_diff = as.numeric(diff(data_in_plm$PPT_G_AUC_Qnt,1))
-  data_in$PPT_G_mn_diff = as.numeric(diff(data_in_plm$PPT_G_mn,1))
-  rm(data_in_plm)
-  
-  # remove EA with less than 4 observations
-  counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(SORGHUMOPH_W))) %>% filter(non_na_count<4))
-  data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
-  
-      # remove eas with NAs still in Damage
-  data_in = data_in[!is.na(data_in$SORGHUMDAMAGEAREA_P),]
- 
-   #set as < because caret reverses the outcome variable 
-sor_dam1_w_ea = factor(SORGHUMDAMAGE_DROUGHT_AREA_P<0.25) ~  A_height+A_height_diff+G_height+G_height_diff+ G_max_diff+A_max_diff+
-  A_Qnt_diff+G_Qnt_diff+ PPT_G_AUC_Qnt_diff+PPT_G_mn_diff+ REGIONCODE+ 
-  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
-	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+ZONECODE
-        
-  registerDoMC(cores = 4)
-
-  # sample from EAs 
-  set.seed(17516)
-  
-  # limit to variables of interest by EA 
-  model_data = data_in[,names(data_in) %in%   c(all.vars(sor_dam1_w_ea),'EACODE','Year')]   
-  num_eas <- floor(0.75 * length(unique(model_data$EACODE)))
-  train_eas <- sample(unique(model_data$EACODE), size = num_eas)
-  
-  train <- model_data[model_data$EACODE %in% train_eas, ]
-  test <- model_data[!(model_data$EACODE %in% train_eas), ]
-  
-    # Impute values 
-  set.seed(123)
-  preProcValues = preProcess(train, method = "medianImpute" )
-  pp.train = predict(preProcValues, train)
-  pp.test  = predict(preProcValues, test)
-  
-  #set up seeds for multicore
-  set.seed(123)
-  seeds <- vector(mode = "list", length = num_groups+1)
-  for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
-  
-  #set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
-  groups = groupKFold(train$EACODE, k = num_groups)
-  
-  # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
-  sor.rf<-train(sor_dam1_w_ea,data=pp.train,method="rf",metric="Kappa",stratify=T,
-                  trControl=trainControl(method="oob", seeds=seeds,index = groups), #number iterations+1
-                  prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
-   
-  pp.test$pred = predict(sor.rf, pp.test)
-  # assign to cm_maz_region_name
-    assign(x = paste('cm_sor',region_name,sep='_'),value = confusionMatrix(data =  pp.test$pred, reference =   (pp.test$SORGHUMDAMAGE_DROUGHT_AREA_P<threshold), mode = "prec_recall")) 
- }
-```
-
 ### Sorghum Damages
 The confusion matrix compares predicted values against the observed (reference). We also report the a) overall accuracy, 2) Kappa coefficient, and 3) the recall rate[^3] as seen in table `r paste(Table_number)` below:
 
@@ -1422,17 +1148,6 @@ The confusion matrix compares predicted values against the observed (reference).
 `r pander(data.frame(Accuracy=round(cm_sor$overall['Accuracy'],2), Kappa=round(cm_sor$overall['Kappa'],2), Recall=round(cm_sor$byClass['Recall'],2),row.names ='Value'))`
  
 Overall, we find a high level of accuracy in our completely independent *testing* data with overall accuracy of `r round(cm_sor$overall['Accuracy'],2)*100` percent. For the case of Sorghum, we see a decent identification of reported Sorghum crop losses with a recall rate of `r round(cm_sor$byClass['Recall'],2)`, indicating that `r round(cm_sor$byClass['Recall'],2)*100`% of all substantial loss cases were predicted in our completely independent *testing* data. In all, `r cm_sor$table['FALSE','FALSE']` out of `r cm_sor$table['FALSE','FALSE']+ cm_sor$table['TRUE','FALSE']` reported cases were predicted, and  `r cm_sor$table['FALSE','TRUE']` cases were falsely predicted as crop failure areas. Although the recall rate is relatively low, we can still say that we can identify healthly maize harvest `r cm_sor$table['TRUE','TRUE']` out of `r cm_sor$table['TRUE','TRUE']+ cm_sor$table['FALSE','TRUE']` times, or `r round(cm_sor$table['TRUE','TRUE'] /(cm_sor$table['TRUE','TRUE']+ cm_sor$table['FALSE','TRUE']),2)*100`% of the time.
-
- *Table `r paste(Table_number)`: Region specific model performance metrics for reported damages > `r paste(threshold,'%',sep='')` for Sorghum* `r  Table_number=Table_number+1`
-```{r Predict Damages Sorghum results by region, echo=FALSE, message=FALSE, warning=FALSE}
-sor_reg = data.frame( 
-Accuracy=c(round(cm_sor_Amhara$overall['Accuracy'],2),round(cm_sor_Oromia$overall['Accuracy'],2),round(cm_sor_SNNP$overall['Accuracy'],2),round(cm_sor_Tigray$overall['Accuracy'],2)    ), Kappa=c(round(cm_sor_Amhara$overall['Kappa'],2),round(cm_sor_Oromia$overall['Kappa'],2),round(cm_sor_SNNP$overall['Kappa'],2),round(cm_sor_Tigray$overall['Kappa'],2)    ), 
-Recall=c(round(cm_sor_Amhara$byClass['Recall'],2),round(cm_sor_Oromia$byClass['Recall'],2),round(cm_sor_SNNP$byClass['Recall'],2),round(cm_sor_Tigray$byClass['Recall'],2)    ),
-row.names =c('Amhara','Oromia','SNNP','Tirgray'))
-pander(sor_reg)
-```
-
-Looking at models trained and tested independently by region we can see that model accuracy varies substantially by region. We see maximum overall accuracy of `r max(sor_reg$Accuracy)*100`% for `r row.names(sor_reg[sor_reg$Accuracy==max(sor_reg$Accuracy),])`, and a maximum recall rate (% of substantial losses correctly identified) of `r max(sor_reg$Recall)*100`% for `r row.names(sor_reg[sor_reg$Recall==max(sor_reg$Recall),])`. This variation in performance by region is likely due to difficulties in field delination with a 250m pixel, and problems with land cover identification.
 
 ```{r Predict Damages Barley Regression, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
 #### Predict damages BARLEY  ----------------------------------------------------
@@ -1517,85 +1232,6 @@ bar_dam1_w_ea = factor(BARLEYDAMAGE_DROUGHT_AREA_P<0.25) ~  A_height+A_height_di
   
 ```
    
-```{r Predict Damages Barley Regression by Region, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
-#### Predict damages BARLEY  ----------------------------------------------------
-for(region_iter in c(1,3,4,7)){  
-  setwd(Home_dir) 
-
- ########  Barley
-
- # read data
-  data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v4.dta",sep=''))
-  data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
-  data_in = data_in[data_in$REGIONCODE==region_iter,  ]
-  name_lookup = data.table(region_id = c(1,3,4,7),region_name=c('Tigray','Amhara','Oromia','SNNP'))
-  region_name = name_lookup[region_id ==region_iter,]$region_name
-  
-   # add temporal lags 
-  data_in_plm = pdata.frame(data_in, index=c("EACODE","Year"), drop.index=F, row.names=TRUE)
-  data_in$G_height =      data_in_plm$G_mx-data_in_plm$G_min
-  data_in$G_height_diff = as.numeric(diff(data_in_plm$G_mx-data_in_plm$G_min,1))
-  data_in$A_height =      data_in_plm$A_max-data_in_plm$A_min
-  data_in$A_height_diff = as.numeric(diff(data_in_plm$A_max-data_in_plm$A_min,1))
-  data_in$G_max_diff =    as.numeric(diff(data_in_plm$G_mx,1))
-  data_in$A_max_diff  =   as.numeric(diff(data_in_plm$A_max,1))
-  data_in$A_Qnt_diff =    as.numeric(diff(data_in_plm$A_Qnt,1))
-  data_in$G_Qnt_diff  =   as.numeric(diff(data_in_plm$G_Qnt,1))
-  data_in$PPT_G_AUC_Qnt_diff = as.numeric(diff(data_in_plm$PPT_G_AUC_Qnt,1))
-  data_in$PPT_G_mn_diff = as.numeric(diff(data_in_plm$PPT_G_mn,1))
-  rm(data_in_plm)
-
-  # remove EA with less than 4 observations
-  counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(BARLEYOPH_W))) %>% filter(non_na_count<4))
-  data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
-  
-        # remove eas with NAs still in Damage
-  data_in = data_in[!is.na(data_in$BARLEYDAMAGEAREA_P),]
-  
-   #set as < because caret reverses the outcome variable 
-
-bar_dam1_w_ea = factor(BARLEYDAMAGE_DROUGHT_AREA_P<0.25) ~  A_height+A_height_diff+G_height+G_height_diff+ G_max_diff+A_max_diff+
-  A_Qnt_diff+G_Qnt_diff+ PPT_G_AUC_Qnt_diff+PPT_G_mn_diff+ REGIONCODE+ 
-  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
-	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+ZONECODE
-        
-  registerDoMC(cores = 4)
-
-  # sample from EAs 
-  set.seed(17516)
-  
-  # limit to variables of interest by EA 
-  model_data = data_in[,names(data_in) %in%   c(all.vars(bar_dam1_w_ea),'EACODE','Year')]   
-  num_eas <- floor(0.75 * length(unique(model_data$EACODE)))
-  train_eas <- sample(unique(model_data$EACODE), size = num_eas)
-  
-  train <- model_data[model_data$EACODE %in% train_eas, ]
-  test <- model_data[!(model_data$EACODE %in% train_eas), ]
-  
-    # Impute values 
-  set.seed(123)
-  preProcValues = preProcess(train, method = "medianImpute" )
-  pp.train = predict(preProcValues, train)
-  pp.test  = predict(preProcValues, test)
-  
-  #set up seeds for multicore
-  set.seed(123)
-  seeds <- vector(mode = "list", length = num_groups+1)
-  for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
-  
-  #set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
-  groups = groupKFold(train$EACODE, k = num_groups)
-  
-  # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
-  bar.rf<-train(bar_dam1_w_ea,data=pp.train,method="rf",metric="Kappa",stratify=T,
-                  trControl=trainControl(method="oob", seeds=seeds,index = groups), #number iterations+1
-                  prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
- 
-  pp.test$pred = predict(bar.rf, pp.test)
-    # assign to cm_maz_region_name
-    assign(x = paste('cm_bar',region_name,sep='_'),value = confusionMatrix(data =  pp.test$pred, reference =   (pp.test$BARLEYDAMAGE_DROUGHT_AREA_P<threshold), mode = "prec_recall"))   
-  }
-```   
 
 ### Barley Damages
 The confusion matrix compares predicted values against the observed (reference). We also report the a) overall accuracy, 2) Kappa coefficient, and 3) the recall rate[^3] as seen in table `r paste(Table_number)` below:
@@ -1609,16 +1245,6 @@ The confusion matrix compares predicted values against the observed (reference).
  
 Overall, we find a high level of accuracy in our completely independent *testing* data with overall accuracy of `r round(cm_bar$overall['Accuracy'],2)*100` percent. For the case of barley, we see a reasonable identification of reported losses with a recall rate of only `r round(cm_bar$byClass['Recall'],2)`, indicating that `r round(cm_bar$byClass['Recall'],2)*100`% of all substantial loss cases were predicted in our independent *testing* data. In all, `r cm_bar$table['FALSE','FALSE']` out of `r cm_bar$table['FALSE','FALSE']+ cm_bar$table['TRUE','FALSE']` reported cases were predicted, and  `r cm_bar$table['FALSE','TRUE']` cases were falsely predicted as crop failure areas. Although the recall rate is relatively low, we can still say that we can identify healthly maize harvest `r cm_bar$table['TRUE','TRUE']` out of `r cm_bar$table['TRUE','TRUE']+ cm_bar$table['FALSE','TRUE']` times, or `r round(cm_bar$table['TRUE','TRUE'] /(cm_bar$table['TRUE','TRUE']+ cm_bar$table['FALSE','TRUE']),2)*100`% of the time.
 
-*Table `r paste(Table_number)`: Region specific model performance metrics for reported damages > `r paste(threshold,'%',sep='')` for Barley* `r  Table_number=Table_number+1`
-```{r Damages Wheat results by region, echo=FALSE, message=FALSE, warning=FALSE}
-  bar_reg = data.frame( 
-  Accuracy=c(round(cm_bar_Amhara$overall['Accuracy'],2),round(cm_bar_Oromia$overall['Accuracy'],2),round(cm_bar_SNNP$overall['Accuracy'],2),round(cm_bar_Tigray$overall['Accuracy'],2)    ), Kappa=c(round(cm_bar_Amhara$overall['Kappa'],2),round(cm_bar_Oromia$overall['Kappa'],2),round(cm_bar_SNNP$overall['Kappa'],2),round(cm_bar_Tigray$overall['Kappa'],2)    ), 
-  Recall=c(round(cm_bar_Amhara$byClass['Recall'],2),round(cm_bar_Oromia$byClass['Recall'],2),round(cm_bar_SNNP$byClass['Recall'],2),round(cm_bar_Tigray$byClass['Recall'],2)    ),
-  row.names =c('Amhara','Oromia','SNNP','Tirgray'))
-  pander(bar_reg)
-```
-
-Looking at models trained and tested independently by region we can see that model accuracy varies substantially by region. We see maximum overall accuracy of `r max(bar_reg$Accuracy)*100`% for `r row.names(bar_reg[maz_reg$Accuracy==max(bar_reg$Accuracy),])`, and a maximum recall rate (% of substantial losses correctly identified) of `r max(bar_reg$Recall)*100`% for `r row.names(bar_reg[bar_reg$Recall==max(bar_reg$Recall),])`. This variation in performance by region is likely due to difficulties in field delination with a 250m pixel, and problems with land cover identification.   
    
 ```{r Predict Damages Teff Regression, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
 #### Predict damages TEFF  ----------------------------------------------------
@@ -1701,84 +1327,6 @@ tef_dam1_w_ea = factor(TEFFDAMAGE_DROUGHT_AREA_P<0.25) ~  A_height+A_height_diff
   cm_tef
 ```
 
-```{r Predict Damages Teff Regression by region, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
-#### Predict damages TEFF  ----------------------------------------------------
-for(region_iter in c(1,3,4,7)){  # read data
-  setwd(Home_dir) 
-
- ########  TEFF
- # read data
-  data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v4.dta",sep=''))
-  data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
-  data_in = data_in[data_in$REGIONCODE==region_iter,  ]
-
-  name_lookup = data.table(region_id = c(1,3,4,7),region_name=c('Tigray','Amhara','Oromia','SNNP'))
-  region_name = name_lookup[region_id ==region_iter,]$region_name
-
-   # add temporal lags 
-  data_in_plm = pdata.frame(data_in, index=c("EACODE","Year"), drop.index=F, row.names=TRUE)
-  data_in$G_height =      data_in_plm$G_mx-data_in_plm$G_min
-  data_in$G_height_diff = as.numeric(diff(data_in_plm$G_mx-data_in_plm$G_min,1))
-  data_in$A_height =      data_in_plm$A_max-data_in_plm$A_min
-  data_in$A_height_diff = as.numeric(diff(data_in_plm$A_max-data_in_plm$A_min,1))
-  data_in$G_max_diff =    as.numeric(diff(data_in_plm$G_mx,1))
-  data_in$A_max_diff  =   as.numeric(diff(data_in_plm$A_max,1))
-  data_in$A_Qnt_diff =    as.numeric(diff(data_in_plm$A_Qnt,1))
-  data_in$G_Qnt_diff  =   as.numeric(diff(data_in_plm$G_Qnt,1))
-  data_in$PPT_G_AUC_Qnt_diff = as.numeric(diff(data_in_plm$PPT_G_AUC_Qnt,1))
-  data_in$PPT_G_mn_diff = as.numeric(diff(data_in_plm$PPT_G_mn,1))
-  rm(data_in_plm)
-  
-  # remove EA with less than 4 observations
-  counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(TEFFOPH_W))) %>% filter(non_na_count<4))
-  data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
-  
-  # remove eas with NAs still in Damage
-  data_in = data_in[!is.na(data_in$TEFFDAMAGEAREA_P),]
-   
-tef_dam1_w_ea = factor(TEFFDAMAGE_DROUGHT_AREA_P<0.25) ~  A_height+A_height_diff+G_height+G_height_diff+ G_max_diff+A_max_diff+
-  A_Qnt_diff+G_Qnt_diff+ PPT_G_AUC_Qnt_diff+PPT_G_mn_diff+ REGIONCODE+ 
-  A_mn + A_min + A_max + A_AUC + A_Qnt + A_sd +  A_max_Qnt +  A_AUC_Qnt  + G_mn  + G_min + G_mx + G_AUC + G_Qnt + G_mx_Qnt + G_AUC_Qnt + G_AUC2 + G_AUC_leading + G_AUC_trailing + G_AUC_diff_mn + G_AUC_diff_90th+T_G_Qnt+G_sd + PET_A_mn + PET_A_min + PET_A_max + PET_A_AUC + PET_A_Qnt + PET_A_sd + PET_G_mn + 
-	PET_G_min + PET_G_mx + PET_G_AUC + PET_G_Qnt + PET_G_AUC2 + PET_G_AUC_leading + PET_G_AUC_trailing + PET_G_AUC_diff_mn + PET_G_AUC_diff_90th + PET_G_sd+ ETA_A_mn + ETA_A_min + ETA_A_max + ETA_A_AUC + ETA_A_Qnt + ETA_A_sd + ETA_G_mn + ETA_G_min + ETA_G_mx + ETA_G_AUC + ETA_G_Qnt + ETA_G_AUC2 +  ETA_G_AUC_leading + ETA_G_AUC_trailing + ETA_G_AUC_diff_mn + ETA_G_AUC_diff_90th + ETA_G_sd+ PPT_A_mn + PPT_A_max + PPT_A_sd +  PPT_G_mn + PPT_G_mx + PPT_G_AUC + PPT_G_Qnt + PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_G_AUC2 + PPT_G_AUC_leading + PPT_G_AUC_trailing + PPT_G_AUC_diff_mn + PPT_G_AUC_diff_90th + PPT_T_G_Qnt + PPT_G_sd+ZONECODE
-        
-  registerDoMC(cores = 4)
-
-  # sample from EAs 
-  set.seed(17516)
-  
-  # limit to variables of interest by EA 
-  model_data = data_in[,names(data_in) %in%   c(all.vars(tef_dam1_w_ea),'EACODE','Year')]   
-  num_eas <- floor(0.75 * length(unique(model_data$EACODE)))
-  train_eas <- sample(unique(model_data$EACODE), size = num_eas)
-  
-  train <- model_data[model_data$EACODE %in% train_eas, ]
-  test <- model_data[!(model_data$EACODE %in% train_eas), ]
-  
-   # Impute values 
-  set.seed(123)
-  preProcValues = preProcess(train, method = "medianImpute" )
-  pp.train = predict(preProcValues, train)
-  pp.test  = predict(preProcValues, test)
-  
-  #set up seeds for multicore
-  set.seed(123)
-  seeds <- vector(mode = "list", length = num_groups+1)
-  for(i in 1:length(seeds)) seeds[[i]] <- sample.int(1000, length(seeds)-1);seeds[[length(seeds)]]=sample.int(1000, 1)
-  
-  #set up longitudinal data groups  index = https://topepo.github.io/caret/data-splitting.html
-  groups = groupKFold(train$EACODE, k = num_groups)
-  
-  # train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
-  tef.rf = train(tef_dam1_w_ea,data=pp.train,method="rf",metric="Kappa",stratify=T,
-                  trControl=trainControl(method="oob", seeds=seeds,index = groups), #number iterations+1
-                  prox=TRUE,allowParallel=TRUE,tuneGrid = expand.grid(mtry=seq(1,15,1)))
-                       
-  pp.test$pred = predict(tef.rf, pp.test)
-  # assign to cm_maz_region_name
-  assign(x = paste('cm_tef',region_name,sep='_'),value = confusionMatrix(data =  pp.test$pred, reference =   (pp.test$TEFFDAMAGE_DROUGHT_AREA_P<threshold), mode = "prec_recall"))      
-  }
-```
-
 ### Teff Damages
 The confusion matrix compares predicted values against the observed (reference). We also report the a) overall accuracy, 2) Kappa coefficient, and 3) the recall rate[^3] as seen in table `r paste(Table_number)` below:
 
@@ -1791,17 +1339,6 @@ The confusion matrix compares predicted values against the observed (reference).
  
 Overall, we find a high level of accuracy in our completely independent *testing* data with overall accuracy of `r round(cm_tef$overall['Accuracy'],2)*100` percent. For the case of teff, we see relatively good identification of reported losses with a recall rate of only `r round(cm_tef$byClass['Recall'],2)`, indicating that `r round(cm_tef$byClass['Recall'],2)*100`% of all substantial loss cases were predicted in our independent *testing* data. In all, `r cm_tef$table['FALSE','FALSE']` out of `r cm_tef$table['FALSE','FALSE']+ cm_tef$table['TRUE','FALSE']` reported cases were predicted, and `r cm_tef$table['FALSE','TRUE']` cases were falsely predicted as crop failure areas. Although the recall rate is relatively low, we can still say that we can identify healthly maize harvest `r cm_tef$table['TRUE','TRUE']` out of `r cm_tef$table['TRUE','TRUE']+ cm_tef$table['FALSE','TRUE']` times, or `r round(cm_tef$table['TRUE','TRUE'] /(cm_tef$table['TRUE','TRUE']+ cm_tef$table['FALSE','TRUE']),2)*100`% of the time.
    
-*Table `r paste(Table_number)`: Region specific model performance metrics for reported damages > `r paste(threshold,'%',sep='')` for Teff* `r  Table_number=Table_number+1`
-```{r Damages Wheat results by region table, echo=FALSE, message=FALSE, warning=FALSE}
-tef_reg = data.frame( 
-Accuracy=c(round(cm_tef_Amhara$overall['Accuracy'],2),round(cm_tef_Oromia$overall['Accuracy'],2),round(cm_tef_SNNP$overall['Accuracy'],2),round(cm_tef_Tigray$overall['Accuracy'],2)    ), Kappa=c(round(cm_tef_Amhara$overall['Kappa'],2),round(cm_tef_Oromia$overall['Kappa'],2),round(cm_tef_SNNP$overall['Kappa'],2),round(cm_tef_Tigray$overall['Kappa'],2)    ), 
-Recall=c(round(cm_tef_Amhara$byClass['Recall'],2),round(cm_tef_Oromia$byClass['Recall'],2),round(cm_tef_SNNP$byClass['Recall'],2),round(cm_tef_Tigray$byClass['Recall'],2)    ),
-row.names =c('Amhara','Oromia','SNNP','Tirgray'))
-pander(tef_reg)
-```
-
-Looking at models trained and tested independently by region we can see that model accuracy varies substantially by region. We see maximum overall accuracy of `r max(tef_reg$Accuracy)*100`% for `r row.names(tef_reg[tef_reg$Accuracy==max(tef_reg$Accuracy),])`, and a maximum recall rate (% of substantial losses correctly identified) of `r max(tef_reg$Recall)*100`% for `r row.names(wht_reg[tef_reg$Recall==max(tef_reg$Recall),])`. This variation in performance by region is likely due to difficulties in field delination with a 250m pixel, and problems with land cover identification.   
-
 ## Predict damages out of sample 
 One possible use case of these models, once improved through higher resolution, better agricultural land use maps, is to predict losses outside of AgSS sample areas. This will allow policy makers to identify potential at-risk communities rapidly at low cost. Given the importance of maximum and 90th percentile values of NDVI in model performance, a reasonable estimate could be made mid-season (or just past peak greeness). As example of how this might work we extracted NDVI statistics for all 75k+ sub-kebeles and used the model trained on AgSS sample areas. 
 
@@ -1957,10 +1494,10 @@ Figure `r paste(Figure_number)`: Count of Predicted Damages (>25%) at the Sub-Ke
   EAs_point_smp = sample_n(EAs_point,50000)
   
   # plot it 
-   plot_dam_maz = ggplot()+  geom_sf(data=Reg_poly,  aes( ),fill = 'grey20',size=0.25 ) +
-    geom_sf(data= EAs_point_smp[EAs_point_smp$R_CODE %in% c(1,3,4,7),] ,  aes(color = DamageSum_allcrops ),size=0.5, alpha=0.5) +  geom_sf(data=Reg_poly,  aes( ),colour='grey80',fill = NA,size=0.25 ) + scale_colour_gradientn(colours=rev(rainbow(4)),name='Damage Count')
+  plot_dam_maz = ggplot()+  geom_sf(data=Reg_poly,  aes( ),fill = 'grey20',size=0.25 ) +
+  geom_sf(data= EAs_point_smp[EAs_point_smp$R_CODE %in% c(1,3,4,7),] ,  aes(color = DamageSum_allcrops ),size=0.5, alpha=0.5) +  geom_sf(data=Reg_poly,  aes( ),colour='grey80',fill = NA,size=0.25 ) + scale_colour_gradientn(colours=rev(rainbow(4)),name='Damage Count')
 
-   plot(plot_dam_maz)
+  plot(plot_dam_maz)
 
 ```
 
