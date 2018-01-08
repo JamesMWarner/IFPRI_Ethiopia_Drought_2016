@@ -111,7 +111,7 @@ bw.gwr.4
 gwr.rob4 = gwr.robust(MAIZEOPH_W ~ MAIZEEXTAREA_P+MAIZEIMSEED_P+MAIZEMERR1AREA_P+MAIZEMERR2AREA_P+MAIZEMERR3AREA_P+MAIZEMERR4AREA_P+elevation+dist_pp50k+soil_TAWC+G_mx+A_Qnt+PPT_G_AUC_Qnt+PPT_G_mn,
                      data = eas.agss.yx.maize, bw = bw.gwr.4,  kernel = "bisquare", adaptive = T, F123.test = T)
 print(gwr.rob4)
-# save(gwr.rob4, file='./IFPRI_Ethiopia_Drought_2016/Outputs4Pred/gwr.rob.form4.RData')
+save(gwr.rob4, file='./IFPRI_Ethiopia_Drought_2016/Outputs4Pred/gwr.rob.form4.RData')
 
 # extact shp of output
 sp = gwr.rob4$SDF
@@ -135,8 +135,8 @@ for(name in names(sf)[1:13]){
   sf[isnsig,paste(name)] = NA # NA out insigg
   plots = ggplot() + geom_sf(data = sf, aes_string(colour=paste(name)))+geom_sf(data=zon,fill=NA,colour='grey60') +
           coord_sf() + ggtitle(paste(name), subtitle='Normalized Coefficient Estimates (p<0.05)')
-  print(plots)
-  ggsave(plot = plots,filename = paste('./IFPRI_Ethiopia_Drought_2016/Visualizations/GWR_plot_',name,'.pdf',sep=''))
+  plot(plots)
+  #ggsave(plot = plots,filename = paste('./IFPRI_Ethiopia_Drought_2016/Visualizations/GWR_plot_',name,'.pdf',sep=''))
   }
 
 
