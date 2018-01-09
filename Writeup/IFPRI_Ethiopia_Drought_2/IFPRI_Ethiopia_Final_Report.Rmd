@@ -9,11 +9,9 @@ output:
   word_document: default
 bibliography: mybibfile.bib
 ---
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(cache=T)
 ```
-
 ```{r Setup, include=FALSE}
 #install Tex for latex  Windows: MiKTeX (Complete) - http://miktex.org/2.9/setup Mac OS X: TexLive 2013 (Full) - http://tug.org/mactex/ Linux: #sudo apt-get install texlive-full system 
 #library(rticles) for knitter templates
@@ -48,10 +46,13 @@ library(RANN)
 library(pdp)
 library(pander)
 library(tidyr)
+
 library(dplyr)
 library(sf)
 library(data.table)
-library(mapview)
+#library(mapview)
+#library(forestfloor)
+
 # set up numbering for figures/graphs etc
 Table_number = 1
 Figure_number = 1
@@ -60,9 +61,11 @@ Appendix_Function_number =1
 Formula_number = 1
 Foot_number = 1
 Home_dir = '~/Documents/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_2016/'
-
 ```
-
+\begin{abstract}
+Hi there!
+\end{abstract}
+ 
 #Introduction
 The ability to monitor and predict crop yields in developing countries is critical to the successful adaptation to changes in our climate. Increased temperatures and variability has already been linked to losses in maize and wheat yields (-3.8 and 5.5% respectively)and crop prices globally [@Lobell616]. Although much effort has been placed on modeling the spatial distribution of these shifts, less effort has been placed on how yields vary across space and time [@Ray2015]. Advances in remote sensing provide  avenues to monitor agricultural crop health at high spatial and temporal resolution. However, our ability to monitor changes in plant productivity is still limited in the more complex environments common to many developing countries [@Mann2015]. 
 
@@ -126,7 +129,7 @@ pptchange2015 =(Monthppt2015C - Monthppt)
 pptF = levelplot(pptchange2015,at=my.at2,layout=c(3, 4),par.settings=RdBuTheme(), main='(b) 2015 Deviation') #
 ```
 
-Figure `r paste(Figure_number)`: Median rainfall per 10 day period 2009/10-2015/16 compared to 2014/15 and 2015/16`r Figure_number =Figure_number+1 `
+*Figure `r paste(Figure_number)`: Median rainfall per 10 day period 2010-2016 compared to 2015 and 2016`r Figure_number =Figure_number+1 `*
 
 ```{r, echo=FALSE, warning=FALSE,fig.width=6,fig.align='center'}
 plot(pptA)
@@ -136,13 +139,12 @@ plot(pptE)
 #grid.arrange(pptA,pptF,pptE,ncol=1)
 ```
 
-
 \newpage
-Looking at the example of wheat production for the top 15 producing zones (Figure: `r paste(Figure_number)`), we can see that total output has remained steady or increased in the majority of top performing zones. This can be seen by the increase in total production from 49,500 in 2010 to 64,209 in the 2015 growing season. Additionally, we can see that the total production of each zone (as indicated by the width of each bar) generally increases over time, or remains relatively constant. Moreover we can see that the rank of regions (as indicated by the plot order, bottom being lowest rank, top being highest rank) remains surprisingly steady despite the exogenous shock of drought beginning in the 2015 planting season. 
+Looking at the example of wheat production for the top 15 producing zones (Figure: `r paste(Figure_number)`), we can see that total output has remained steady or increased in the majority of top performing zones. This can be seen by the increase in total production from 49,500 in 2011 to 64,209 in the 2016 growing season. Additionally, we can see that the total production of each zone (as indicated by the width of each bar) generally increases over time, or remains relatively constant. Moreover we can see that the rank of regions (as indicated by the plot order, bottom being lowest rank, top being highest rank) remains surprisingly steady despite the exogenous shock of drought beginning in the 2015 planting season. We do however see a retraction in total output in 2016 due to the drought, however this only seemed to revert total yields to 2014 levels. 
 
-Figure `r paste(Figure_number)`: Total wheat output of top 15 producing zones in tons`r Figure_number =Figure_number+1 `
+*Figure `r paste(Figure_number)`: Total wheat output of top 15 producing zones in tons`r Figure_number =Figure_number+1 `*
 
-![](Wheat_Rank.jpg)
+![](Wheat_Rank_v2.jpg)
 
 ```{r Drought in One Graph, include=F}
 # Figure DROUGHT IN ONE GRAPH 
@@ -150,6 +152,7 @@ Figure `r paste(Figure_number)`: Total wheat output of top 15 producing zones in
 
 setwd(file.path(Home_dir,'/Outputs4Pred/'))
 agss = read.dta13('./AgSS_2010_15_Compiled_panel_merged_clean_PCA_v4.dta') 
+agss$Year = agss$Year+1
 #agss$Year = agss$Year +1  # deal with my choice of year issue 
 agss= agss[agss$REGIONCODE != 2,] # Drop afar
 
@@ -278,10 +281,11 @@ We can see from Figure `r Figure_number` three time series for the major regions
 
 \newpage
 
+*Figure `r paste(Figure_number)`: Drought in one graph `r Figure_number =Figure_number+1 `*
+
 ```{r Drought in one graph figure, echo=FALSE, fig.height=9, fig.width=8, message=FALSE, warning=FALSE}
 grid.arrange(A,B3,C,ncol=1,heights=c(.25,.25,.50))
 ```
-Figure `r paste(Figure_number)`: Drought in one graph `r Figure_number =Figure_number+1 `
 
 ```{r Trade Flows,include=F}
 # pdf inserted from Ethiopia Flow - Data v3.R in the H:/../Projects/Ethiopia Flow Maps/  folder
@@ -290,15 +294,16 @@ Figure `r paste(Figure_number)`: Drought in one graph `r Figure_number =Figure_n
 
 Moreover Ethiopia has rapidly improved its ability to mitigate food insecurity through trade flows. International and international trade has likely been improved by the rapid development of the paved road network, and with the opening of the Ethiopia-Djibouti electric railway line in 2016 improving trade with this red sea port. Even in 2011, for the case of wheat, we can see how imports and internal trade flows move wheat from surplus areas to deficit areas. In Figure `r paste(Figure_number)`, we see large international imports as well as comprehensive internal trade flows at the zonal level. 
 
+*Figure `r paste(Figure_number)`: 2011 aggregate wheat trade flows at the zonal level`r Figure_number =Figure_number+1 `*
+
 ![](imports.png)
-Figure `r paste(Figure_number)`: 2011 aggregate wheat trade flows at the zonal level`r Figure_number =Figure_number+1 `
 
 Although far from perfect we should acknowledge substantial improvements in Ethiopia's ability to mitigate and respond to localized drought. 
 
 # Methods
 ## Data Sources
-### Survey data - Agricultural Sample Survey Dat (2010-2015)
-Survey data was obtained from Ethiopia's Central Statistical Agency's (CSA) Agricultural Sample Survey (AgSS) and was chosen for its annual collection, spatial coverage, and unique sampling structure through these six crop years. The AgSS is an annually collected government administered large-scale survey tasked with measuring agricultural production in Ethiopia at the zonal level [^1].  The survey interviews approximately 45,000 farmers per year on a range of farm management questions covering some basic demographics of the household as well as a range of questions concerning planting, harvesting and selling at the plot level.  Typically, about 20 farm households are randomly sampled from small local village-level areas of approximately 200 households (the sub-kebele level). On average, based on population, approximately five of these sample areas exist at the kebele-level administration area. Although the figures vary widely, sub-kebeles are meant to approximate about 200 households per unit and the average kebele has around 1,000 households each. From this sampling frame, a random selection of about 2,200 sub-kebeles are chosen as a representative sub-sample for zonal level production projections of major agricultural production areas. Population weights are then applied to project agricultural production at the zonal level. For this study, we construct a panel data set over the six crop seasons identified because approximately 75% of the same sub-kebeles were sampled by CSA over the six meher crop seasons of interest. This effectively builds a base of five relatively favorable crop seasons, from 2010 to 2014, and allows for the drought effects of 2015-2016 as a study in contrast in terms of this significant weather event.  The sample is with replacement and therefore representative of the sub-kebele but not a true panel because the same farmers were not chosen. In addition, no sampling weights are applied because we have omitted approximately 25% of the sample and are generally most interested in the localized effects.  
+### Survey data - Agricultural Sample Survey Dat (2011-2016)
+Survey data was obtained from Ethiopia's Central Statistical Agency's (CSA) Agricultural Sample Survey (AgSS) and was chosen for its annual collection, spatial coverage, and unique sampling structure through these six crop years. The AgSS is an annually collected government administered large-scale survey tasked with measuring agricultural production in Ethiopia at the zonal level [^1].  The survey interviews approximately 45,000 farmers per year on a range of farm management questions covering some basic demographics of the household as well as a range of questions concerning planting, harvesting and selling at the plot level. Typically, about 20 farm households are randomly sampled from small local village-level areas of approximately 200 households (the sub-kebele level). On average, based on population, approximately five of these sample areas exist at the kebele-level administration area. Although the figures vary widely, sub-kebeles are meant to approximate about 200 households per unit and the average kebele has around 1,000 households each. From this sampling frame, a random selection of about 2,200 sub-kebeles are chosen as a representative sub-sample for zonal level production projections of major agricultural production areas. Population weights are then applied to project agricultural production at the zonal level. For this study, we construct a panel data set over the six crop seasons identified because approximately 75% of the same sub-kebeles were sampled by CSA over the six meher crop seasons of interest. This effectively builds a base of five relatively favorable crop seasons, from 2010 to 2014, and allows for the drought effects of 2015-2016 as a study in contrast in terms of this significant weather event. The sample is with replacement and therefore representative of the sub-kebele but not a true panel because the same farmers were not chosen. In addition, no sampling weights are applied because we have omitted approximately 25% of the sample and are generally most interested in the localized effects.  
 
 [^1]:Beyond the nation, Ethiopia has four official levels of administrative areas. These include, in order of geographic size, regions, zones, woredas and kebeles.  There are approximately 12 regions, 88 zones, 690 woredas and 15,000 kebeles.  For our purposes, we use the sub-kebele, not recognized as a geographic region for administrative purposes, but commonly used for statistical sampling and are roughly based on population.  There are over 75,000 sub-kebeles in the country.
 
@@ -308,7 +313,7 @@ The principal unit of analysis is the sub-kebele and all relevant CSA data is ag
 
 ### Remotely sensed data - Greeness, precipitation and evaporation
 ####Normalized Difference Vegetation Index
-Considering the relatively small scale of agriculture in this region we use 250m vegetation products from the MODIS satellites. Vegetation indices are obtained from two 16-day MODIS products (MOD13Q1, MYD13Q1) from the Aqua and Terra satellites [@didan2006modis]. Due to the staggered nature of acquisition, these products are treated as partially overlapping windows representing 8 day periods [@doraiswamy2007crop]. We find that the combination of these two products provides a stable and informative time series.
+Considering the relatively small scale of agriculture in this region we use 250m vegetation products from the MODIS satellites. Vegetation indices are obtained from two 16-day MODIS products (MOD13Q1, MYD13Q1) from the Aqua and Terra satellites [@didan2006modis]. Due to the staggered nature of acquisition, these products are treated as partially overlapping windows representing 8-day periods [@doraiswamy2007crop]. We find that the combination of these two products provides a stable and informative time series.
 
 For the sake of simplicity and replicability, we focus on the Normalized Difference Vegetation Index (NDVI) and examine its predictive power using panel econometric techniques. NDVI is sensitive to the amount of chlorophyll in any given pixel and is commonly used to estimate plant productivity and health in agricultural applications [@Mann2017,@Mann2015,@funk2009phenologically]. After removal of snow, cloud and other flagged low quality cells, we remove all non-agricultural cells through the use of the 500m MODIS land cover product (MCD12Q1) for the appropriate year.
 
@@ -335,7 +340,7 @@ One of the key challenges is how to decide on which of the 126 variables from Ag
 Here we utilize VSURF to select unique sets of variables for each crop (barley, maize, wheat, teff). Given the complexity of these permutations for each crop (100s of millions) we utilize 15 cores of the GWU supercomputer Colonial One. Each run took between 10-24 hours. 
 
 ####Regression
-Compared to cross-sectional approaches, panel analysis can substantially increase the degree of observed variance over both space and time. For instance, in our current application, the integration of EAS (with n = 1752) over the 2010-2015 sample period (t = 6), results in a substantially larger data (N~6900), allowing for a much greater flexibility and degrees of freedom in the modelling of the issue of interest. Here we include a few variables of interest to the reader including Zonal and annual dummies, and a lagged value of output per hectare. Here we estimate a series of random effect models of the following form`r F1=Formula_number` `r paste(F1)`: `r Formula_number=Formula_number+1`
+Compared to cross-sectional approaches, panel analysis can substantially increase the degree of observed variance over both space and time. For instance, in our current application, the integration of EAS (with n = 1752) over the 2011-2016 sample period (t = 6), results in a substantially larger data (N~6900), allowing for a much greater flexibility and degrees of freedom in the modelling of the issue of interest. Here we include a few variables of interest to the reader including Zonal and annual dummies, and a lagged value of output per hectare. Here we estimate a series of random effect models of the following form`r F1=Formula_number` `r paste(F1)`: `r Formula_number=Formula_number+1`
 
 (`r paste(F1)`)                
 $$\ Y_{itc}=\alpha_{i}+\sum_{k=1}^{K}\beta_{k}X_{it}+ \mu_{it} +\epsilon_{it}$$
@@ -344,8 +349,7 @@ where $\ Y_{itc}$ is the output per hectare (OPH) for crop *c* for sub-kebele *i
 
 Here we present preliminary results from panel regressions on output per hectare for Ethiopia's major crops. These variables reflect the initial selection from the VSURF algorithm. 
 
-
-## Predicting Crop Losses
+## Predicting Crop Losses from Drought
 Another critical emphasis of this project is to see if remotely sensed data on greenness, precipitation, or evapotranspiration and the zone code can be used in conjunction with household surveys to predict the location and/or extent of damages before the next years AgSS survey results are released. In this vein we aim to utilize advances from machine learning to accurately predict substantial crop damages for all major crops. We define our dependent variable, 'substantial' losses due to drought, as farmer reported losses over 25%. Two types of models are then run for each crop, one, a "national-level" model is trained on all observations for the major growing regions, and a second group of "region-level" models where each model is trained from data in a specific region. 
 
 ### Estimation Strategy
@@ -353,16 +357,16 @@ Another critical emphasis of this project is to see if remotely sensed data on g
 Random forests (RF) are a flexible (used for classification and regression) ensemble learning method that aggregates across multiple classification or regression trees each based on a randomized subset of variables. Each tree is formed through hierarchical splitting method where by each binary split (e.g. NDVI < 0.1) is identified as the most informative, as defined by the greatest reduction in Gini. This ensemble method improves performance by finding the mode or median of 'weak learners'. This process in turn allows RFs to avoid over-fitting and therefore perform consistently out-of-sample and with noisy data sets. 
 
 #### Training vs Testing Data
-Before we run any models we break the data into two groups, with 85% of all sub-kebele units being retained for the training/tuning/cross-validation of the models, and 15% of these held aside to provide independent measures of out-of-sample performance. 
+Before we run any models we break the data into two groups, with 85% of all sub-kebele units being retained for the training and tuning of the models, and 15% of these held aside to provide independent measures of out-of-sample performance. 
 
 #### Training Data: Cross Validation & Tuning
 To enhance the performance of the models out-of-sample, we undertake two procedures on the training data; tuning and cross validation. Tuning in this case is limited to choosing the number of features (variables) randomly selected for use in each tree. We do a grid search independently for each crop finding the parameter tuning that provides the best performance. To ensure that these parameter tunings work well, we utilize k-fold cross validation whereby the training data is split further into 3 sets of sub-kebele data, the model is trained on two thirds of the data and its performance, using the Kappa coefficient, is estimated using the omitted third sub-sample. Performance for each parameter value is therefore evaluated out-of-sample three times and averaged. The optimal parameter then is that with the highest Kappa value and is specific for each crop model. Kappa[^2] is a performance indicator similar to the percentage of observations that are correctly classified but that controls for the fact that categories with large numbers of observations are easier to guess by random chance. 
 
 #### Testing Data: Out-of-sample Performance
-Independent of the training data we initially withheld 25% of sub-kebele units to provide 'testing data' for accurate measures of truly out-of-sample performance for our tuned RF models. These tests should therefore be good indicators of performance for sub-kebeles excluded from the AgSS survey. To test accuracy we make predictions of the damage category on this testing data and compare them to each observations observed damage category. We provide three major performance indicators, a) overall accuracy, 2) Kappa coefficient, and 3) the recall rate[^3]. The same metrics are applied to both the national-level (all major growing regions), and the regional-level models (specific to each region).
+Independent of the training data we initially withheld 15% of sub-kebele units to provide 'testing data' for accurate measures of truly out-of-sample performance for our tuned RF models. These tests should therefore be good indicators of performance for sub-kebeles excluded from the AgSS survey. To test accuracy we make predictions of the damage category on this testing data and compare them to each observations observed damage category. We provide three major performance indicators, a) overall accuracy, 2) Kappa coefficient, and 3) the recall rate[^3]. The same metrics are applied to both the national-level (all major growing regions), and the regional-level models (specific to each region).
 
 [^2]: see: https://en.m.wikipedia.org/wiki/Cohen%27s_kappa    
-[^3]: the percentage of sub-kebeles with 'substantial damage' that are correctly classified by our models.
+[^3]: the percentage of sub-kebeles with 'substantial drought damage' that are correctly classified by our models.
 
 <!-- ## Geographically Weighted Regression -->
 <!-- Another way to explore the impacts of policy efforts is to look at how their impacts vary across space. We can do this by estimating how the relationships between a dependent and independent variables change in different areas. One popular method is using Geographically Weighted Regression (GWR) [@brunsdon1996geographically, @brunsdon1998geographically]. A simple GWR implementation is as follows `r F1234=Formula_number` `r paste(F1234)`: `r Formula_number=Formula_number+1` -->
@@ -385,18 +389,16 @@ Independent of the training data we initially withheld 25% of sub-kebele units t
 <!-- * Each location has it's own coefficient estimates, standard errors, and R^2 -->
 <!-- * Local outliers can be addressed -->
 
-# Results 
+# Results & Discussion
 ## Regression Results
+Here we present results from panel regressions as outlined in the "Estimating Crop Yields" section. The dependent variable is crop yields (output per hectare) measured in quintals (1 quintal = 100 kilograms). The independent variables are initial selected using the VSURF algorithm described in the methods section.   
 ```{r Panel Maize Regression, echo=FALSE, message=FALSE, warning=FALSE}
-
 #### Panel Regression ----------------------------------------------------
-
   # read data
   version = 4  
   setwd(Home_dir) 
 
  ######## MAIZE
-
  # read data
   data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v",version,".dta",sep=''))
   data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
@@ -436,7 +438,7 @@ Independent of the training data we initially withheld 25% of sub-kebele units t
     A_Qnt   + A_max_Qnt+   T_G_Qnt  + MAIZEIMSEED +
     MAIZEDAMAGEAREA_P + MAIZEAREA +  Fert_Amt_Per_Area +
     MAIZEEXTAREA + PPT_A_max +PET_A_min+ PPT_G_AUC_Qnt + PET_G_AUC_diff_mn   + PPT_G_mx_Qnt+
-    c(Year) + Y_COORD +  X_COORD + bs(elevation,3) + factor(Z_CODE) 
+    c(Year) + Y_COORD +  X_COORD + splines::bs(elevation,3) + factor(Z_CODE) 
   maz.re2 <- plm(form_2_maz_z, data = data_in_plm, model = "random")
 
   coeff.maz.re2=summary(maz.re2)[1]$coefficients
@@ -445,7 +447,7 @@ Independent of the training data we initially withheld 25% of sub-kebele units t
     A_Qnt  + A_max_Qnt +   MAIZEIMSEED +
     MAIZEDAMAGEAREA_P  +  Fert_Amt_Per_Area +
     MAIZEEXTAREA +   PPT_G_AUC_Qnt + PET_G_AUC_diff_mn   + PET_A_min+ PPT_G_mx_Qnt+
-    c(Year) +  X_COORD + bs(elevation,3) + factor(Z_CODE) 
+    c(Year) +  X_COORD + splines::bs(elevation,3) + factor(Z_CODE) 
   maz.re3 <- plm(form_3_maz_z, data = data_in_plm, model = "random")
   
   # store for text pasting 
@@ -454,7 +456,7 @@ Independent of the training data we initially withheld 25% of sub-kebele units t
   
     form_4_maz_z = MAIZEOPH_W ~    lag(data_in_plm$MAIZEOPH_W, 1)  +G_mn + A_mn + 
     A_Qnt  + A_max_Qnt  + PPT_G_AUC_Qnt + PET_G_AUC_diff_mn   + PET_A_min+ PPT_G_mx_Qnt+
-    c(Year) +  X_COORD + bs(elevation,3) + factor(Z_CODE) 
+    c(Year) +  X_COORD + splines::bs(elevation,3) + factor(Z_CODE) 
   maz.re4 <- plm(form_4_maz_z, data = data_in_plm, model = "random")
   # summary(maz.re4)
   
@@ -466,21 +468,22 @@ Independent of the training data we initially withheld 25% of sub-kebele units t
   # maz.re4 <- plm(form_4_maz_z, data = data_in_plm, model = "random")
   # summary(maz.re4)
 ``` 
-
-Table `r paste(Table_number)`: Panel RE regression on output per hectare for maize in quintals 
-`r maize_table=Table_number; Table_number=Table_number+1`
-```{r Maize Results, echo=FALSE, message=FALSE, warning=F,comment=''}
+ 
+*Table `r paste(Table_number)`: Panel RE regression on output per hectare for maize in quintals 
+`r maize_table=Table_number; Table_number=Table_number+1`*
+```{r Maize Results, echo=FALSE, message=FALSE, warning=F,comment='' }
   stargazer(maz.re1, maz.re2,  maz.re3, maz.re4,
            title="Panel RE regression", type="text", 
           column.labels=c("Full", "Reduced","Final","No AgSS"), 
-          df=FALSE, digits=4,omit = "Z_CODE",omit.labels = 'Zone Dummy',no.space=T)
+          df=FALSE, digits=4,omit = "Z_CODE",omit.labels = 'Zone Dummy',no.space=T )
 ```
+
 
 Looking at the results from Table `r paste(maize_table)` with regression results from Maize OPH (quintals per hectare) we can see the results from four model outputs. The first, "Full", presents the results based on the model selection from the VSURF algorithm and includes zonal fixed effects (FE). The second, "Reduced", narrows the variable selection while including critical non-linearity for variables such as elevation, and adds a variable *Fert_Amt_Per_Area* which is the amount of chemical fertilizer applied per unit area. Non-linearity is controlled for using basis-splines which outperform polynomial representations in terms of stability and forecasting. The third model, "Final", represents the final selection of significant variables for estimation. The last model, "No AgSS", omits all AgSS survey variables to demonstrate the ability of the model to predict yields on the basis of remotely sensed data and last years yields. 
 
-Looking at the final model we can see an impressive adjusted R^2 of `r paste(round(sum.maz.re3$r.squared[2],2))`. Residuals are also relatively small with 1st and 3rd quintiles spanning `r paste(round(summary(maz.re3$residuals)[2],2))` and `r paste(round(summary(maz.re3$residuals)[5],2))` quintals.These numbers are relatively impressive considering the highly-localized nature of these estimates (at the sub-kebele level). Looking more closely we can observe some important features. 
+Looking at the final model we can see an impressive adjusted R^2^ of `r paste(round(sum.maz.re3$r.squared[2],2))`. Residuals are also relatively small with 1st and 3rd quintiles spanning `r paste(round(summary(maz.re3$residuals)[2],2))` and `r paste(round(summary(maz.re3$residuals)[5],2))` quintals. These findings are relatively impressive considering the highly-localized nature of these estimates (at the sub-kebele level), and the relatively coarse spatial resolution of the remotely sensed data (250m). Looking more closely we can observe some important features. 
 
-First, remotely sensed variables, while complex, have a few tangible interpretations. For instance, *G_mn* is positive and significant (p<`r paste(signif(coeff.maz.re3['G_mn',4],3))`) indicating that yields are higher if the mean greenness (NDVI) level during the Meher growing season is higher. Similarly, increases in the 90th percentile of greenness for the entire year (*A_Qnt*), corresponds to statistically significant higher yields (p<`r paste(signif(coeff.maz.re3['A_Qnt',4],3))`). Interestingly, the variable *A_mn*, which is the mean greenness level (NDVI) for the entire year, is negative and significant (p<`r paste(signif(coeff.maz.re3['A_mn',4],3))`). Already controlling for conditions during the Meher season, this might be an indication of two issues, a) a higher *A_mn* might indicate the failure to properly till between seasons, or b) complications of management in dual-crop areas, where planting occurs for both the minor (Belg) and major (Meher) rainy season. 
+First, remotely sensed variables, while complex, have a few tangible interpretations. For instance, *G_mn* is positive and significant (p<`r paste(signif(coeff.maz.re3['G_mn',4],3))`) indicating that yields are higher if the mean greenness (NDVI) level during the Meher growing season is higher. Similarly, increases in the 90th percentile of greenness for the entire year (*A_Qnt*), corresponds to statistically significant higher yields (p<`r paste(signif(coeff.maz.re3['A_Qnt',4],3))`). Interestingly, the variable *A_mn*, which is the mean greenness level (NDVI) for the entire year, is negative and significant (p<`r paste(signif(coeff.maz.re3['A_mn',4],3))`). Already controlling for conditions during the Meher season, this might be an indication of two issues, a) a higher *A_mn* might indicate the failure to properly till or remove weeds between seasons, or b) complications of management in dual-crop areas, where planting occurs for both the minor (Belg) and major (Meher) rainy season. 
 
 Looking at precipitation variables we can see that *PPT_G_AUC_Qnt* yields are higher (p<`r paste(signif(coeff.maz.re3['PPT_G_AUC_Qnt',4],3))`) in sub-kebeles where the 90th percentile of total rainfall during the Meher season is higher. The opposite is true (p<`r  paste(signif(coeff.maz.re3['PPT_G_mx_Qnt',4],3))`) for areas with higher 90 percentile maximum rainfalls (*PPT_G_mx_Qnt*) likely reflecting the impact of flooding or excess rain events. Additionally, areas with higher minimum potential evaporation rates (*PET_A_min*: higher min temps, more sun) receive better yields (p<`r paste(signif(coeff.maz.re3['PET_A_min',4],3))`) while controlling for precip and greenness, and areas with above average total PET (*PET_G_AUC_diff_mn*) also receive yield benefits (p<`r paste(signif(coeff.maz.re3['PET_G_AUC_diff_mn',4],3))`). 
 
@@ -492,7 +495,7 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
 
  # read data
   setwd(Home_dir) 
-  data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v",version,".dta",sep=''))
+  data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v4.dta",sep=''))
    data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
 
   # remove EA with less than 4 observations
@@ -517,48 +520,71 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
   form_1_wht_z = as.formula(paste('WHEATOPH_W ~',form_1_wht_z,sep=' '))
 
   wht.re1 = WHEATOPH_W ~ lag(data_in_plm$WHEATOPH_W, 1)+ 
-    G_mx + A_max_Qnt + T_G_Qnt +  PPT_G_Qnt + PPT_G_sd +  PPT_G_mx_Qnt + PPT_G_AUC_Qnt + PPT_T_G_Qnt + PET_G_mn +PET_G_sd+   
+    G_mx + A_max_Qnt + T_G_Qnt +  PPT_G_Qnt + PPT_G_sd + # PPT_G_mx_Qnt + PPT_G_AUC_Qnt 
+  + PPT_T_G_Qnt + PET_G_mn +PET_G_sd+   
     WHEATAREA  +WHEATNIMSEED + WHEATNIMSEED_P + WHEATDAMAGEAREA_P + WHEATFERT_CHEMICAL_AMT + WHEATFERT_CHEMICAL_AREA +    
-    WHEATFERT_CHEMICAL_AMT_P + WHEATFERT_CHEMICAL_AREA_P +  
+       WHEATFERT_CHEMICAL_AREA_P +  #WHEATFERT_CHEMICAL_AMT_P
      X_COORD +Y_COORD +  dist_rcap  + elevation + c(Year) + factor(Z_CODE)
   wht.re1 <- plm(wht.re1, data = data_in_plm, model = "random")
-  # summary(wht.re1)
+  
+  # store for text pasting 
+  sum.wht.re1 = summary(wht.re1)
+  coeff.wht.re1 = sum.wht.re1[1]$coefficients
   
   data_in_plm$Fert_Amt_Per_Area = data_in_plm$WHEATFERT_CHEMICAL_AMT / (data_in_plm$WHEATFERT_CHEMICAL_AREA+1)
   
   wht.re2 = WHEATOPH_W ~ lag(data_in_plm$WHEATOPH_W, 1)+ 
-    G_mx + A_max_Qnt + T_G_Qnt  + PPT_G_sd +  PPT_G_mx_Qnt + PPT_T_G_Qnt  +   
-    WHEATAREA  + WHEATNIMSEED_P + WHEATDAMAGEAREA_P +    Fert_Amt_Per_Area +    
-      WHEATFERT_CHEMICAL_AREA_P +  
+    G_mx + A_max_Qnt + T_G_Qnt  + PPT_G_sd +PET_G_mn+PET_G_sd+PPT_T_G_Qnt+ #PPT_G_Qnt+  PPT_G_mx_Qnt
+    WHEATAREA   + WHEATDAMAGEAREA_P +    Fert_Amt_Per_Area +   WHEATFERT_CHEMICAL_AMT+ 
+      WHEATFERT_CHEMICAL_AREA_P +  WHEATNIMSEED+PPT_G_Qnt+
      X_COORD  + Y_COORD  + bs(elevation,3) + c(Year) + factor(Z_CODE)
   wht.re2 <- plm(wht.re2, data = data_in_plm, model = "random")
-
+  # store for text pasting 
+  sum.wht.re2 = summary(wht.re2)
+  coeff.wht.re2 = sum.wht.re2[1]$coefficients
+  
   wht.re3 = WHEATOPH_W ~ lag(data_in_plm$WHEATOPH_W, 1)+ 
-    G_mx + A_max_Qnt + T_G_Qnt   + PPT_T_G_Qnt  +   
-    WHEATAREA  + WHEATNIMSEED_P + WHEATDAMAGEAREA_P +      
-      WHEATFERT_CHEMICAL_AREA_P +  
+    G_mx + A_max_Qnt + T_G_Qnt   + PPT_T_G_Qnt  +  PPT_G_sd +PET_G_sd+PET_G_mn+
+    WHEATAREA     + WHEATDAMAGEAREA_P +    WHEATFERT_CHEMICAL_AMT+  PPT_G_Qnt+
+      WHEATFERT_CHEMICAL_AREA_P +   #WHEATNIMSEED_P
      X_COORD    + bs(elevation,3) + c(Year) + factor(Z_CODE)
   wht.re3 <- plm(wht.re3, data = data_in_plm, model = "random")
+  # store for text pasting 
+  sum.wht.re3 = summary(wht.re3)
+  coeff.wht.re3 = sum.wht.re3[1]$coefficients
   
   wht.re4 = WHEATOPH_W ~ lag(data_in_plm$WHEATOPH_W, 1)+ 
-    G_mx + A_max_Qnt + T_G_Qnt   + PPT_T_G_Qnt  +   
+    G_mx + A_max_Qnt + T_G_Qnt   + PPT_T_G_Qnt  + PPT_G_sd + PET_G_sd+PET_G_mn+PPT_G_Qnt+
      X_COORD    + bs(elevation,3) + c(Year) + factor(Z_CODE)
   wht.re4 <- plm(wht.re4, data = data_in_plm, model = "random")
+  # store for text pasting 
+  sum.wht.re4 = summary(wht.re4)
+  coeff.wht.re4 = sum.wht.re4[1]$coefficients
 ```
-*Table `r paste(Table_number)`: Panel RE regression on output per hectare for wheat in quintals * `r  Table_number=Table_number+1`
+
+\newpage
+
+*Table `r paste(Table_number)`: Panel RE regression on output per hectare for wheat in quintals * `r wheat_table=Table_number; Table_number=Table_number+1`
 ```{r Wheat Results, echo=FALSE, message=FALSE, warning=F,comment=''}
-  stargazer(wht.re1, wht.re2,  wht.re3, wht.re4,
+stargazer(wht.re1, wht.re2,  wht.re3, wht.re4,
            title="Panel RE regression", type='text', 
           column.labels=c("Full", "Reduced","Final","No AgSS"), 
           df=FALSE, digits=4,omit = "Z_CODE",omit.labels = 'Zone Dummy',no.space=T)
 ```
+
+Again, looking at the results from Table `r paste(wheat_table)` with regression results from Wheat OPH (quintals per hectare) we can see the results from four model outputs. The first, "Full", presents the results based on the model selection from the VSURF algorithm and includes zonal fixed effects (FE). The second, "Reduced", narrows the variable selection while including critical non-linearity for variables such as elevation, and adds key variables. The third model, "Final", represents the final selection of significant variables for estimation. The last model, "No AgSS", omits all AgSS survey variables to demonstrate the ability of the model to predict yields on the basis of remotely sensed data and last years yields. 
+
+In Table `r paste(wheat_table)` we can see an impressive adjusted R^2^ of `r paste(round(sum.wht.re3$r.squared[2],2))`. Residuals are also relatively small with 1st and 3rd quintiles spanning `r paste(round(summary(wht.re3$residuals)[2],2))` and `r paste(round(summary(wht.re3$residuals)[5],2))` quintals per hectare. Although interpretation is complex for this prediction-oriented model, most variables have the expected sign and significance. Increased maximum greeness during the growing season *G_mx* corresponds to significantly higher yields (p<`r paste(signif(coeff.wht.re3['G_mx',4],3))`). Interestingly, most measures of precipitation like *PPT_G_Qnt* (while controling for greeness, a proxy of plant health) correpsonds to lower yields, perhaps indicating that most wheat growing areas have suffered from excess rain during the sample period (p<`r paste(signif(coeff.wht.re3['PPT_G_Qnt',4],3))`). While higher mean evaporative demand *PET_G_mn* (related to higher temperatures and lower humidity) correspond to higher yields (p<`r paste(signif(coeff.wht.re3['PET_G_mn',4],3))`). Like maize *A_max_Qnt* has the opposite sign perhaps for similar reason (poor management). 
+
+Looking at AgSS survey data we can see that improved seeds *WHEATNIMSEED* have a positive and nearly statistically signficant effect (p<`r paste(signif(coeff.wht.re2['PET_G_mn',4],3))`). Both the amount *WHEATFERT_CHEMICAL_AMT* and percentage covered *WHEATFERT_CHEMICAL_AREA_P* by chemical fertilizers had large statistically significant effects (p<`r paste(signif(coeff.wht.re3['WHEATFERT_CHEMICAL_AMT',4],3))`, p<`r paste(signif(coeff.wht.re3['WHEATFERT_CHEMICAL_AREA_P',4],3))` respectively). Although unstable, we also see the possibility of gains from scale with area planted *WHEATAREA* having a small significant effect in the final model (p<`r paste(signif(coeff.wht.re3['WHEATFERT_CHEMICAL_AREA_P',4],3))`).
+
 
 ```{r Panel Barley Regression, echo=FALSE, message=FALSE, warning=FALSE}
 ######### BARLEY
   setwd(Home_dir) 
   
  # read data
-  data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v",version,".dta",sep=''))
+  data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v4.dta",sep=''))
   data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
 
   # remove EA with less than 4 observations
@@ -593,31 +619,35 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
   data_in_plm$Fert_Amt_Per_Area = data_in_plm$BARLEYFERT_CHEMICAL_AMT / (data_in_plm$BARLEYFERT_CHEMICAL_AREA+1)
 
   bar.re2 = BARLEYOPH_W ~  lag(data_in_plm$BARLEYOPH_W, 1) +
-    G_mx + G_Qnt + A_AUC_Qnt + A_max_Qnt + PPT_A_max +PPT_G_AUC + PPT_A_mn +  PPT_G_sd + PPT_A_sd +
-     PPT_G_AUC_Qnt + PPT_G_mx_Qnt +  PPT_T_G_Qnt + PET_G_mx + Fert_Amt_Per_Area +
-    BARLEYDAMAGEAREA_P +  BARLEYFERT_CHEMICAL_AREA + BARLEYFERT_NATURAL_AREA +   
-    Y_COORD + X_COORD +  dist_rcap + bs(elevation,3) + c(Year) + factor(Z_CODE)
+    G_mx + G_Qnt +    A_max_Qnt   +  PPT_G_sd + PPT_A_sd + #PPT_A_mn PPT_A_max PPT_G_AUC A_AUC_Qnt BARLEYFERT_NATURAL_AREA dist_rcap
+     PPT_G_AUC_Qnt + PPT_G_mx_Qnt +  PPT_T_G_Qnt + PET_G_mx + Fert_Amt_Per_Area + 
+    BARLEYDAMAGEAREA_P +  BARLEYFERT_CHEMICAL_AREA +   
+    Y_COORD + X_COORD  + bs(elevation,3) + c(Year) + factor(Z_CODE)
 
   bar.re2 <- plm(bar.re2, data = data_in_plm, model = "random")
   # summary(bar.re2)
 
   bar.re3 = BARLEYOPH_W ~  lag(data_in_plm$BARLEYOPH_W, 1) +
-    G_mx + G_Qnt  + A_max_Qnt  +PPT_G_AUC + PPT_A_mn +  PPT_G_sd + PPT_A_sd +
+    G_mx + G_Qnt  + A_max_Qnt   +  PPT_A_sd +   #PPT_A_mn PPT_G_AUC PPT_G_sd BARLEYFERT_NATURAL_AREA
      PPT_G_AUC_Qnt + PPT_G_mx_Qnt +  PPT_T_G_Qnt +   
-    BARLEYDAMAGEAREA_P +  BARLEYFERT_CHEMICAL_AREA + BARLEYFERT_NATURAL_AREA +   
+    BARLEYDAMAGEAREA_P +  BARLEYFERT_CHEMICAL_AREA  +   
     Y_COORD + X_COORD + bs(elevation,3) + c(Year) + factor(Z_CODE)
 
   bar.re3 <- plm(bar.re3, data = data_in_plm, model = "random")
 
   bar.re4 = BARLEYOPH_W ~  lag(data_in_plm$BARLEYOPH_W, 1) +
-    G_mx + G_Qnt  + A_max_Qnt  +PPT_G_AUC + PPT_A_mn +  PPT_G_sd + PPT_A_sd +
+    G_mx + G_Qnt  + A_max_Qnt  +  PPT_A_sd +  #PPT_A_mn PPT_G_AUC PPT_G_sd 
      PPT_G_AUC_Qnt + PPT_G_mx_Qnt +  PPT_T_G_Qnt +   
     Y_COORD + X_COORD + bs(elevation,3) + c(Year) + factor(Z_CODE)
 
   bar.re4 <- plm(bar.re4, data = data_in_plm, model = "random")
 ```
+
+\newpage
+
 *Table `r paste(Table_number)`: Panel RE regression on output per hectare for barley in quintals* `r  Table_number=Table_number+1`
 ```{r Barley Results, echo=FALSE, message=FALSE, warning=F,comment=''}
+
   stargazer(bar.re1, bar.re2,  bar.re3, bar.re4,
            title="Panel RE regression", type="text", 
           column.labels=c("Full", "Reduced","Final","No AgSS"), 
@@ -689,6 +719,9 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
    
   tef.re4 <- plm(tef.re4, data = data_in_plm, model = "random")
 ```
+
+\newpage
+
 *Table `r paste(Table_number)`: Panel RE regression on output per hectare for teff in quintals* `r  Table_number=Table_number+1`
 ```{r Teff Results, echo=FALSE, message=FALSE, warning=F,comment=''}
   stargazer(tef.re1, tef.re2,  tef.re3, tef.re4,
@@ -756,6 +789,9 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
 
   sor.re4 <- plm(sor.re4, data = data_in_plm, model = "random")
 ```
+
+\newpage
+
 *Table `r paste(Table_number)`: Panel RE regression on output per hectare for sorghum in quintals* `r  Table_number=Table_number+1`
 ```{r Sorghum Results, echo=FALSE, message=FALSE, warning=F,comment=''}
   stargazer(sor.re1, sor.re2,  sor.re3, sor.re4,
@@ -764,7 +800,9 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
           df=FALSE, digits=4,omit = "Z_CODE",omit.labels = 'Zone Dummy',no.space=T)
 ```
 
-## Predicting damages
+## Predicting Drought Damages
+Here we present results described in the earlier 'Predicting Crop Losses from Drought' section in methods. We utilize a random forest to predict losses greater than 25% due to drought using remotely sensed vegetation and weather data, as well as provide measures of test out-of-sample accuracy. 
+
 ```{r Predict Damages Maize Regression, echo=FALSE, message=FALSE, warning=FALSE,fig.height=7}
 #### Predict damages MAIZE ----------------------------------------------------
   # read data
@@ -842,9 +880,9 @@ The AgSS data also provide some insights. We see scant evidence for yield improv
   groups = groupKFold(train$EACODE, k = num_groups)   # 15 works
 
   #train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
-  maz.rf<-train(maz_dam1_w_ea,data=pp.train,method="rf",metric="Kappa",stratify=T,
-                    trControl=trainControl(method="oob", seeds=seeds,index = groups), #number iterations+1
-                    prox=T,allowParallel=T,tuneGrid = expand.grid(mtry=seq(5,12,1)))
+  # maz.rf<-train(maz_dam1_w_ea,data=pp.train,method="rf",metric="Kappa",stratify=T,
+  #                   trControl=trainControl(method="oob", seeds=seeds,index = groups), #number iterations+1
+  #                   prox=T,allowParallel=T,tuneGrid = expand.grid(mtry=seq(5,12,1)))
 
   # save(maz.rf,file = './Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P_GT.25_zone_drought.RData')
   load('./Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P_GT.25_zone_drought.RData')
@@ -868,7 +906,7 @@ Overall, we find a high level of accuracy in our completely independent *testing
  
 We can also examine the relative importance of each variable to the national-level model, as well as its estimated non-linear relationship with the dependent variable through partial dependency plots. First, let's examine the relative importance of each variable in the random forest through the role it played in Gini coefficient loss.
 
-Figure `r paste(Figure_number)`: Variable importance plot for maize damage prediction`r maz_imp_fig=Figure_number; Figure_number =Figure_number+1 `
+*Figure `r paste(Figure_number)`: Top 10 variable importance plot for maize damage prediction`r maz_imp_fig=Figure_number; Figure_number =Figure_number+1 `*
 
 ```{r Variable Importance Maize, echo=FALSE, message=FALSE, warning=FALSE,fig.width=7}
 # store variable importance values
@@ -882,8 +920,8 @@ varImp_maz$importance = varImp_maz$importance[order(varImp_maz$importance[,1],de
 
 # store top 2 
 most_imp_maz = varImp_maz$importance$name[1]
-secd_imp_maz = varImp_maz$importance$name[6]
-thrd_imp_maz = varImp_maz$importance$name[10]
+secd_imp_maz = varImp_maz$importance$name[3]
+thrd_imp_maz = varImp_maz$importance$name[8]
 
 # plot imporance
 top_ten = varImp_maz$importance[1:10,]
@@ -891,30 +929,37 @@ top_ten = top_ten[order(top_ten[,1],decreasing = F),]
 dotchart(top_ten[,'Overall'],labels=top_ten[,'name'],cex=1,xlab="Importance")
 
 ```
-From the figure above we can see that `r most_imp_maz` has the highest relative importance in the random forest model. `r most_imp_maz` is measured as the fist difference in the 90th percentile NDVI value for the growing season. As such the change in the highest NDVI values likely reflects a measure of change in plant health, with positive `r  rownames(varImp_maz$importance)[which.max(varImp_maz$importance$Overall)]` values corresponding to increased plant health relative to the previous growing season. We can also see that the most important variables are largely comprised of variables summarizing NDVI, with the exception of PPT_G_mn which is the mean value of precipitation for each 10 day period across the growing season, and PPT_G_AUC_Qnt, the .
+From the figure above we can see that the most important variables are comprised of measures of changes in NDVI (G_Qnt_diff, A_Qnt_diff, G_max_diff) as well as measures of change (PPR_G_mn_diff, PPT_G_AUC_diff_mn), mean (PPT_G_mn), 90th percentile values (PPT_G_Qnt) and standard deviation (PPT_G_sd) in precipitation. Changes in total potential evapotranspiration over the growing season, a measure of evaporative demand (largely controlled by temperature and humidity), also plays a key role (PET_G_AUC_diff_mn, PET_G_AUC_diff_90th). We can see that the most important variables for maize are largely comprised of measures of change in the mean and upper level of the distribution of greeness, precipitation, and potential evapotranspiration. This points to one of the advantages of machine learning, since these algorithms can exploit even minor difference between otherwise colinear variables in order to provide a reliable model fit.
+
+We can see that `r most_imp_maz` has the highest relative importance in the random forest model. `r most_imp_maz` is measured as the fist difference in the 90th percentile NDVI value for the growing season. As such the change in the highest NDVI values likely reflects a measure of change in plant health, with positive `r  rownames(varImp_maz$importance)[which.max(varImp_maz$importance$Overall)]` values corresponding to increased plant health relative to the previous growing season. We can also see that the most important variables are largely comprised of variables summarizing NDVI, with the exception of PPT_G_mn which is the mean value of precipitation for each 10 day period across the growing season, and PPT_G_AUC_Qnt, the .
 
 We can now look at the partial dependence plots to help understand the non-linear response of reported damages to variables of interest, such as `r most_imp_maz`.  
 
-Figure `r paste(Figure_number)`: Partial dependency plot for influence of `r most_imp_maz` on maize damage prediction`r Figure_number =Figure_number+1 `
+*Figure `r paste(Figure_number)`: Partial dependency plot for influence of `r most_imp_maz` on maize damage prediction`r Figure_number =Figure_number+1 `*
 
 ```{r Partial Dependency Maize first, echo=FALSE, message=FALSE, warning=FALSE,fig.width=7}
+#
 maz.rf %>% partial(pred.var = most_imp_maz) %>% autoplot(rug = F, train = pp.train,x)+ labs(y='Likelihood of loss',x = paste(most_imp_maz, ''))
 ```
-In the figure above, we can see how the likelihood of reporting maize losses decreases rapidly as the first difference of G_Qnt (G_Qnt_diff) approaches zero. G_Qnt, itself, measures the 90th percentile of NDVI values over the Meher growing season. Negative values of the first difference therefore indicate this the current year is lower than the previous, and possitive, higher. Therefore G_Qnt_diff picks up on the changes in peak values of NDVI. Similarly, we can look at the partial dependence plot for other variables of interest such as `r secd_imp_maz`.
+In the figure above, we can see how the likelihood of reporting maize losses decreases rapidly as the first difference of G_Qnt (G_Qnt_diff) approaches zero. G_Qnt, itself, measures the 90th percentile of NDVI values over the Meher growing season. Negative values of the first difference therefore indicate this the current year's 90th percentile NDVI is lower than the previous, and positive, higher. Therefore G_Qnt_diff picks up on the changes in peak values of NDVI. Similarly, we can look at the partial dependence plot for other variables of interest such as `r secd_imp_maz`.
 
-Figure `r paste(Figure_number)`: Partial dependency plot for influence of `r secd_imp_maz` on maize damage prediction`r Figure_number =Figure_number+1 `
+*Figure `r paste(Figure_number)`: Partial dependency plot for influence of `r secd_imp_maz` on maize damage prediction`r Figure_number =Figure_number+1 `*
 
 ```{r Partial_Dependency_Maize_second, echo=FALSE, message=FALSE, warning=FALSE,fig.width=7}
+#
 maz.rf %>% partial(pred.var = secd_imp_maz) %>% autoplot(rug = F, train = pp.train,x)+ labs(y='Likelihood of loss',x = paste(secd_imp_maz, ''))
 ```
-`r secd_imp_maz` is a measure of variability in NDVI across the entire year (including both the Meher and Belg seasons). We see a near linear decrease in the likelihood of damage starting from a value of around 600, with a minima near 1750. The high likelihood of failure corresponding with very low values of NDVI variance likely relates to early season trouble including a failure to germinate, or early damage leading to crop failure. These early catastrophic losses would have little change in NDVI (greeness) across the year and therefore very low values of `r secd_imp_maz`. The minima in the likelihood of a loss occures at a relatively high level of variance (around the 3rd quintile), this is likely related to the fact that a plot of healthy plants that is harvested and tilled, will have relatively high variance (especially in dual-cropping Meher and Belg areas). We can see values around 2000 that extremely high variance again corresponds to increased likelihood of losses, as dramatic shifts in plant health would likely correspond to the highest levels of variance. We can see how variance in NDVI corresponds to crop failures with variables such as `r thrd_imp_maz`.
+`r secd_imp_maz` tracks the effects of the change in average 10-day precipitation across the growing season. We can see that year-over-year declines (negative numbers) correspond to a much higher likelihood of crop losses due to drought. The likelihood of failure declines rapidly around a value of -10mm, and reaches its lowest likelihood just above 0mm. Past this, we again see an increase the likelihood of damage, but at a slower rate. Finally, years will extremely large increases in precipitation also correspond to increased damage due to excess precipitation or damaging storms.
 
-Figure `r paste(Figure_number)`: Partial dependency plot for influence of `r thrd_imp_maz` on maize damage prediction`r Figure_number =Figure_number+1 `
+We can see how average precipitation corresponds to drought related crop failures with variables such as `r thrd_imp_maz`.
+
+*Figure `r paste(Figure_number)`: Partial dependency plot for influence of `r thrd_imp_maz` on maize damage prediction`r Figure_number =Figure_number+1 `*
 
 ```{r Partial Dependency Maize third, echo=FALSE, message=FALSE, warning=FALSE,fig.width=7}
+#
 maz.rf %>% partial(pred.var = thrd_imp_maz) %>% autoplot(rug = F, train = pp.train,x)+ labs(y='Likelihood of loss',x = paste(thrd_imp_maz, ''))
 ```
-`r thrd_imp_maz` tracks the effects of the average 10-day precipitation across the growing season. We can see that low levels of precipitation have the highest likelihood of crop damage. The likelihood of failure declines rapidly around a value of 20mm, and reaches its lowest likelihood around 40mm. Past this, we again see an increase the likelihood of damage, but at a slower rate. This later increase in the likelihood of damages likely points to the effects of excess precipitation or damaging storms.
+Similarly, we can see how the average 10-day precipitation effects the likelihood of loss. Losses decline rapidly above a 20mm 10-day average, reaching a minuma around 40mm, but then increasing again after 60mm. Interestingly, the large uptick in reported losses due to drought at high levels of precipitation is unexpected. That being said this may have to due with issues of farmers confusing general weather related losses with drought related losses. From a policy perspective, this differece is likely trivial since interventions should target losses more generally. 
  
 ```{r Predict Damages Wheat Regression, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
 #### Predict damages WHEAT ----------------------------------------------------
@@ -1012,7 +1057,7 @@ Overall, we find a high level of accuracy in our completely independent *testing
  
 We can also examine the relative importance of each variable to the national-level model, as well as its estimated non-linear relationship with the dependent variable through partial dependency plots. First, let's examine the relative importance of each variable in the random forest through the role it played in Gini coefficient loss.
 
-Figure `r paste(Figure_number)`: Variable importance plot for maize damage prediction`r wht_imp_fig=Figure_number; Figure_number =Figure_number+1`
+*Figure `r paste(Figure_number)`: Top 10 variable importance plot for maize damage prediction`r wht_imp_fig=Figure_number; Figure_number =Figure_number+1`*
 
 ```{r Variable Importance Wheat, echo=FALSE, message=FALSE, warning=FALSE,fig.width=7}
 # store variable importance values
@@ -1034,34 +1079,37 @@ top_ten = top_ten[order(top_ten[,1],decreasing = F),]
 dotchart(top_ten[,'Overall'],labels=top_ten[,'name'],cex=1,xlab="Importance")
 ```
 
-From the figure above we can see that `r most_imp_wht` has the highest relative importance in the random forest model. `r most_imp_wht` is the first difference of G_Qnt (G_Qnt_diff), where G_Qnt is the 90th percentile of NDVI values in the Meher season. As such the high NDVI values  reflect a measure of plant health, with higher `r  rownames(varImp_wht$importance)[which.max(varImp_wht$importance$Overall)]` values corresponding to strong plant health (higher leaf area, low water stress) at some point in the growing season. We can also see that the most important variables are largely comprised of variables summarizing NDVI, with the exception of PPT_G_mn which is the mean value of precipitation for each 10 day period across the growing season.  
+From the figure above we see a similar set of variables relative to maize, while the order and level of importance however has changed. This is an indication that our models are able to utilize the same broad set of phenological and weather variables to identify differences between crop types and how their losses can be observed. 
 
-Interestingly, comparing figures `r wht_imp_fig` and `r maz_imp_fig`, we see that measures of variability such as A_sd and G_sd are very  important for Maize but not for wheat. This might reflect physilogical differences between plants, where variability in leaf color more greatly effects yields for Maize. These differences between models indicate a need to run plant specific models. 
+We can see that `r most_imp_wht` has the highest relative importance in the random forest model. `r most_imp_wht` is the first difference of G_Qnt (G_Qnt_diff), where G_Qnt is the 90th percentile of NDVI values in the Meher season. As such the high NDVI valuesreflect a measure of plant health, with higher `r  rownames(varImp_wht$importance)[which.max(varImp_wht$importance$Overall)]` values corresponding to strong plant health (higher leaf area, low water stress) at some point in the growing season. We can also see that the most important variables are largely comprised of variables summarizing NDVI, with the exception of PPT_G_mn which is the mean value of precipitation for each 10 day period across the growing season.  
 
-We can now look at the partial dependence plots to help understand the non-linear response of reported damages to `r most_imp_wht`.  
+Interestingly, comparing figures `r wht_imp_fig` and `r maz_imp_fig`, we see that measures of potential evapotranspiration (temperature and humidity) play a smaller role in losses for wheat compared to maize. This might reflect physilogical differences between plants, where variability in temperatures more greatly effects yields for Maize. The differences between models validates our suite of variables as well as the need to run plant specific models. 
 
-Figure `r paste(Figure_number)`: Partial dependency plot for influence of `r most_imp_wht` on wheat damage prediction`r Figure_number =Figure_number+1 `
+We can now look at the partial dependence plots to help understand the non-linear response of reported drought damages to `r most_imp_wht`.  
+
+*Figure `r paste(Figure_number)`: Partial dependency plot for influence of `r most_imp_wht` on wheat damage prediction`r Figure_number =Figure_number+1 `*
 
 ```{r Partial Dependency Wheat first, echo=FALSE, message=FALSE, warning=FALSE,fig.width=7}
+#
 wht.rf %>% partial(pred.var = most_imp_wht) %>% autoplot(rug = F, train = pp.train,x)+ labs(y='Likelihood of loss',x = paste(most_imp_wht, ''))
 ```
-In the figure above, we can see with `r most_imp_wht`, similar to maize, how the likelihood of reporting maize losses decreases rapidly after -1000, with a minima near zero. The likelihood of losses increase at the upper end of the distribution. These losses at upper end of the distribution might reflect poor management such as failure to control weeds, or excessively narrow row spacing. This consistency across independent crop models is a strong indication that these models are picking up on meaningful non-linear relations. Similarly, we can look at the partial dependence plot for other variables of interest such as `r secd_imp_wht`.
+In the figure above, we can see with `r most_imp_wht`, similar to maize, how the likelihood of reporting maize losses decreases rapidly after -500, with a minima above zero. The likelihood of losses again increases at the upper end of the distribution. These losses at upper end of the distribution might reflect poor management such as failure to control weeds, or narrow row spacing. The consistency across independent crop models (maize and wheat) is a strong indication that these models are picking up on meaningful non-linear relations. Similarly, we can look at the partial dependence plot for other variables of interest such as `r secd_imp_wht`.
 
-Figure `r paste(Figure_number)`: Partial dependency plot for influence of `r secd_imp_wht` on wheat damage prediction`r Figure_number =Figure_number+1 `
+*Figure `r paste(Figure_number)`: Partial dependency plot for influence of `r secd_imp_wht` on wheat damage prediction`r wht_pptgmndiff = Figure_number; Figure_number =Figure_number+1 `*
 
-```{r Partial Dependency Wheat second, echo=FALSE, message=FALSE, warning=FALSE,fig.width=7}
+```{r Partial Dependency Wheat second, echo=FALSE, fig.width=7, message=FALSE, warning=FALSE}
 wht.rf %>% partial(pred.var = secd_imp_wht) %>% autoplot(rug = F, train = pp.train,x)+ labs(y='Likelihood of loss',x = paste(secd_imp_wht, ''))
 ```
 
-Looking again at Figure `r wht_imp_fig`, we can see that the most important variables for Wheat are largely comprised of measures of the upper level of the distribution (G_mx, G_qnt, A_mx). This points to one of the advantages of machine learning, since these algorithms can exploit even minor difference between otherwise colinear variables in order to provide a reliable model fit. Looking at one (G_mx) we can see a familiar non-linear pattern with declining likelihood of losses up to some point and increases thereafter. Extremely low levels of G_mx likely correspond to failure in germination, low planting density, etc and extremely high levels of G_mx likely corresponds to a failure to weed or an excess of rain. Similarly, we can look at the partial dependence plot for other variables of interest such as `r thrd_imp_wht`.
+Looking again at Figure `r wht_pptgmndiff`, we can see similarities and differences between the likelihood of losses for wheat compared to maize. For wheat, we see that the likelihood of losses at very negative levels of PPT_G_mn_diff is both higher (-3 vs -2.25), and declines more slowly as the change in average precipitation increases. They both however hit a minima above 0. However wheat losses do not increase again, at all, until extremely high increases in precip year-over-year. Now we can look at the partial dependence plot for other variables of interest such as `r thrd_imp_wht`.
 
-Figure `r paste(Figure_number)`: Partial dependency plot for influence of `r thrd_imp_wht` on wheat damage prediction`r Figure_number =Figure_number+1 `
+*Figure `r paste(Figure_number)`: Partial dependency plot for influence of `r thrd_imp_wht` on wheat damage prediction`r Figure_number =Figure_number+1 `*
 
 ```{r Partial Dependency Wheat third, echo=FALSE, message=FALSE, warning=FALSE,fig.width=7}
+#
 wht.rf %>% partial(pred.var = thrd_imp_wht) %>% autoplot(rug = F, train = pp.train,x)+ labs(y='Likelihood of loss',x = paste(thrd_imp_wht, ''))
 ```
-In the figure above, we can see some interesting similarities and differences between the wheat and maize response to mean precipitation over the growing season. Of particular interest is in areas greater than 40mm. The likelihood that substantial losses are reported doesn't increase meaningfully until over 60mm. In comparison, maize losses increased rapidly past 40mm. Here the likelihood of lossess does not increase rapidly until 60mm. Althogh these damages would likely be linked to losses from rust or mold, or physical damage from storms all of which increase with excess rainfall. The differences between maize and wheat however demonstrate the resiliance of wheat to changes in precipitation.
-
+In the figure above, we can see the relationship between average annual potential evapotranspiration (PET_A_mn) and drought related losses. As expected losses are flat/stable until extremely high levels of PET, indicating high temperatures and low humidity. This plot again confirms both the critical importance of non-linear relationships and validates the approach used in this study.  
 
 ```{r Predict_Damages_Sorghum, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
 #### Predict damages Sorghum  ----------------------------------------------------
@@ -1340,150 +1388,150 @@ The confusion matrix compares predicted values against the observed (reference).
 Overall, we find a high level of accuracy in our completely independent *testing* data with overall accuracy of `r round(cm_tef$overall['Accuracy'],2)*100` percent. For the case of teff, we see relatively good identification of reported losses with a recall rate of only `r round(cm_tef$byClass['Recall'],2)`, indicating that `r round(cm_tef$byClass['Recall'],2)*100`% of all substantial loss cases were predicted in our independent *testing* data. In all, `r cm_tef$table['FALSE','FALSE']` out of `r cm_tef$table['FALSE','FALSE']+ cm_tef$table['TRUE','FALSE']` reported cases were predicted, and `r cm_tef$table['FALSE','TRUE']` cases were falsely predicted as crop failure areas. Although the recall rate is relatively low, we can still say that we can identify healthly maize harvest `r cm_tef$table['TRUE','TRUE']` out of `r cm_tef$table['TRUE','TRUE']+ cm_tef$table['FALSE','TRUE']` times, or `r round(cm_tef$table['TRUE','TRUE'] /(cm_tef$table['TRUE','TRUE']+ cm_tef$table['FALSE','TRUE']),2)*100`% of the time.
    
 ## Predict damages out of sample 
-One possible use case of these models, once improved through higher resolution, better agricultural land use maps, is to predict losses outside of AgSS sample areas. This will allow policy makers to identify potential at-risk communities rapidly at low cost. Given the importance of maximum and 90th percentile values of NDVI in model performance, a reasonable estimate could be made mid-season (or just past peak greeness). As example of how this might work we extracted NDVI statistics for all 75k+ sub-kebeles and used the model trained on AgSS sample areas. 
+One possible use case of these models is to predict losses outside of AgSS sample areas. This will allow policy makers to identify potential at-risk communities rapidly at low cost. Given the importance of maximum and 90th percentile values of NDVI in model performance, a reasonable estimate could be made mid-season (or just past peak greeness). As example of how this might work we extracted NDVI statistics for all 75k+ sub-kebeles and used the model trained on AgSS sample areas. 
 
 ```{r Predict Damages to all EAs, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
   # Read in all EA data
   setwd(Home_dir)  
-  # EAs_poly = st_read("../Data/EnumerationAreas/EnumerationAreasSIN.shp") # use EA_code_merge as unique id  75582 features
+  EAs_poly = st_read("../Data/EnumerationAreas/EnumerationAreasSIN.shp") # use EA_code_merge as unique id  75582 features
   Reg_poly = st_read("../Data/AdminBoundaries/ETH_adm1_UTM.shp") # use EA_code_merge as unique id
   Reg_poly = st_transform(Reg_poly,"+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs")
-# 
-#   # load all eas exacted data
-#   load('~/Documents/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_2016/Outputs4Pred/all_eas_NDVI_ET_panel_V4.RData')
-#   all_eas_data = get('output')
-#   all_eas_data$ZONECODE = as.numeric(all_eas_data$Z_CODE)
-#   all_eas_data$EACODE = as.numeric(all_eas_data$EA_CODE)
-#   all_eas_data$EA_CODE_Year = paste(all_eas_data$EA_CODE,all_eas_data$Year,sep="_")
-#   rm(output)
-#   # impute missing values
-#   all_eas_data = subset(all_eas_data, select=-c(plant_dates,harvest_dates,G_mx_dates)) # must remove date variables before impute
-#   preProcValues = preProcess(all_eas_data, method = "medianImpute" )
-#   all_eas_data = predict(preProcValues, all_eas_data)
-# 
-#   # create a unqiue key for both
-#   all_eas_data$EA_merge = paste(all_eas_data$W_CODE,gsub("-","", all_eas_data$EA_NAME),sep='')
-#   EAs_poly$EA_merge = paste(EAs_poly$W_CODE,gsub("-","", EAs_poly$EA_NAME),sep='')
-#   # find non-matching codes
-#   #anti_join(all_eas_data, EAs_poly, by="EA_merge")
-# 
-#    # add temporal lags
-#   all_eas_data_plm = pdata.frame(all_eas_data, index=c("EACODE","Year"), drop.index=F, row.names=TRUE)
-#   all_eas_data$G_height =      all_eas_data_plm$G_mx-all_eas_data_plm$G_min
-#   all_eas_data$G_height_diff = as.numeric(diff(all_eas_data_plm$G_mx-all_eas_data_plm$G_min,1))
-#   all_eas_data$A_height =      all_eas_data_plm$A_max-all_eas_data_plm$A_min
-#   all_eas_data$A_height_diff = as.numeric(diff(all_eas_data_plm$A_max-all_eas_data_plm$A_min,1))
-#   all_eas_data$G_max_diff =    as.numeric(diff(all_eas_data_plm$G_mx,1))
-#   all_eas_data$A_max_diff  =   as.numeric(diff(all_eas_data_plm$A_max,1))
-#   all_eas_data$A_Qnt_diff =    as.numeric(diff(all_eas_data_plm$A_Qnt,1))
-#   all_eas_data$G_Qnt_diff  =   as.numeric(diff(all_eas_data_plm$G_Qnt,1))
-#   all_eas_data$PPT_G_AUC_Qnt_diff = as.numeric(diff(all_eas_data_plm$PPT_G_AUC_Qnt,1))
-#   all_eas_data$PPT_G_mn_diff = as.numeric(diff(all_eas_data_plm$PPT_G_mn,1))
-#   all_eas_data$REGIONCODE = as.numeric(all_eas_data$R_CODE)  # swap names to match
-#   rm(all_eas_data_plm)
-# 
-#   # load & predict damage model
-#   setwd(Home_dir)
-# 
-#   load('./Outputs4Pred/tef.rf.TEFFDAMAGEAREA_P_GT_.25_zone_drought.RData')
-#   all_eas_data$pred_dam_tef = predict(tef.rf, all_eas_data)
-#   load('./Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P_GT_.25_zone_drought.RData')
-#   all_eas_data$pred_dam_bar = predict(bar.rf, all_eas_data)
-#   '~/Documents/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_2016/Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P_GT_.25_zone_diff.RData'
-#   load('./Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P_GT_.25_zone_drought.RData')
-#   all_eas_data$pred_dam_sor = predict(sor.rf, all_eas_data)
-#   load('./Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P_GT_.25_zone_drought.RData')
-#   all_eas_data$pred_dam_wht = predict(wht.rf, all_eas_data)
-#   load('./Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P_GT.25_zone_drought.RData')
-#   all_eas_data$pred_dam_maz = predict(maz.rf, all_eas_data)
-#   rm(list = c('tef.rf','bar.rf','sor.rf','wht.rf','maz.rf'))
-# 
-#   table(all_eas_data$pred_dam_sor, exclude = NULL)
-# 
-#   # store predicted damages in wide format
-#   # remove duplicates also
-#   all_eas_dam_sor =    unique(all_eas_data[,list(Year,RK_NAME,RK_CODE,R_NAME,R_CODE,Z_NAME,Z_CODE,W_NAME,
-#      W_CODE,EA_NAME,EA_merge,pred_dam_sor) ])  # subset variables of interest
-#   all_eas_dam_sor$pred_dam_sor = all_eas_dam_sor$pred_dam_sor == T  # convert from factor to logical
-#   all_eas_dam_sor = all_eas_dam_sor %>% distinct(Year, RK_CODE, .keep_all =T) %>% spread(key = Year, value = pred_dam_sor) # wide format
-#   names(all_eas_dam_sor)[names(all_eas_dam_sor)  %in% 2009:2016] =
-#      paste(names(all_eas_dam_sor)[names(all_eas_dam_sor)  %in% 2009:2016],'dam_sor',sep='_') # rename
-#   all_eas_dam_sor$DamageSum_s =  all_eas_dam_sor %>% select(matches('dam'))  %>% rowSums( na.rm = T)
-# 
-#   all_eas_dam_bar =  unique(all_eas_data[,list(Year,RK_NAME,RK_CODE,R_NAME,R_CODE,Z_NAME,Z_CODE,W_NAME,
-#      W_CODE,EA_NAME,EA_merge,pred_dam_bar) ])
-#   all_eas_dam_bar$pred_dam_bar = all_eas_dam_bar$pred_dam_bar == T
-#   all_eas_dam_bar = all_eas_dam_bar %>% distinct(Year, RK_CODE, .keep_all =T) %>% spread(key = Year, value = pred_dam_bar)
-#   names(all_eas_dam_bar)[names(all_eas_dam_bar)  %in% 2009:2016] =
-#       paste(names(all_eas_dam_bar)[names(all_eas_dam_bar)  %in% 2009:2016],'dam_bar',sep='_')
-#   all_eas_dam_bar$DamageSum_b =  all_eas_dam_bar %>% select(matches('dam'))  %>% rowSums( na.rm = T)
-# 
-#   all_eas_dam_wht =  unique(all_eas_data[,list(Year,RK_NAME,RK_CODE,R_NAME,R_CODE,Z_NAME,Z_CODE,W_NAME,
-#       W_CODE,EA_NAME,EA_merge,pred_dam_wht) ])
-#   all_eas_dam_wht$pred_dam_wht = all_eas_dam_wht$pred_dam_wht == T
-#   all_eas_dam_wht = all_eas_dam_wht %>% distinct(Year, RK_CODE, .keep_all =T) %>% spread(key = Year, value = pred_dam_wht)
-#   names(all_eas_dam_wht)[names(all_eas_dam_wht)  %in% 2009:2016] =
-#       paste(names(all_eas_dam_wht)[names(all_eas_dam_wht)  %in% 2009:2016],'dam_wht',sep='_')
-#   all_eas_dam_wht$DamageSum_w =  all_eas_dam_wht %>% select(matches('dam'))  %>% rowSums( na.rm = T)
-# 
-#   all_eas_dam_maz_sub = all_eas_data[,list(Year,RK_NAME,RK_CODE,R_NAME,R_CODE,Z_NAME,Z_CODE,W_NAME,
-#            W_CODE,EA_NAME,EA_merge,pred_dam_maz) ]
-#   all_eas_dam_maz_sub$pred_dam_maz = all_eas_dam_maz_sub$pred_dam_maz == T
-#   all_eas_dam_maz_sub = all_eas_dam_maz_sub %>% distinct(Year, RK_CODE, .keep_all =T)
-#   all_eas_dam_maz = spread(all_eas_dam_maz_sub, key = Year, value = pred_dam_maz)
-#   names(all_eas_dam_maz)[names(all_eas_dam_maz)  %in% 2009:2016] =
-#       paste(names(all_eas_dam_maz)[names(all_eas_dam_maz)  %in% 2009:2016],'dam_maz',sep='_')
-#   all_eas_dam_maz$DamageSum_m =  all_eas_dam_maz %>% select(matches('dam'))  %>% rowSums( na.rm = T)
-# 
-#   all_eas_dam_tef_sub = all_eas_data[,list(Year,RK_NAME,RK_CODE,R_NAME,R_CODE,Z_NAME,Z_CODE,W_NAME,
-#            W_CODE,EA_NAME,EA_merge,pred_dam_tef) ]
-#   all_eas_dam_tef_sub$pred_dam_tef = all_eas_dam_tef_sub$pred_dam_tef == T
-#   all_eas_dam_tef_sub = all_eas_dam_tef_sub %>% distinct(Year, RK_CODE, .keep_all =T)
-#   all_eas_dam_tef = spread(all_eas_dam_tef_sub, key = Year, value = pred_dam_tef)
-#   names(all_eas_dam_tef)[names(all_eas_dam_tef)  %in% 2009:2016] =
-#       paste(names(all_eas_dam_tef)[names(all_eas_dam_tef)  %in% 2009:2016],'dam_tef',sep='_')
-#   all_eas_dam_tef$DamageSum_t =  all_eas_dam_tef %>% select(matches('dam'))  %>% rowSums( na.rm = T)
-# 
-#   rm(list=c('all_eas_dam_tef_sub','all_eas_dam_maz_sub','all_eas_data'))
-# 
-#   # join to ea polygon selected variables
-#   # get EA codes from polgon and join to that
-#   jnd.tbl = data.frame(EA_merge = unique(EAs_poly$EA_merge))
-#   jnd.tbl = all_eas_dam_sor %>% select(matches('20|EA_merge|DamageSum')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge')
-#   jnd.tbl = all_eas_dam_bar %>% select(matches('20|EA_merge|DamageSum')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge')
-#   jnd.tbl = all_eas_dam_wht %>% select(matches('20|EA_merge|DamageSum')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge')
-#   jnd.tbl = all_eas_dam_maz %>% select(matches('20|EA_merge|DamageSum')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge')
-#   jnd.tbl = all_eas_dam_tef %>% select(matches('20|EA_merge|DamageSum')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge') %>% as.data.frame()
-#   # all crops damage summaries
-#   jnd.tbl$DamageSum_allcrops =  jnd.tbl %>% select(matches('DamageSum'))  %>% rowSums( na.rm = T)
-#   jnd.tbl$DamageSum_allcrops_2009 = jnd.tbl %>% select(matches('2009')) %>% rowSums( na.rm = T)
-#   jnd.tbl$DamageSum_allcrops_2010 = jnd.tbl %>% select(matches('2010')) %>% rowSums( na.rm = T)
-#   jnd.tbl$DamageSum_allcrops_2011 = jnd.tbl %>% select(matches('2011')) %>% rowSums( na.rm = T)
-#   jnd.tbl$DamageSum_allcrops_2012 = jnd.tbl %>% select(matches('2012')) %>% rowSums( na.rm = T)
-#   jnd.tbl$DamageSum_allcrops_2013 = jnd.tbl %>% select(matches('2013')) %>% rowSums( na.rm = T)
-#   jnd.tbl$DamageSum_allcrops_2014 = jnd.tbl %>% select(matches('2014')) %>% rowSums( na.rm = T)
-#   jnd.tbl$DamageSum_allcrops_2015 = jnd.tbl %>% select(matches('2015')) %>% rowSums( na.rm = T)
-#   jnd.tbl$DamageSum_allcrops_2016 = jnd.tbl %>% select(matches('2016')) %>% rowSums( na.rm = T)
-# 
-#   EAs_poly = left_join(EAs_poly,jnd.tbl,by='EA_merge')
-# 
-#   # only use if reading in via readOGR EAs_poly@data = join(EAs_poly@data,jnd.tbl,by='EA_merge',type='left')
-# 
-#   rm(list=c('all_eas_dam_sor','all_eas_dam_sor','all_eas_dam_bar','all_eas_dam_wht','all_eas_dam_maz','all_eas_dam_tef',
-#                "all_eas_dam_maz_sub", "all_eas_dam_tef_sub","all_eas_data",'jnd.tbl'))
-# 
-#   # check number of damaged EAs ( Damaged is == FALSE)
-#   EAs_poly  %>% as.data.frame() %>% select(matches('bar')) %>% apply(.,2,function(x) x==F ) %>% colSums( na.rm = T)
-#    table(EAs_poly$`2012_dam_bar`, exclude = NULL)
-# 
-#   # plot results as points
-#   EAs_point = st_centroid(EAs_poly)
-#   saveRDS(EAs_point,'~/Documents/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_2016/Outputs4Pred/allEAs_point_merge_agss.rds')
 
-  
+  # load all eas exacted data
+  load('~/Documents/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_2016/Outputs4Pred/all_eas_NDVI_ET_panel_V4.RData')
+  all_eas_data = get('output')
+  all_eas_data$ZONECODE = as.numeric(all_eas_data$Z_CODE)
+  all_eas_data$EACODE = as.numeric(all_eas_data$EA_CODE)
+  all_eas_data$EA_CODE_Year = paste(all_eas_data$EA_CODE,all_eas_data$Year,sep="_")
+  rm(output)
+  # impute missing values
+  all_eas_data = subset(all_eas_data, select=-c(plant_dates,harvest_dates,G_mx_dates)) # must remove date variables before impute
+  preProcValues = preProcess(all_eas_data, method = "medianImpute" )
+  all_eas_data = predict(preProcValues, all_eas_data)
+
+  # create a unqiue key for both
+  all_eas_data$EA_merge = paste(all_eas_data$W_CODE,gsub("-","", all_eas_data$EA_NAME),sep='')
+  EAs_poly$EA_merge = paste(EAs_poly$W_CODE,gsub("-","", EAs_poly$EA_NAME),sep='')
+  # find non-matching codes
+  #anti_join(all_eas_data, EAs_poly, by="EA_merge")
+
+   # add temporal lags
+  all_eas_data_plm = pdata.frame(all_eas_data, index=c("EACODE","Year"), drop.index=F, row.names=TRUE)
+  all_eas_data$G_height =      all_eas_data_plm$G_mx-all_eas_data_plm$G_min
+  all_eas_data$G_height_diff = as.numeric(diff(all_eas_data_plm$G_mx-all_eas_data_plm$G_min,1))
+  all_eas_data$A_height =      all_eas_data_plm$A_max-all_eas_data_plm$A_min
+  all_eas_data$A_height_diff = as.numeric(diff(all_eas_data_plm$A_max-all_eas_data_plm$A_min,1))
+  all_eas_data$G_max_diff =    as.numeric(diff(all_eas_data_plm$G_mx,1))
+  all_eas_data$A_max_diff  =   as.numeric(diff(all_eas_data_plm$A_max,1))
+  all_eas_data$A_Qnt_diff =    as.numeric(diff(all_eas_data_plm$A_Qnt,1))
+  all_eas_data$G_Qnt_diff  =   as.numeric(diff(all_eas_data_plm$G_Qnt,1))
+  all_eas_data$PPT_G_AUC_Qnt_diff = as.numeric(diff(all_eas_data_plm$PPT_G_AUC_Qnt,1))
+  all_eas_data$PPT_G_mn_diff = as.numeric(diff(all_eas_data_plm$PPT_G_mn,1))
+  all_eas_data$REGIONCODE = as.numeric(all_eas_data$R_CODE)  # swap names to match
+  rm(all_eas_data_plm)
+
+  # load & predict damage model
+  setwd(Home_dir)
+
+  load('./Outputs4Pred/tef.rf.TEFFDAMAGEAREA_P_GT_.25_zone_drought.RData')
+  all_eas_data$pred_dam_tef = predict(tef.rf, all_eas_data)
+  load('./Outputs4Pred/bar.rf.BARLEYDAMAGEAREA_P_GT_.25_zone_drought.RData')
+  all_eas_data$pred_dam_bar = predict(bar.rf, all_eas_data)
+  '~/Documents/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_2016/Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P_GT_.25_zone_diff.RData'
+  load('./Outputs4Pred/sor.rf.SORGHUMDAMAGEAREA_P_GT_.25_zone_drought.RData')
+  all_eas_data$pred_dam_sor = predict(sor.rf, all_eas_data)
+  load('./Outputs4Pred/wht.rf.WHEATDAMAGEAREA_P_GT_.25_zone_drought.RData')
+  all_eas_data$pred_dam_wht = predict(wht.rf, all_eas_data)
+  load('./Outputs4Pred/maz.rf.MAIZEDAMAGEAREA_P_GT.25_zone_drought.RData')
+  all_eas_data$pred_dam_maz = predict(maz.rf, all_eas_data)
+  rm(list = c('tef.rf','bar.rf','sor.rf','wht.rf','maz.rf'))
+
+  table(all_eas_data$pred_dam_wht, exclude = NULL)
+
+  # store predicted damages in wide format
+  # remove duplicates also
+  all_eas_dam_sor =    unique(all_eas_data[,list(Year,RK_NAME,RK_CODE,R_NAME,R_CODE,Z_NAME,Z_CODE,W_NAME,
+     W_CODE,EA_NAME,EA_merge,pred_dam_sor) ])  # subset variables of interest
+  all_eas_dam_sor$pred_dam_sor = all_eas_dam_sor$pred_dam_sor == F  # LOSSES ARE SET TO FALSE, also convert from factor to logical
+  all_eas_dam_sor = all_eas_dam_sor %>% distinct(Year, RK_CODE, .keep_all =T) %>% spread(key = Year, value = pred_dam_sor) # wide format
+  names(all_eas_dam_sor)[names(all_eas_dam_sor)  %in% 2009:2016] =
+     paste(names(all_eas_dam_sor)[names(all_eas_dam_sor)  %in% 2009:2016],'dam_sor',sep='_') # rename
+  all_eas_dam_sor$DamageSum_s =  all_eas_dam_sor %>% select(matches('dam'))  %>% rowSums( na.rm = T)
+
+  all_eas_dam_bar =  unique(all_eas_data[,list(Year,RK_NAME,RK_CODE,R_NAME,R_CODE,Z_NAME,Z_CODE,W_NAME,
+     W_CODE,EA_NAME,EA_merge,pred_dam_bar) ])
+  all_eas_dam_bar$pred_dam_bar = all_eas_dam_bar$pred_dam_bar == F
+  all_eas_dam_bar = all_eas_dam_bar %>% distinct(Year, RK_CODE, .keep_all =T) %>% spread(key = Year, value = pred_dam_bar)
+  names(all_eas_dam_bar)[names(all_eas_dam_bar)  %in% 2009:2016] =
+      paste(names(all_eas_dam_bar)[names(all_eas_dam_bar)  %in% 2009:2016],'dam_bar',sep='_')
+  all_eas_dam_bar$DamageSum_b =  all_eas_dam_bar %>% select(matches('dam'))  %>% rowSums( na.rm = T)
+
+  all_eas_dam_wht =  unique(all_eas_data[,list(Year,RK_NAME,RK_CODE,R_NAME,R_CODE,Z_NAME,Z_CODE,W_NAME,
+      W_CODE,EA_NAME,EA_merge,pred_dam_wht) ])
+  all_eas_dam_wht$pred_dam_wht = all_eas_dam_wht$pred_dam_wht == F
+  all_eas_dam_wht = all_eas_dam_wht %>% distinct(Year, RK_CODE, .keep_all =T) %>% spread(key = Year, value = pred_dam_wht)
+  names(all_eas_dam_wht)[names(all_eas_dam_wht)  %in% 2009:2016] =
+      paste(names(all_eas_dam_wht)[names(all_eas_dam_wht)  %in% 2009:2016],'dam_wht',sep='_')
+  all_eas_dam_wht$DamageSum_w =  all_eas_dam_wht %>% select(matches('dam'))  %>% rowSums( na.rm = T)
+
+  all_eas_dam_maz_sub = all_eas_data[,list(Year,RK_NAME,RK_CODE,R_NAME,R_CODE,Z_NAME,Z_CODE,W_NAME,
+           W_CODE,EA_NAME,EA_merge,pred_dam_maz) ]
+  all_eas_dam_maz_sub$pred_dam_maz = all_eas_dam_maz_sub$pred_dam_maz == F
+  all_eas_dam_maz_sub = all_eas_dam_maz_sub %>% distinct(Year, RK_CODE, .keep_all =T)
+  all_eas_dam_maz = spread(all_eas_dam_maz_sub, key = Year, value = pred_dam_maz)
+  names(all_eas_dam_maz)[names(all_eas_dam_maz)  %in% 2009:2016] =
+      paste(names(all_eas_dam_maz)[names(all_eas_dam_maz)  %in% 2009:2016],'dam_maz',sep='_')
+  all_eas_dam_maz$DamageSum_m =  all_eas_dam_maz %>% select(matches('dam'))  %>% rowSums( na.rm = T)
+
+  all_eas_dam_tef_sub = all_eas_data[,list(Year,RK_NAME,RK_CODE,R_NAME,R_CODE,Z_NAME,Z_CODE,W_NAME,
+           W_CODE,EA_NAME,EA_merge,pred_dam_tef) ]
+  all_eas_dam_tef_sub$pred_dam_tef = all_eas_dam_tef_sub$pred_dam_tef == F
+  all_eas_dam_tef_sub = all_eas_dam_tef_sub %>% distinct(Year, RK_CODE, .keep_all =T)
+  all_eas_dam_tef = spread(all_eas_dam_tef_sub, key = Year, value = pred_dam_tef)
+  names(all_eas_dam_tef)[names(all_eas_dam_tef)  %in% 2009:2016] =
+      paste(names(all_eas_dam_tef)[names(all_eas_dam_tef)  %in% 2009:2016],'dam_tef',sep='_')
+  all_eas_dam_tef$DamageSum_t =  all_eas_dam_tef %>% select(matches('dam'))  %>% rowSums( na.rm = T)
+
+  rm(list=c('all_eas_dam_tef_sub','all_eas_dam_maz_sub','all_eas_data'))
+
+  # join to ea polygon selected variables
+  # get EA codes from polgon and join to that
+  jnd.tbl = data.frame(EA_merge = unique(EAs_poly$EA_merge))
+  jnd.tbl = all_eas_dam_sor %>% select(matches('20|EA_merge|DamageSum')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge')
+  jnd.tbl = all_eas_dam_bar %>% select(matches('20|EA_merge|DamageSum')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge')
+  jnd.tbl = all_eas_dam_wht %>% select(matches('20|EA_merge|DamageSum')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge')
+  jnd.tbl = all_eas_dam_maz %>% select(matches('20|EA_merge|DamageSum')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge')
+  jnd.tbl = all_eas_dam_tef %>% select(matches('20|EA_merge|DamageSum')) %>% unique()%>% left_join( jnd.tbl, . , by ='EA_merge') %>% as.data.frame()
+  # all crops damage summaries
+  jnd.tbl$DamageSum_allcrops =  jnd.tbl %>% select(matches('DamageSum'))  %>% rowSums( na.rm = T)
+  jnd.tbl$DamageSum_allcrops_2009 = jnd.tbl %>% select(matches('2009')) %>% rowSums( na.rm = T)
+  jnd.tbl$DamageSum_allcrops_2010 = jnd.tbl %>% select(matches('2010')) %>% rowSums( na.rm = T)
+  jnd.tbl$DamageSum_allcrops_2011 = jnd.tbl %>% select(matches('2011')) %>% rowSums( na.rm = T)
+  jnd.tbl$DamageSum_allcrops_2012 = jnd.tbl %>% select(matches('2012')) %>% rowSums( na.rm = T)
+  jnd.tbl$DamageSum_allcrops_2013 = jnd.tbl %>% select(matches('2013')) %>% rowSums( na.rm = T)
+  jnd.tbl$DamageSum_allcrops_2014 = jnd.tbl %>% select(matches('2014')) %>% rowSums( na.rm = T)
+  jnd.tbl$DamageSum_allcrops_2015 = jnd.tbl %>% select(matches('2015')) %>% rowSums( na.rm = T)
+  jnd.tbl$DamageSum_allcrops_2016 = jnd.tbl %>% select(matches('2016')) %>% rowSums( na.rm = T)
+
+  EAs_poly = left_join(EAs_poly,jnd.tbl,by='EA_merge')
+
+  # only use if reading in via readOGR EAs_poly@data = join(EAs_poly@data,jnd.tbl,by='EA_merge',type='left')
+
+  rm(list=c('all_eas_dam_sor','all_eas_dam_sor','all_eas_dam_bar','all_eas_dam_wht','all_eas_dam_maz','all_eas_dam_tef',
+               "all_eas_dam_maz_sub", "all_eas_dam_tef_sub","all_eas_data",'jnd.tbl'))
+
+  # check number of damaged EAs ( Damaged is now == T)
+  EAs_poly  %>% as.data.frame() %>% select(matches('bar')) %>% apply(.,2,function(x) x==T ) %>% colSums( na.rm = T)
+   table(EAs_poly$`2012_dam_bar`, exclude = NULL)
+
+  # plot results as points
+  EAs_point = st_centroid(EAs_poly)
+  saveRDS(EAs_point,'~/Documents/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_2016/Outputs4Pred/allEAs_point_merge_agss.rds')
+
+
 ```
  
-Figure `r paste(Figure_number)`: Count of Predicted Damages (>25%) at the Sub-Kebele Level 2009-2016   `r Figure_number =Figure_number+1 `
+*Figure `r paste(Figure_number)`: Count of Predicted Damages (>25%) at the Sub-Kebele Level 2009/10-2015/16   `r Figure_number =Figure_number+1 `*
 
 ```{r All_Crops_Predict_Damages_to_all_EAs, echo=FALSE, fig.width=7, message=FALSE, warning=FALSE}
   # load processed predictions
@@ -1491,17 +1539,16 @@ Figure `r paste(Figure_number)`: Count of Predicted Damages (>25%) at the Sub-Ke
 
   # subset to speed up plotting
   set.seed(10)
-  EAs_point_smp = sample_n(EAs_point,50000)
+  EAs_point_smp =EAs_point #sample_n(EAs_point,10000)
   
   # plot it 
-  plot_dam_maz = ggplot()+  geom_sf(data=Reg_poly,  aes( ),fill = 'grey20',size=0.25 ) +
-  geom_sf(data= EAs_point_smp[EAs_point_smp$R_CODE %in% c(1,3,4,7),] ,  aes(color = DamageSum_allcrops ),size=0.5, alpha=0.5) +  geom_sf(data=Reg_poly,  aes( ),colour='grey80',fill = NA,size=0.25 ) + scale_colour_gradientn(colours=rev(rainbow(4)),name='Damage Count')
+  plot_dam_maz = ggplot()+  geom_sf(data=Reg_poly,  aes( ),fill = 'grey20',size=0.25 ) + geom_sf(data= EAs_point_smp[EAs_point_smp$R_CODE %in% c(1,3,4,7) & EAs_point_smp$DamageSum_allcrops==0,] ,  aes(color = DamageSum_allcrops ),size=0.75, alpha=0.5) + geom_sf(data= EAs_point_smp[EAs_point_smp$R_CODE %in% c(1,3,4,7)& EAs_point_smp$DamageSum_allcrops!=0 ,] ,  aes(color = DamageSum_allcrops ),size=0.75, alpha=0.5) +  
+    geom_sf(data=Reg_poly,  aes( ),colour='grey80',fill = NA,size=0.25 ) + scale_colour_gradientn(colours=c('grey30','#2b8cbe','#7bccc4','#bae4bc','#f0f9e8'),name='Damage Count')
 
   plot(plot_dam_maz)
-
 ```
 
-In this particular example, we provide an estimate of the total number of losses (for all crops) for the 2010/11-2015/16 growing season. As you can see maps like this could be used to identify isolated clusters of at-risk communities. Or if provided midway through the growing season could act as a method for rapid assessment to help target food aid or agricultural extension.    
+In this particular example, we provide an estimate of the total number of drought related losses (for all crops) for the 2011-2016 growing seasons. As you can see maps like this could be used to identify isolated clusters of at-risk communities. Or if provided midway through the growing season could act as a method for rapid assessment to help target food aid or agricultural extension.    
 
 ```{r Leaflet_All_Crops_Predict_Damages_to_all_EAs, eval=FALSE, fig.width=7, message=FALSE, warning=FALSE, include=FALSE}
   setwd(Home_dir)  
@@ -1509,5 +1556,7 @@ In this particular example, we provide an estimate of the total number of losses
   map_points  %>% mapView(.,values=as(.,'Spatial')@data$DamageSum_allcrops,legend=T,map.types=c('OpenStreetMap.Mapnik','Esri.WorldImagery') ) %>% mapshot( url = paste0(Home_dir,"/Writeup/IFPRI_Ethiopia_Drought_2/", "Damage_Pred.html"))
   
 ```
+# Conclusions
+
 \newpage
 # References {#references}
