@@ -70,7 +70,7 @@ Home_dir = '~/Documents/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_2016/
 ```
 
 \begin{abstract}
- In this study, although we do not find evidence of extensive drought, we provide evidence of localized clusters of drought in the 2015-2016 growing season. Despite this we find scant evidence of substantial crop losses in the fifteen most productive zones, but instead that they were able to maintain or exceed production levels seen in 2014. That being said, there is a substantial uptick in the number of drought related losses reported by farmers, within localized areas, particularly in 2016. To explore the impact of these local droughts and management techniques on output per hectare, we develop a panel regression utilizing sub-kebele level agricultural survey data, and remotely sensed data on greeness, precipitation and measures of evaporative demand. We find crop specific responses to a variety of management practices, and climate conditions with $R^{2}$ between 0.47 and 0.31 at the sub-kebele level. We believe these models could be used to help monitor and predict yields for disaster response teams and policy makers to use, particularly with further development and integration of the newly available 30m Harmonized Landsat Sentinel (HLS) dataset. We further utilize our agricultural survey and remotely sensed data to develop machine learning models aimed at prediciting substantial crop losses due to drought. These models predict, on an independent sample, substantial drought damage with over 95 percent accuracy with Kappa coefficients in the mid to high 60s. We consider these findings substantial because they reach accuracy levels meaningful for policy, but also because they are based largley on course (250m) resolution data and agricultural survey data that is often dismissed in the research community. In effect, we believe we have made some lemonade.  
+ In this study, although we do not find evidence of extensive drought, we provide evidence of localized clusters of drought in the 2015-2016 growing season. Despite this we find scant evidence of substantial crop losses in the fifteen most productive zones, but instead that they were able to maintain or exceed production levels seen in 2014. That being said, there is a substantial uptick in the number of drought related losses reported by farmers, within localized areas, particularly in 2016. To explore the impact of these local droughts and management techniques on output per hectare, we develop a panel regression utilizing sub-kebele level agricultural survey data, and remotely sensed data on greeness, precipitation and measures of evaporative demand. We create a set of models to provide mid-season estimates of output per hectare for maize, wheat and barley, and obtain $R^{2}$ between 0.39 and 0.35 at the sub-kebele level. We also find crop specific responses to a variety of management practices, and climate conditions with $R^{2}$ between 0.47 and 0.31 at the sub-kebele level. We believe these models could be used to help monitor and predict yields for disaster response teams and policy makers to use, particularly with further development and integration of the newly available 30m Harmonized Landsat Sentinel (HLS) dataset. We further utilize our agricultural survey and remotely sensed data to develop machine learning models aimed at prediciting substantial crop losses (>25%) due to drought. These models predict, on an independent sample, substantial drought damage with over 95 percent accuracy with Kappa coefficients in the mid to high 60s. We consider these findings substantial because they reach accuracy levels meaningful for policy, but also because they are based largley on course (250m) resolution data and agricultural survey data that is often dismissed in the research community. In effect, we believe we have made some lemonade.  
 \end{abstract}
  
 \newpage 
@@ -369,9 +369,40 @@ Considering the relatively small scale of agriculture in this region we use 250m
 For the sake of simplicity and replicability, we focus on the Normalized Difference Vegetation Index (NDVI) and examine its predictive power using panel econometric techniques. NDVI is sensitive to the amount of chlorophyll in any given pixel and is commonly used to estimate plant productivity and health in agricultural applications [@Mann2017,@Mann2015,@funk2009phenologically]. After removal of snow, cloud and other flagged low quality cells, we remove all non-agricultural cells through the use of the 500m MODIS land cover product (MCD12Q1) for the appropriate year.
 
 ####Water Availability Variables
-In order to estimate the effects of precipitation (ppt)  on our crop production models the Climate Hazards Group Infrared Precipitation Station (CHIRPS) data was included. Data is collected as total precipitation by dekadal [@funk2015climate]. A dekadal represents three periods each month, the first two periods being 10 days each, and the third being any remaining days of that month.
+In order to estimate the effects of precipitation (PPT)  on our crop production models the Climate Hazards Group Infrared Precipitation Station (CHIRPS) data was included. Data is collected as total precipitation by dekadal [@funk2015climate]. A dekadal represents three periods each month, the first two periods being 10 days each, and the third being any remaining days of that month.
 
-Hydrological availability of water and available energy for plant growth have been shown in previous research to be important factors in crop models and are therefore included here. For this reason, we include monthly estimates of potential evaporation (PET) and actual evapotranspiration anomaly (ETA). Actual evapotranspiration (AET) is the sum of transpiration of water through plants plus evaporation from soils and water surfaces. AET is a correlated with vascular plant productivity and correlates with the biomass accumulation and regrowth[@major1967potential,@mann2016incorporating]. The ETA variable used in this study is the current AET compared to the 2003-2013 mean. ETA therefore is a proxy for drought as low current values of AET would correspond to reductions either in available energy to move water, or water itself.  Potential evapotranspiration is an estimate of the total amount of water that could be moved through the system if water was not a limiting factor. As such it is an ideal indicator of available (or excessive) energy in the form of light and heat, but also includes the impact of wind speed, pressure, and humidity amongst others. The standard deviation of PET, reflects variability at the local level of these weather conditions.  Both ETA and PET are available for download through FEWS NET [@dataportals].
+Hydrological availability of water and available energy for plant growth have been shown in previous research to be important factors in crop models and are therefore included here. For this reason, we include monthly estimates of potential evaporation (PET) and actual evapotranspiration anomaly (ETA). Actual evapotranspiration (AET) is the sum of transpiration of water through plants plus evaporation from soils and water surfaces. AET is a correlated with vascular plant productivity and correlates with the biomass accumulation and regrowth[@major1967potential,@mann2016incorporating]#nowcastresults. The ETA variable used in this study is the current AET compared to the 2003-2013 mean. ETA therefore is a proxy for drought as low current values of AET would correspond to reductions either in available energy to move water, or water itself.  Potential evapotranspiration is an estimate of the total amount of water that could be moved through the system if water was not a limiting factor. As such it is an ideal indicator of available (or excessive) energy in the form of light and heat, but also includes the impact of wind speed, pressure, and humidity amongst others. The standard deviation of PET, reflects variability at the local level of these weather conditions.  Both ETA and PET are available for download through FEWS NET [@dataportals].
+
+###Variable Definitions
+*Table `r paste(Table_number)`: AgSS variable names & descriptions `r VarTableNum=Table_number` `r Table_number =Table_number+1 `*
+
+```{r agss variable definition table, echo=FALSE}
+definitions = read.csv('./AGSS Variable Description Table.csv',as.is = T)
+definitions[1,1] = '$\\textbf{Prefixes}$' # insert bold text using latex
+definitions[7,1] = '$\\textbf{Postfixes and Other}$'
+definitions[10,1] = '$\\textbf{AgSS Variables}$'
+definitions[19,1] = '$\\textbf{Other Geographic Variables}$'
+ 
+#definitions
+pander(definitions, justify = c('left', 'left'),split.cells = c(22,50))
+#pandoc.table(definitions, style = 'rmarkdown')
+```
+
+*Table `r paste(Table_number)`: Remotely sensed variable names & descriptions `r VarTableNum=Table_number` `r Table_number =Table_number+1 `*
+
+```{r remotely sensed variable definition table, echo=FALSE}
+definitions = read.csv('./Variable Description Table.csv',as.is = T)
+definitions[1,1] = '$\\textbf{Prefixes}$' # insert bold text using latex
+definitions[7,1] = '$\\textbf{Postfixes and Other}$'
+definitions[10,1] = '$\\textbf{NDVI Basic Summary Statistics}$'
+definitions[19,1] = '$\\textbf{Other Basic Summary Statistics}$'
+definitions[22,1] = '$\\textbf{Integrated Summary Statistics}$'
+definitions[27,1] = '$\\textbf{Comparison to Norms}$'
+ 
+#definitions
+pander(definitions, justify = c('left', 'left'),split.cells = c(20,50))
+#pandoc.table(definitions, style = 'rmarkdown')
+```
 
 ## Estimating Crop Yields  
 ### Preprocessing 
@@ -387,26 +418,25 @@ We estimate three classes of statistics across each of these two distinct period
 ###"Now Casting" - Estimation Strategy
 One primary use for these data is for early season estimation of crop yields. Although AgSS provides invaluable estimates of agricultural productivity on an annual basis, lag between data collection and release is substantial. This gap leaves substantial need to timely first-order estimates for crop yields. Modivated by prelimiary panel regression results reported in the [Appendix](#appendix_anchor), we find that reasonable estimates of output per hectare can be created around mid-season. Where 'mid-season' is defined by reaching the maximum NDVI greeness value.  
 
-####Panel Regression
-Compared to cross-sectional approaches, panel analysis can substantially increase the degree of observed variance over both space and time. For instance, in our current application, the integration of EAS (with n = 1752) over the 2011-2016 sample period (t = 6), results in a substantially larger data (N~6900), allowing for a much greater flexibility and degrees of freedom in the modelling of the issue of interest. Here we include a few variables of interest to the reader including Zonal and annual dummies, and a lagged value of output per hectare. Here we estimate a series of random effect models of the following form`r F1=Formula_number` `r paste(F1)`: `r Formula_number=Formula_number+1`
+####Panel Regression for "Now-Casting"
+Compared to cross-sectional approaches, panel analysis can substantially increase the degree of observed variance over both space and time. For instance, in our current application, the integration of EAS (with n = 1752) over the 2011-2016 sample period (t = 6), results in a substantially larger data (N~6900), allowing for a much greater flexibility and degrees of freedom in the modelling of the issue of interest. Here we include a series of variables that can be calculated in the first half of the growing season including contenporaneous and lagged values, Zonal fixed effects, as well as a lagged value of output per hectare. Here we estimate a series of random effect models of the following form`r F1=Formula_number` `r paste(F1)`: `r Formula_number=Formula_number+1`
 
 (`r paste(F1)`)                
 $$\ Y_{itc}=\alpha_{i}+\sum_{k=1}^{K}\beta_{k}X_{it}+ \mu_{it} +\epsilon_{it}$$
  
-where $\ Y_{itc}$ is the output per hectare (OPH) for crop *c* for sub-kebele *i* for year *t*, $\alpha$ is the average output per hectare for sample population (country), $\sum_{k=1}^{K}\beta_{k}X_{it}$ is the sum of all *K* coefficient estimates $\beta_{k}$ for all variables *X*, $\mu_{i}$ is the sub-kebele specific random effect that measures the difference between the average OPH at sub-kebele *i* and the average OPH in the entire country. The term $\epsilon_{it}$ is the individual-specific effect, which can be described as the deviation of the *i*th OPH from the average for that year.
+where $\ Y_{itc}$ is the output per hectare (OPH) for crop *c* for sub-kebele *i* for year *t*, $\alpha$ is the average output per hectare for sample population (all major growing regions), $\sum_{k=1}^{K}\beta_{k}X_{it}$ is the sum of all *K* coefficient estimates $\beta_{k}$ for all variables *X*, where *X* comprises all variables that are available a mid growing season, $\mu_{i}$ is the sub-kebele specific random effect that measures the difference between the average OPH at sub-kebele *i* and the average OPH in all major growing regions. The term $\epsilon_{it}$ is the individual-specific effect, which can be described as the deviation of the *i*th OPH from the average for that year.
 
-Here we present preliminary results from panel regressions on output per hectare for Ethiopia's major crops. These variables reflect the initial selection from the VSURF algorithm. 
+We present preliminary "Now-Casting" results from panel regressions on output per hectare for Ethiopia's major crops *[here](#nowcastresults)*. 
 
 ## Predicting Crop Losses from Drought
 Another critical emphasis of this project is to see if remotely sensed data on greenness, precipitation, or evapotranspiration and the zone code can be used in conjunction with household surveys to predict the location and/or extent of damages before the next years AgSS survey results are released. In this vein we aim to utilize advances from machine learning to accurately predict substantial crop damages for all major crops. We define our dependent variable, 'substantial' losses due to drought, as farmer reported losses over 25%. Two types of models are then run for each crop, one, a "national-level" model is trained on all observations for the major growing regions, and a second group of "region-level" models where each model is trained from data in a specific region. Specifically our model takes the following form:
 `r F2=Formula_number` `r Formula_number=Formula_number+1`
 
-              
 (`r paste(F2)`) 
 $$\ Y_{cn} = f(X)   $$
 $$\ Y_{ci}=\Bigg\{\begin{matrix}\textrm{1, if drought loss > 0.25}\\ \textrm{0, otherwise}\\\end{matrix}$$
 
-Where $Y_{ci}$ is a binary variable where losses for crop *c* due to drought in sub-kebele *i* are greater than 25%, and it is estimated a non-linear function of all remotely sensed variables of interest *X*.  
+Where $Y_{ci}$ is a binary variable where losses for crop *c* due to drought in sub-kebele *i* are greater than 25%, and it is estimated a non-linear function of all remotely sensed variables of interest *X*.  We present results for damage predictions *[here](#damageresults)*
 
 ### Estimation Strategy
 #### Random Forests Description
@@ -424,9 +454,9 @@ Independent of the training data we initially withheld 15% of sub-kebele units t
 [^2]: see: https://en.m.wikipedia.org/wiki/Cohen%27s_kappa    
 [^3]: the percentage of sub-kebeles with 'substantial drought damage' that are correctly classified by our models.
 
-
+\newpage
 # Results & Discussion
-## Now Casting - Mid-Season OPH Estimates
+## Now Casting - Mid-Season OPH Estimates {#nowcastresults}
 ```{r Now Casting - Maize, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
   # read data
   setwd(Home_dir) 
@@ -488,7 +518,6 @@ Independent of the training data we initially withheld 15% of sub-kebele units t
   sum.nowcast_maz2
 ```  
 
-\newpage
 
 *Table `r paste(Table_number)`: Now-Casting: Panel RE regression on output per hectare for maize in quintals* `r  nc_maize_table=Table_number;Table_number=Table_number+1`
 
@@ -648,10 +677,9 @@ Comparing the results for maize with those here for wheat, we can see interestin
 
 In Table `r paste(nc_bar_table)` we can see a decent adjusted R^2^ of `r paste(round(sum.nowcast_bar2$r.squared[2],2))`. Residuals are also relatively small with 1st and 3rd quintiles spanning `r paste(round(summary(nowcast_bar2$residuals)[2],2))` and `r paste(round(summary(nowcast_bar2$residuals)[5],2))` quintals per hectare. 
 
-Again we can see similarities with other crop models. Like maize we can see that increased maximum greeness during the growing season (*G_mx*) corresponds to significantly higher yields (p<`r paste(signif(coeff.nowcast_bar2['G_mx',4],3))`), but no other contemporaneous measures of NDVI. Similar to all models, we also see *PET_G_AUC_leading* increasing yields (p<`r paste(signif(coeff.nowcast_bar2['PET_G_AUC_leading',4],3))`), but no other 'leading' variables. Lagged PET variables are significant however, with greater PET variability and AUC increasing yields (p<`r paste(signif(coeff.nowcast_bar2['PET_G_sd',4],3))`, p<`r paste(signif(coeff.nowcast_bar2['PET_G_AUC',4],3))` respectively), and declining yields with higher last year maximum PET (p<`r paste(signif(coeff.nowcast_bar2['PET_G_mx',4],3))`). Again higher lagged mean precipitation *PPT_G_mn* increases yields, and declining with lagged precip AUC (p<`r paste(signif(coeff.nowcast_bar2['PPT_G_AUC',4],3))`). For AgSS variables, we only see improvements from last years increase in chemical fertilizer coverage (p<`r paste(signif(coeff.nowcast_bar2['lag(BARLEYFERT_CHEMICAL_AREA_P, 1)',4],3))`).
+Again we can see similarities with other crop models. Like maize, we can see that increased maximum greeness during the growing season (*G_mx*) corresponds to significantly higher yields (p<`r paste(signif(coeff.nowcast_bar2['G_mx',4],3))`), but see no impact from other contemporaneous measures of NDVI. Similar to all models, we also see *PET_G_AUC_leading* increasing yields (p<`r paste(signif(coeff.nowcast_bar2['PET_G_AUC_leading',4],3))`), but no other 'leading' variables. Lagged PET variables are significant however, with greater PET variability and AUC increasing yields (p<`r paste(signif(coeff.nowcast_bar['lag(PET_G_sd, 1)',4],3))`, p<`r paste(signif(coeff.nowcast_bar2['lag(PET_G_AUC, 1)',4],3))` respectively), and declining yields with higher last year maximum PET (p<`r paste(signif(coeff.nowcast_bar2['lag(PET_G_mx, 1)',4],3))`). Again higher lagged mean precipitation *PPT_G_mn* increases yields, and declining with lagged precip AUC (p<`r paste(signif(coeff.nowcast_bar2['lag(PPT_G_AUC, 1)',4],3))`). For AgSS variables, we only see improvements from last years increase in chemical fertilizer coverage (p<`r paste(signif(coeff.nowcast_bar2['lag(BARLEYFERT_CHEMICAL_AREA_P, 1)',4],3))`).
 
-
-## Predicting Drought Damages
+## Predicting Drought Damages {#damageresults}
 Here we present results described in the earlier 'Predicting Crop Losses from Drought' section in methods. We utilize a random forest to predict losses greater than 25% due to drought using remotely sensed vegetation and weather data, as well as provide measures of test out-of-sample accuracy. 
 
 ```{r Predict Damages Maize Regression, echo=FALSE, message=FALSE, warning=FALSE,fig.height=7}
@@ -1235,7 +1263,7 @@ The confusion matrix compares predicted values against the observed (reference).
 Overall, we find a high level of accuracy in our completely independent *testing* data with overall accuracy of `r round(cm_tef$overall['Accuracy'],2)*100` percent. For the case of teff, we see relatively good identification of reported losses with a recall rate of only `r round(cm_tef$byClass['Recall'],2)`, indicating that `r round(cm_tef$byClass['Recall'],2)*100`% of all substantial loss cases were predicted in our independent *testing* data. In all, `r cm_tef$table['FALSE','FALSE']` out of `r cm_tef$table['FALSE','FALSE']+ cm_tef$table['TRUE','FALSE']` reported cases were predicted, and `r cm_tef$table['FALSE','TRUE']` cases were falsely predicted as crop failure areas. Although the recall rate is relatively low, we can still say that we can identify healthly maize harvest `r cm_tef$table['TRUE','TRUE']` out of `r cm_tef$table['TRUE','TRUE']+ cm_tef$table['FALSE','TRUE']` times, or `r round(cm_tef$table['TRUE','TRUE'] /(cm_tef$table['TRUE','TRUE']+ cm_tef$table['FALSE','TRUE']),2)*100`% of the time.
    
 ## Predict Damages Out-Of-Sample 
-One possible use case of these models is to predict losses outside of AgSS sample areas. This will allow policy makers to identify potential at-risk communities rapidly at low cost. Given the importance of maximum and 90th percentile values of NDVI in model performance, a reasonable estimate could be made mid-season (or just past peak greeness). As example of how this might work we extracted NDVI statistics for all 75k+ sub-kebeles and used the model trained on AgSS sample areas. 
+One possible use case of these models is to predict losses outside of AgSS sample areas. This will allow policy makers to identify potential at-risk communities rapidly at low cost. Given the importance of maximum and 90th percentile values of NDVI in model performance, a reasonable estimate could be made mid-season (or just past peak greeness) similar to the approach in 'Now Casting'. As example of how this might work we extracted NDVI statistics for all 75k+ sub-kebeles and used the model trained on AgSS sample areas. 
 
 ```{r Predict Damages to all EAs, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
   # Read in all EA data
@@ -1395,7 +1423,7 @@ One possible use case of these models is to predict losses outside of AgSS sampl
   plot(plot_dam_maz)
 ```
 
-In this particular example, we provide an estimate of the total number of drought related losses (for all crops) for the 2011-2016 growing seasons. As you can see maps like this could be used to identify isolated clusters of at-risk communities. Or if provided midway through the growing season could act as a method for rapid assessment to help target food aid or agricultural extension.    
+In this particular example, we provide an estimate of the total number of drought related losses (for all crops) for the 2011-2016 growing seasons. As you can see maps like this could be used to identify isolated clusters of at-risk communities and especially those that experience repeative losses. Additionally, taking from the "Now-Casting" approach, these same loss predictions could be provided midway through the growing season, acting as a method for rapid assessment, to help target food aid or agricultural extension. 
 
 ```{r Leaflet_All_Crops_Predict_Damages_to_all_EAs, eval=FALSE, fig.width=7, message=FALSE, warning=FALSE, include=FALSE}
   setwd(Home_dir)  
@@ -1404,7 +1432,9 @@ In this particular example, we provide an estimate of the total number of drough
   
 ```
 # Conclusions
-Although R^2^s are reasonably high for real-world data, we belive these models could be significantly improved with the use of 30m harmonized landsat sentinel data. This data should be released in 2018 and will have 5-day coverage. Implying one image is captured every 5-days. This would likely provide a high enough frequency to avoid clouds, and provide reasonable esitmates of NDVI curves, but at a much higher resolution (compared to 250m cells used here).
+In this paper we find evidence of localized clusters of drought in the 2015-2016 period. However we find little to no evidence that these localized impacts effected crop yields in the most important growing areas. We find evidence however that particular areas are more prone to repetative losses across an array of crops. Considering the *generally* positive impacts of improved seeds and chemical fertilizers (crop specific, please see regressions), we believe information provided in this study could help target intervensions in these especially risk-prone areas. 
+
+Although R^2^s and predictive accuracy are reasonably high for real-world data, we belive these models could be significantly improved with the use of 30m harmonized landsat sentinel (HLS) data. This data should be released in 2018 and will have 5-day coverage. Implying one image is captured every 5-days. This would likely provide a high enough frequency to avoid clouds, and provide reasonable esitmates of NDVI curves, but at a much higher resolution (compared to 250m cells used here). We believe this will be critical to improve on our results going forward, as it will allow us to better distinguish between agriculutral and non-agricultural cells, while avoiding cells that are a mixture of crops and forest. The methods developed through this study, and previoius ones, could be easily transfered to the new HLS data stream, thus greatly improving our model accuracy, while minimizing further development time. 
 
 \newpage
 
