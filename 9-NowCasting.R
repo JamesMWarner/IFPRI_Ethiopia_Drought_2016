@@ -25,13 +25,12 @@ library(randomForest)
   
    
   # read data
-  version = 4  
-  setwd(Home_dir) 
+   setwd(Home_dir) 
   
   ######## MAIZE
   
   # read data
-  data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v",version,".dta",sep=''))
+  data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v4.dta",sep=''))
   data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
   
   # remove EA with less than 4 observations
@@ -43,11 +42,33 @@ library(randomForest)
   data_in_plm$Fert_Amt_Per_Area = data_in_plm$MAIZEFERT_CHEMICAL_AMT / (data_in_plm$MAIZEFERT_CHEMICAL_AREA+1)
   
   # add lag variables for agss
-  data_in_plm$MAIZEOPH_W_lag  = lag(data_in_plm$MAIZEOPH_W, 1)
-  data_in_plm$MAIZEIMSEED_lag = lag(data_in_plm$MAIZEIMSEED,1) 
+  data_in_plm$MAIZEOPH_W_lag  =       lag(data_in_plm$MAIZEOPH_W, 1)
+  data_in_plm$MAIZEIMSEED_lag =       lag(data_in_plm$MAIZEIMSEED,1) 
   data_in_plm$MAIZEDAMAGEAREA_P_lag = lag(data_in_plm$MAIZEDAMAGEAREA_P,1)
   data_in_plm$Fert_Amt_Per_Area_lag = lag(data_in_plm$Fert_Amt_Per_Area,1) 
-  data_in_plm$MAIZEEXTAREA_lag    = lag(data_in_plm$MAIZEEXTAREA,1)
+  data_in_plm$MAIZEEXTAREA_lag    =   lag(data_in_plm$MAIZEEXTAREA,1)
+  data_in_plm$G_height_lag =          lag(data_in_plm$G_mx-data_in_plm$G_min,1)
+  data_in_plm$G_height     =          data_in_plm$G_mx-data_in_plm$G_min
+  data_in_plm$G_height_diff_lag =              lag(as.numeric(diff(data_in_plm$G_mx-data_in_plm$G_min,1)),1)
+  data_in_plm$A_height_diff_lag =              lag(data_in_plm$A_max-data_in_plm$A_min,1)
+  
+  # # add temporal lags 
+  # data_in_plm = pdata.frame(data_in, index=c("EACODE","Year"), drop.index=F, row.names=TRUE)
+  # 
+  # data_in$ = 
+  # data_in$A_height =      
+  # data_in$A_height_diff = as.numeric(diff(data_in_plm$A_max-data_in_plm$A_min,1))
+  # data_in$G_max_diff =    as.numeric(diff(data_in_plm$G_mx,1))
+  # data_in$A_max_diff  =   as.numeric(diff(data_in_plm$A_max,1))
+  # data_in$A_Qnt_diff =    as.numeric(diff(data_in_plm$A_Qnt,1))
+  # data_in$G_Qnt_diff  =   as.numeric(diff(data_in_plm$G_Qnt,1))
+  # data_in$PPT_G_AUC_Qnt_diff = as.numeric(diff(data_in_plm$PPT_G_AUC_Qnt,1))
+  # data_in$A_sd_diff = as.numeric(diff(data_in_plm$A_sd,1))  
+  # data_in$G_sd_diff = as.numeric(diff(data_in_plm$G_sd,1))  
+  # data_in$PPT_G_mn_diff = as.numeric(diff(data_in_plm$PPT_G_mn,1))
+  # rm(data_in_plm)
+  
+  
   
   # remove 2015 for prediction & convert back to data.frames
   data_in_plm_pred = data_in_plm[data_in_plm$Year==2015,]
@@ -74,7 +95,7 @@ library(randomForest)
   # #train random forest on grouped data https://topepo.github.io/caret/model-training-and-tuning.html
   # registerDoMC(cores = 5)
   # maz.rf_nc<-train(form1_mz,data=data_in_plm,method="rf", 
-  #                trControl=trainControl(method="cv",number=3, seeds=seeds,index = groups), #number iterations+1
+  #                trControl=trainControl(method="oob", seeds=seeds,index = groups), #number iterations+1
   #                prox=T,allowParallel=T,tuneGrid = expand.grid(mtry=seq(5,12,1)))
   # save(maz.rf_nc,file = './Outputs4Pred/maz.rf_nowcast.RData')
   load('./Outputs4Pred/maz.rf_nowcast.RData')
@@ -95,7 +116,7 @@ library(randomForest)
   plot(maz.rf_nc)
   print(maz.rf_nc)
   varImp(maz.rf_nc)
-  
+  maz.rf_nc
   
   form1_mz =  as.numeric(MAIZEOPH_W) ~ MAIZEOPH_W_lag +MAIZEIMSEED_lag + MAIZEDAMAGEAREA_P_lag + Fert_Amt_Per_Area_lag +
     MAIZEEXTAREA_lag + G_mx_dates +G_mx + G_mx_Qnt + G_AUC_leading+ 

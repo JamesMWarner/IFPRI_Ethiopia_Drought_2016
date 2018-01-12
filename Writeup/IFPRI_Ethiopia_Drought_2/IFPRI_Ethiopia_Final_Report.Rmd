@@ -426,7 +426,7 @@ Independent of the training data we initially withheld 15% of sub-kebele units t
 
 
 # Results & Discussion
-# Now Casting - Mid-Season OPH Estimates
+## Now Casting - Mid-Season OPH Estimates
 ```{r Now Casting - Maize, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
   # read data
   setwd(Home_dir) 
@@ -488,6 +488,8 @@ Independent of the training data we initially withheld 15% of sub-kebele units t
   sum.nowcast_maz2
 ```  
 
+\newpage
+
 *Table `r paste(Table_number)`: Now-Casting: Panel RE regression on output per hectare for maize in quintals* `r  nc_maize_table=Table_number;Table_number=Table_number+1`
 
 ```{r Now Cast Maize Results, echo=FALSE, message=FALSE, warning=F,comment=''}
@@ -500,7 +502,7 @@ Looking at the results from Table `r paste(nc_maize_table)` with regression resu
 
 In Table `r paste(nc_maize_table)` we can see a decent adjusted R^2^ of `r paste(round(sum.nowcast_maz2$r.squared[2],2))`. Residuals are also relatively small with 1st and 3rd quintiles spanning `r paste(round(summary(nowcast_maz2$residuals)[2],2))` and `r paste(round(summary(nowcast_maz2$residuals)[5],2))` quintals per hectare. Although R^2^s are reasonably high for real-world data, we belive these models could be significantly improved with the use of 30m harmonized landsat sentinel data. This data should be released in 2018 and will have 5-day coverage. Implying one image is captured every 5-days. This would likely provide a high enough frequency to avoid clouds, and provide reasonable esitmates of NDVI curves, but at a much higher resolution (compared to 250m cells used here).
 
-Although interpretation is complex for this prediction-oriented model, most variables have the expected sign and significance. First we can look at contemporaneous variables measured in the current growing season. We can see that increased maximum greeness during the growing season (*G_mx*) corresponds to significantly higher yields (p<`r paste(signif(coeff.nowcast_maz2['G_mx',4],3))`. A greater NDVI 'height', the difference between growing season minimum and maximum values (*G_height*), corresponds to signficantly higher yields (p<`r paste(signif(coeff.nowcast_maz2['G_height',4],3))`. Next variables with the postfix "_leading" indicates that the variable summarizes data between the estimated planting date and maximum NDVI level in the Meher growing season. A higher total potential evapotranspiration[^4] values during 'leading' period of the growing season (*PET_G_AUC_leading*) corresponds to higher yields (p<`r paste(signif(coeff.nowcast_maz2['PET_G_AUC_leading',4],3))`. Interestingly, increased precipitation totals in the leading period of the season (*PPT_G_AUC_leading*) correspond to lower maize yields (p<`r paste(signif(coeff.nowcast_maz2['PET_G_AUC_leading',4],3))`. Next we look at one period lagged variables that give some indication of expected values for any given sub-kebele. The first (*MAIZEOPH_W, 1)*) is a one-period lag of maize outputs per hectare, unsurprisingly this variable is both significant and major determinant (p<`r paste(signif(coeff.nowcast_maz2['lag(data_in_plm$MAIZEOPH_W, 1)',4],3))`. We also see an inverse relationship between last year's season length and yields (*lag(season_length, 1) *) (p<`r paste(signif(coeff.nowcast_maz2['lag(season_length, 1)',4],3))`), where season length is the difference between estimated planting date and harvest date. This inverse relationship may be related to management practices, where farmers respond to weather or a failing season by trying to either plant early or harvest late. We also see the impact of PET in the previous season higher maximum temperatures and area under the curve (AUC) of PET corresponds to slightly higher yields (p<`r min(paste(signif(coeff.nowcast_maz2['lag(PET_G_mx, 1)',4],3)),paste(signif(coeff.nowcast_maz2['lag(PET_G_AUC, 1)',4],3)))`). Similarly, a higher mean precipitation last year (*lag(PPT_G_mn, 1)*) corresponds to significantly higher yields (p<`r paste(signif(coeff.nowcast_maz2['lag(PPT_G_mn, 1)',4],3))`), while higher total precip last year corresponds to slightly lower yields (p<`r paste(signif(coeff.nowcast_maz2['lag(PPT_G_AUC, 1)',4],3))`), although this is likely a non-linear response. We can also look at lagged values of management practices from the AgSS, with lagged improved seed use (*lag(MAIZEIMSEED, 1)*), the percetage (*lag(MAIZEFERT_CHEMICAL_AREA_P, 1)*), and intensity of chemical fertilizers (*lag(Fert_Amt_Per_Area, 1)*) all significantly related to yields now (p<`r paste(signif(coeff.nowcast_maz2['lag(MAIZEIMSEED, 1)',4],3))`,p<`r paste(signif(coeff.nowcast_maz2['lag(MAIZEFERT_CHEMICAL_AREA_P, 1)',4],3))`,p<`r paste(signif(coeff.nowcast_maz2['lag(Fert_Amt_Per_Area, 1)',4],3))`, respectively). We can also see the impacts of market access the variable *dist_pp50k* with increasing distances to population centers of 50k+ people decreasing yields (p<`r paste(signif(coeff.nowcast_maz2['dist_pp50k',4],3))`).  
+Although interpretation is complex for this prediction-oriented model, most variables have the expected sign and significance. First we can look at contemporaneous variables measured in the current growing season. We can see that increased maximum greeness during the growing season (*G_mx*) corresponds to significantly higher yields (p<`r paste(signif(coeff.nowcast_maz2['G_mx',4],3))`. A greater NDVI 'height', the difference between growing season minimum and maximum values (*G_height*), corresponds to signficantly higher yields (p<`r paste(signif(coeff.nowcast_maz2['G_height',4],3))`. Next variables with the postfix "_leading" indicates that the variable summarizes data between the estimated planting date and maximum NDVI level in the Meher growing season. A higher total potential evapotranspiration[^4] values during 'leading' period of the growing season (*PET_G_AUC_leading*) corresponds to higher yields (p<`r paste(signif(coeff.nowcast_maz2['PET_G_AUC_leading',4],3))`. Interestingly, increased precipitation totals in the leading period of the season (*PPT_G_AUC_leading*) correspond to lower maize yields (p<`r paste(signif(coeff.nowcast_maz2['PET_G_AUC_leading',4],3))`. Next we look at one period lagged variables that give some indication of expected values for any given sub-kebele. The first (*MAIZEOPH_W, 1)*) is a one-period lag of maize outputs per hectare, unsurprisingly this variable is both significant and major determinant (p<`r paste(signif(coeff.nowcast_maz2['lag(data_in_plm$MAIZEOPH_W, 1)',4],3))`. We also see an inverse relationship between last year's season length and yields (*lag(season_length, 1) *) (p<`r paste(signif(coeff.nowcast_maz2['lag(season_length, 1)',4],3))`), where season length is the difference between estimated planting date and harvest date. This inverse relationship may be related to management practices, where farmers respond to weather or a failing season by trying to either plant early or harvest late. We also see the impact of PET in the previous season higher maximum temperatures and area under the curve (AUC) of PET corresponds to slightly higher yields (p<`r min(paste(signif(coeff.nowcast_maz2['lag(PET_G_mx, 1)',4],3)),paste(signif(coeff.nowcast_maz2['lag(PET_G_AUC, 1)',4],3)))`). Similarly, a higher mean precipitation last year (*lag(PPT_G_mn, 1)*) corresponds to significantly higher yields (p<`r paste(signif(coeff.nowcast_maz2['lag(PPT_G_mn, 1)',4],3))`), while higher total precip last year corresponds to slightly lower yields (p<`r paste(signif(coeff.nowcast_maz2['lag(PPT_G_AUC, 1)',4],3))`), although this is likely a non-linear response. We can also look at lagged values of management practices from the AgSS, with lagged improved seed use (*lag(MAIZEIMSEED, 1)*), the percetage (*lag(MAIZEFERT_CHEMICAL_AREA_P, 1)*), and intensity of chemical fertilizers (*lag(Fert_Amt_Per_Area, 1)*) all significantly related to yields now (p<`r paste(signif(coeff.nowcast_maz2['lag(MAIZEIMSEED, 1)',4],3))`,p<`r paste(signif(coeff.nowcast_maz2['lag(MAIZEFERT_CHEMICAL_AREA_P, 1)',4],3))`,p<`r paste(signif(coeff.nowcast_maz2['lag(Fert_Amt_Per_Area, 1)',4],3))`, respectively). We can also see the impacts of market access the variable *dist_pp50k* with increasing distances to population centers of 50k+ people decreasing yields (p<`r paste(signif(coeff.nowcast_maz['dist_pp50k',4],3))`).  
 
 [^4]:Potential evapotranspiration is a measure of evaporative demand. It is the amount of water that could move through a system if water was not a limiting factor and is therefore related to higher temperatures and low humidity.
 
@@ -562,26 +564,91 @@ Although interpretation is complex for this prediction-oriented model, most vari
   sum.nowcast_wht2
 ```  
 
+
+ 
 *Table `r paste(Table_number)`: Now-Casting: Panel RE regression on output per hectare for wheat in quintals* `r  nc_wht_table=Table_number;Table_number=Table_number+1`
 
-```{r Now Cast Maize Results, echo=FALSE, message=FALSE, warning=F,comment=''}
+```{r Now Cast Wheat Results, echo=FALSE, message=FALSE, warning=F,comment=''}
  stargazer(nowcast_wht, nowcast_wht2,
           title="Panel RE regression", type="text",
           column.labels=c("Full", "Final"),
           df=FALSE, digits=4,omit = "Z_CODE",omit.labels = 'Zone Dummy',no.space=T)
 ```
 
-In Table `r paste(nc_wht_table)` we can see a decent adjusted R^2^ of `r paste(round(sum.nowcast_wht2$r.squared[2],2))`. Residuals are also relatively small with 1st and 3rd quintiles spanning `r paste(round(summary(nowcast_wht2$residuals)[2],2))` and `r paste(round(summary(nowcast_wht2$residuals)[5],2))` quintals per hectare. Although interpretation is complex for this prediction-oriented model, most variables have the expected sign and significance. 
+In Table `r paste(nc_wht_table)` we can see a decent adjusted R^2^ of `r paste(round(sum.nowcast_wht2$r.squared[2],2))`. Residuals are also relatively small with 1st and 3rd quintiles spanning `r paste(round(summary(nowcast_wht2$residuals)[2],2))` and `r paste(round(summary(nowcast_wht2$residuals)[5],2))` quintals per hectare. 
 
-First we can look at contemporaneous variables measured in the current growing season. We can see that increased maximum greeness during the growing season (*G_mx*) corresponds to significantly higher yields (p<`r paste(signif(coeff.nowcast_maz2['G_mx',4],3))`. 
-
-
+Comparing the results for maize with those here for wheat, we can see interesting differences related to plant physiology, demands, and management. First we can look at contemporaneous variables measured in the current growing season. Like maize we can see that increased maximum greeness during the growing season (*G_mx*) corresponds to significantly higher yields (p<`r paste(signif(coeff.nowcast_wht2['G_mx',4],3))`), but the sum of NDVI area (*G_AUC_leading*) corresponds to slightly lower yields (p<`r paste(signif(coeff.nowcast_wht2['G_AUC_leading',4],3))`). This may reflect higher yields in areas with a more rapid greenup (from minimum to peak greeness). Similarly, we see higher 'leading' period potential evapotranspiration (*PET_G_AUC_leading*) increases yields (p<`r paste(signif(coeff.nowcast_wht2['PET_G_AUC_leading',4],3))`). Looking at lagged variables we can see that again lagged OPH value are a good predictor of the current year (p<`r paste(signif(coeff.nowcast_wht2['lag(data_in_plm$WHEATOPH_W, 1)',4],3))`). As opposed to maize, longer growing seasons in the previous year (*lag(season_length, 1)*) corresponds to higher yields (p<`r paste(signif(coeff.nowcast_wht2['lag(season_length, 1)',4],3))`). Also opposite of maize, higher evaporative demands in the pervious year (*lag(PET_G_mx, 1)*) correspond to lower yields (p<`r paste(signif(coeff.nowcast_wht2['lag(season_length, 1)',4],3))`), reflecting wheat's preference for cooler zones. For precipitation, similar to maize, last years mean (*lag(PPT_G_mn, 1)*) and maximum precipitation rates (*lag(PPT_G_max, 1)*) correspond with higher yields (p<`r paste(signif(coeff.nowcast_wht2['lag(PPT_G_mn, 1)',4],3))`, p<`r paste(signif(coeff.nowcast_wht2['lag(PPT_G_mn, 1)',4],3))` respectively), while higher previous year precipitation (*lag(PPT_G_AUC, 1)*) decreases them (p<`r paste(signif(coeff.nowcast_wht2['lag(PPT_G_AUC, 1)',4],3))`). For AgSS data, we can see that increasing the quantity of improved seeds (*lag(WHEATIMSEED, 1)*) in the previous year, corresponds to higher yields in this one (p<`r paste(signif(coeff.nowcast_wht2['lag(WHEATIMSEED, 1)',4],3))`). We also see benefits from increasing the percentage covered by chemical fertilizers (*lag(WHEATFERT_CHEMICAL_AREA_P, 1)*) (p<`r paste(signif(coeff.nowcast_wht2['lag(WHEATFERT_CHEMICAL_AREA_P, 1)',4],3))`).
 
 
+```{r Now Casting - Barley, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
+  # read data
+  setwd(Home_dir) 
+  # read data
+  data_in = read.dta13(paste("./Outputs4Pred/AgSS_2010_15_Compiled_panel_merged_clean_v4.dta",sep=''))
+  data_in = data_in[,!(names(data_in) %in% c("_merge") ) ]
+  
+  # remove EA with less than 4 observations
+  counts = as.data.frame(data_in  %>% group_by(EACODE) %>% summarise(non_na_count = sum(!is.na(BARLEYOPH_W))) %>% filter(non_na_count<4))
+  data_in = data_in[!(data_in$EACODE %in% counts$EACODE),]
+  data_in$dist_pp50k = base::scale(data_in$dist_pp50k, scale=F) # scale to avoid issues
 
+  # define as panel data
+  data_in_plm <- pdata.frame(data_in, index=c("EACODE","Year"),  row.names=TRUE)
+  
+  # add lag variables for agss
+  data_in_plm$Fert_Amt_Per_Area = data_in_plm$WHEATFERT_CHEMICAL_AMT / (data_in_plm$WHEATFERT_CHEMICAL_AREA+1)
+  data_in_plm$BARLEYOPH_W_lag  =       lag(data_in_plm$BARLEYOPH_W, 1)
+  data_in_plm$BARLEYIMSEED_lag =       lag(data_in_plm$BARLEYIMSEED,1) 
+  data_in_plm$BARLEYDAMAGEAREA_P_lag = lag(data_in_plm$BARLEYDAMAGEAREA_P,1)
+  data_in_plm$Fert_Amt_Per_Area_lag = lag(data_in_plm$Fert_Amt_Per_Area,1) 
+  data_in_plm$BARLEYEXTAREA_lag    =   lag(data_in_plm$BARLEYEXTAREA,1)
+  data_in_plm$G_height_lag =          lag(data_in_plm$G_mx-data_in_plm$G_min,1)
+  data_in_plm$G_height     =          data_in_plm$G_mx-data_in_plm$G_min
+  data_in_plm$season_length = as.numeric( data_in$harvest_dates-data_in$plant_dates)
+  
+  agss_lag_bar_z_NC = BARLEYOPH_W ~ G_mx   + G_AUC_leading+G_height+
+  PET_G_AUC_leading+ETA_G_AUC_leading+PPT_G_AUC_leading+ lag(data_in_plm$BARLEYOPH_W, 1)   +
+    lag(G_height,1)+ lag(season_length,1)+
+  lag(PET_G_mn,1)+lag(PET_G_mx,1)+lag(PET_G_AUC,1)+lag(PET_G_AUC,1)+lag(PET_G_sd,1)+
+  lag(PPT_G_mn,1)+lag(PPT_G_mx,1)+lag(PPT_G_AUC,1)+lag(PPT_G_AUC,1)+lag(PPT_G_sd,1)+
+  lag(BARLEYIMSEED,1) + lag(BARLEYDAMAGEAREA_P,1) + 
+  lag(BARLEYFERT_CHEMICAL_AREA_P,1)+  lag(Fert_Amt_Per_Area,1) +
+  lag(BARLEYEXTAREA,1) +lag(BARLEYIMSEED_P,1) +dist_pp50k + bs(elevation,3) + factor(Z_CODE)
+  
+  nowcast_bar <- plm(agss_lag_bar_z_NC, data = data_in_plm, model = "random")
+  
+  # store for text pasting
+  sum.nowcast_bar = summary(nowcast_bar)
+  coeff.nowcast_bar = sum.nowcast_bar[1]$coefficients
+  sum.nowcast_bar
+  
+  agss_lag_bar_z_NC2 = BARLEYOPH_W ~ G_mx   +
+  PET_G_AUC_leading+PPT_G_AUC_leading+ lag(data_in_plm$BARLEYOPH_W, 1)   +
+    lag(G_height,1)+  
+  lag(PET_G_mx,1)+lag(PET_G_AUC,1)+lag(PET_G_AUC,1)+lag(PET_G_sd,1)+
+  lag(PPT_G_mn,1) +lag(PPT_G_AUC,1)+lag(PPT_G_AUC,1)+ 
+  lag(BARLEYFERT_CHEMICAL_AREA_P,1) + bs(elevation,3) + factor(Z_CODE)
+  
+  nowcast_bar2 <- plm(agss_lag_bar_z_NC2, data = data_in_plm, model = "random")
+  
+  # store for text pasting
+  sum.nowcast_bar2 = summary(nowcast_bar2)
+  coeff.nowcast_bar2 = sum.nowcast_bar2[1]$coefficients
+  sum.nowcast_bar2
+```  
 
+*Table `r paste(Table_number)`: Now-Casting: Panel RE regression on output per hectare for barley in quintals* `r  nc_bar_table=Table_number;Table_number=Table_number+1`
 
+```{r Now Cast Barley Results, echo=FALSE, message=FALSE, warning=F,comment=''}
+ stargazer(nowcast_bar, nowcast_bar2,
+          title="Panel RE regression", type="text",
+          column.labels=c("Full", "Final"),
+          df=FALSE, digits=4,omit = "Z_CODE",omit.labels = 'Zone Dummy',no.space=T)
+```
 
+In Table `r paste(nc_bar_table)` we can see a decent adjusted R^2^ of `r paste(round(sum.nowcast_bar2$r.squared[2],2))`. Residuals are also relatively small with 1st and 3rd quintiles spanning `r paste(round(summary(nowcast_bar2$residuals)[2],2))` and `r paste(round(summary(nowcast_bar2$residuals)[5],2))` quintals per hectare. 
+
+Again we can see similarities with other crop models. Like maize we can see that increased maximum greeness during the growing season (*G_mx*) corresponds to significantly higher yields (p<`r paste(signif(coeff.nowcast_bar2['G_mx',4],3))`), but no other contemporaneous measures of NDVI. Similar to all models, we also see *PET_G_AUC_leading* increasing yields (p<`r paste(signif(coeff.nowcast_bar2['PET_G_AUC_leading',4],3))`), but no other 'leading' variables. Lagged PET variables are significant however, with greater PET variability and AUC increasing yields (p<`r paste(signif(coeff.nowcast_bar2['PET_G_sd',4],3))`, p<`r paste(signif(coeff.nowcast_bar2['PET_G_AUC',4],3))` respectively), and declining yields with higher last year maximum PET (p<`r paste(signif(coeff.nowcast_bar2['PET_G_mx',4],3))`). Again higher lagged mean precipitation *PPT_G_mn* increases yields, and declining with lagged precip AUC (p<`r paste(signif(coeff.nowcast_bar2['PPT_G_AUC',4],3))`). For AgSS variables, we only see improvements from last years increase in chemical fertilizer coverage (p<`r paste(signif(coeff.nowcast_bar2['lag(BARLEYFERT_CHEMICAL_AREA_P, 1)',4],3))`).
 
 
 ## Predicting Drought Damages
