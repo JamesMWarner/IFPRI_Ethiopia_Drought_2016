@@ -1,15 +1,15 @@
 ---
-title: "Modeling Impacts of Drought on all Major Crops in Ethiopia: 2011-2016"
+title: "Modeling Impacts of Drought on all Major Crops in Ethiopia: 2010-2015"
 author: "Michael L Mann & James Warner"
 date: "September 29, 2017"
 output:
+  word_document: default
+  html_document:
+    df_print: paged
   pdf_document: 
     fig_caption: false
     toc: false
     number_sections: true
-  html_document:
-    df_print: paged
-  word_document: default
 bibliography: mybibfile.bib
 ---
 ```{r setup, include=FALSE}
@@ -70,22 +70,27 @@ Home_dir = '~/Documents/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_2016/
 ```
 
 \begin{abstract}
- In this study, although we do not find evidence of extensive drought, we provide evidence of localized clusters of drought in the 2015-2016 growing season. Despite this we find scant evidence of substantial crop losses in the fifteen most productive zones, but instead that they were able to maintain or exceed production levels seen in 2014. That being said, there is a substantial uptick in the number of drought related losses reported by farmers, within localized areas, particularly in 2016. To explore the impact of these local droughts and management techniques on output per hectare, we develop a panel regression utilizing sub-kebele level agricultural survey data, and remotely sensed data on greeness, precipitation and measures of evaporative demand. We create a set of models to provide mid-season estimates of output per hectare for maize, wheat and barley, and obtain $R^{2}$ between 0.39 and 0.35 at the sub-kebele level. We also find crop specific responses to a variety of management practices, and climate conditions with $R^{2}$ between 0.47 and 0.31 at the sub-kebele level. We believe these models could be used to help monitor and predict yields for disaster response teams and policy makers to use, particularly with further development and integration of the newly available 30m Harmonized Landsat Sentinel (HLS) dataset. We further utilize our agricultural survey and remotely sensed data to develop machine learning models aimed at prediciting substantial crop losses (>25%) due to drought. These models predict, on an independent sample, substantial drought damage with over 95 percent accuracy with Kappa coefficients in the mid to high 60s. We consider these findings substantial because they reach accuracy levels meaningful for policy, but also because they are based largley on course (250m) resolution data and agricultural survey data that is often dismissed in the research community. In effect, we believe we have made some lemonade.  
+ In this study, although we do not find evidence of extensive drought, we provide evidence of localized clusters of drought in the 2015 growing season. Despite this we find scant evidence of substantial crop losses in the fifteen most productive zones, but instead that they were able to maintain or exceed production levels seen in 2014. That being said, there is a substantial uptick in the number of drought related losses reported by farmers, within localized areas, particularly in 2015. To explore the impact of these local droughts and management techniques on output per hectare, we develop a panel regression utilizing sub-kebele level agricultural survey data, and remotely sensed data on greeness, precipitation and measures of evaporative demand. We create a set of models to provide mid-season estimates of output per hectare for maize, wheat and barley, and obtain $R^{2}$ between 0.39 and 0.35 at the sub-kebele level. We also find crop specific responses to a variety of management practices, and climate conditions with $R^{2}$ between 0.47 and 0.31 at the sub-kebele level. We believe these models could be used to help monitor and predict yields for disaster response teams and policy makers to use, particularly with further development and integration of the newly available 30m Harmonized Landsat Sentinel (HLS) dataset. We further utilize our agricultural survey and remotely sensed data to develop machine learning models aimed at prediciting substantial crop losses (>25%) due to drought. These models predict, on an independent sample, substantial drought damage with over 95 percent accuracy with Kappa coefficients in the mid to high 60s. We consider these findings substantial because they reach accuracy levels meaningful for policy, but also because they are based largley on course (250m) resolution data and agricultural survey data that is often dismissed in the research community. In effect, we believe we have made some lemonade.  
+ 
 \end{abstract}
  
 \newpage 
  
  
 #Introduction
-The ability to monitor and predict crop yields in developing countries is critical to the successful adaptation to changes in our climate. Increased temperatures and variability has already been linked to losses in maize and wheat yields (-3.8 and 5.5% respectively)and crop prices globally [@Lobell616]. Although much effort has been placed on modeling the spatial distribution of these shifts, less effort has been placed on how yields vary across space and time [@Ray2015]. Advances in remote sensing provide  avenues to monitor agricultural crop health at high spatial and temporal resolution. However, our ability to monitor changes in plant productivity is still limited in the more complex environments common to many developing countries [@Mann2015]. 
+The ability to monitor and predict crop yields in developing countries is critical to the successful adaptation to changes in our climate. Increased temperatures and variability has already been linked to losses in maize and wheat yields (-3.8 and 5.5% respectively) and crop prices globally [@Lobell616]. Although much effort has been placed on modeling the spatial distribution of these shifts, less effort has been placed on how yields vary across space and time especially in a longitudinal setting [@Ray2015]. Advances in remote sensing provide avenues to monitor agricultural crop health at high spatial and temporal resolution. However, our ability to monitor changes in plant productivity is still limited in the more complex environments common to many developing countries [@Mann2015]. 
 
-Remote sensing based efforts to characterize the extent, cultivation practices, and productivity of global croplands has a long history. In fact, agricultural monitoring motivated much of the earliest work in remote sensing for example NASA's LACIE and AgRISTARS programs in the 1970s and 1980s and [@macdonald1980global, @hatfield1983remote, @NASA1984,@pinter2003agricultural]). Since then, substantial progress has been made in mapping cropland extent, crop types, irrigation status, cropping intensity, and productivity from remotely sensed imagery. For example, the MODIS Land Cover Product MCD12Q1 [@friedl2002global, @friedl2010modis] provides operationally produced, global scale maps of agriculture and agricultural-natural mosaics at an annual time step and 500 m spatial resolution from 2001-present. A finer resolution (~30 m) data set is available for the conterminous United States which maps the annual extent and type for over 250 crops using primarily Landsat imagery: the Cropland Data Layer [@nass2003usda. These are but two prominent examples out of a broad literature documenting a wide variety of efforts to map cropland extent and type from remotely sensed imagery  [@lobell2004cropland, @xiao2006mapping, @thenkabail2007spectral, @ramankutty2008farming, @wardlow2008large, @biradar2011quantifying]. Remotely sensed imagery has also been employed to map irrigated areas [@thenkabail2009global, @portmann2010mirca2000], and cropping frequency/intensity [@biradar2011quantifying, @gray2014mapping, @li2014mapping].
 
-Initial efforts (e.g. LACIE and AgRISTARS) primarily utilized remotely sensed imagery to characterize the spatial extent and growth stage of crops, but relied on models driven chiefly by meteorological information to predict crop yield [@idso1977remote, @doraiswamy2003crop]. However, the biophysical link between canopy spectral reflectance and net primary production has long been established [@tucker1986satellite]; indicating that satellite measurements could play a role in determining crop yield directly. Indeed, early experimental work confirmed the usefulness of spectral measurements in predicting LAI and intercepted PAR in crops [@daughtry1983spectral, @asrar1984estimating, @clevers1997simplified], a result that was later extended to satellite measurements of spectral reflectance [@tucker1980relationship, @groten1993ndvi, @bartholome1988radiometric]. Spectral measurements typically explain variability in LAI and intercepted PAR better than crop yields because a variety of factors other than net primary production (e.g. weather during critical crop growth stages) influence yield. Nevertheless, a wide number of studies have documented highly explanatory empirical relationships between satellite measures such as NDVI (in many forms: growing season maximum and mean, seasonally integrated, etc.) and yields for a variety of crops, particularly at regional scales [@rasmussen1992assessment, @benedetti1993use, @funk2009phenologically, @becker2010generalized, @becker2010monitoring, @mkhabela2011crop]. Because certain crop growth stages are particularly critical for final yield [@butler2015variations], improved results are often seen when remotely sensed data are used to characterize crop phenology [@bolton2013forecasting]. More recently, methods for forecasting yields with remotely sensed variables at the field scale have been explored [@lobell2015scalable, @gao2017toward]. In addition to establishing a direct relationship between satellite measurements and crop yield, combining these observations with model output, through formal or ad hoc data assimilation techniques has also been demonstrated [@mo2005prediction, @moriondo2007simple, @de2007crop].
+
+Remote sensing based efforts to characterize the extent, cultivation practices, and productivity of global croplands has a long history. Substantial progress has been made in mapping cropland extent, crop types, irrigation status, cropping intensity, and productivity from remotely sensed imagery. Remotely sensed imagery has also been employed to map irrigated areas [@thenkabail2009global, @portmann2010mirca2000], and cropping frequency/intensity [@biradar2011quantifying, @gray2014mapping, @li2014mapping].
+
+Initial efforts (e.g. LACIE and AgRISTARS) primarily utilized remotely sensed imagery to characterize the spatial extent and growth stage of crops, but relied on models driven chiefly by meteorological information to predict crop yield [@idso1977remote, @doraiswamy2003crop]. However, the biophysical link between canopy spectral reflectance and net primary production has long been established [@tucker1986satellite]; indicating that satellite measurements could play a role in determining crop yield directly. A wide number of studies have documented highly explanatory empirical relationships between satellite measures such as NDVI (in many forms: growing season maximum and mean, seasonally integrated, etc.) and yields for a variety of crops, particularly at regional scales [@rasmussen1992assessment, @benedetti1993use, @funk2009phenologically, @becker2010generalized, @becker2010monitoring, @mkhabela2011crop]. Because certain crop growth stages are particularly critical for final yield [@butler2015variations], improved results are often seen when remotely sensed data are used to characterize crop phenology [@bolton2013forecasting]. More recently, methods for forecasting yields with remotely sensed variables at the field scale have been explored [@lobell2015scalable, @gao2017toward].
+
+********************************************
 
 The main objectives of this paper is to create a suite of models that can a) provides reliable estimates of yields based on remotely sensed data, b) reveal insights into the impacts of management. We also create a suite of algorithms used to extract, summarize, and organize remotely sensed data and prepare it for spatiotemporal analysis. 
 
-##Drought Meets Distribution
+##The State of Drought
 Spurred by a long history of monsoon failures across the Sahel, forecasters and aid teams anxiously watched eastern Africa at the onset of a significant El Nino event in late 2014.  Reports of below average rainfalls in 2015-17 across the low lying pastoral communities and South Eastern Ethiopia triggered an international effort to provide food aid to roughly 8.5 million people in the summer of 2017 [@reliefweb2017, @reliefweb_2017b]. The understated response from the Ethiopian government has lead to accusations that the government is downplaying the severity of the drought as early as 2016 [@schemm_2016, @schemm_2017]. Despite the reality of a severe and crippling drought in food insecure low lying  areas, there is little sign of food shortages nationally, with a recent study observing no significant change in grain prices throughout the country [@bachewe_yimer_minten]. The lack of a price response would indicate that while food insecure areas were hit heavily by water shortages largely effecting livestock, while leaving the highland areas largely unaffected or triggering only minor losses. Despite international concern, conditions up until the 2016-2017 growing season may have been largely handled by domestic resources and trade flows, therefore requiring shifts in distribution rather than a large-scale international intervention.
 
 \newpage
@@ -110,7 +115,7 @@ setwd(Home_dir)
 # save(Monthppt, file = 'R:\\Mann_Research\\IFPRI_Ethiopia_Drought_2016\\IFPRI_Ethiopia_Drought_Code\\Writeup\\IFPRI 2016 Report Ethiopia\\Monthppt.R')
 load('./Writeup/IFPRI 2016 Report Ethiopia/Monthppt.R') 
 
-my.at <- seq(-10, 200, 10)
+my.at <- seq(-10, 150, 10)
 pptA = levelplot(Monthppt,at=my.at,layout=c(3, 4),par.settings=c(RdBuTheme()),scales=list(),main='(a) Median 2009-2015')
 
 #get 2015 median ppt
@@ -135,37 +140,31 @@ pptchange2015 =(Monthppt2015C - Monthppt)
 pptF = levelplot(pptchange2015,at=my.at2,layout=c(3, 4),par.settings=RdBuTheme(), main='(b) 2015 Deviation') #
 ```
 
-*Figure `r paste(Figure_number)`: Median rainfall per 10 day period 2010-2016 compared to 2015 and 2016`r Figure_number =Figure_number+1 `*
-
-  
+*Figure `r paste(Figure_number)`: Median rainfall per 10 day period 2010-2015 compared to 2015 actual`r Figure_number =Figure_number+1 `*
   
 ```{r, echo=FALSE, warning=FALSE,fig.width=6,fig.align='center'}
 plot(pptA)
 plot(pptF)
-plot(pptE)
 
+#plot(pptE)
 #pdf(figurepath, width = 8, height = 11) # Open a new pdf file
 ```
 
 
 Looking at Figure `r paste(Figure_number-1)` we can see the spatiotemporal patterns of rainfall across Ethiopia. The top panel (a) reports the median total rain fall per 10 day period during each month (in mm). Here we can see the onset of the heavy rains during the Meher growing season, and the decline near harvest in October. In panels (b-c) we can see the deviation from this norm for the years 2015 and 2016 (in mm). The only striking shortfall is July in 2015 and patchy isolated declines through August that year. 2016 by comparison shows indications of generally above average rainfall. These figures also demonstrate the spatial heterogeneity of rainfall over time. Both years show small areas that interchange between having above or below average rainfall. It should be pointed out that the erratic nature of these rains might point to the importance of the timing of these rains, with rainfall being more important during critical growth stages like germination and flowering. If rains fail during critical periods, even small shortfalls can precipitate significant losses. Therefore Ethiopia, like many rainfall dependent countries has and will continue to be be prone to localized and occasionally wide-spread yield losses.  
 
-
-\pagebreak 
 *Figure `r paste(Figure_number)`: Total wheat output of top 15 producing zones in tons`r Figure_number =Figure_number+1 `*
 
-![""](Wheat_Rank_v2.jpg)
+![""](Wheat_Rank.jpg)
 
 
-Looking at the example of wheat production for the top 15 producing zones (Figure: `r paste(Figure_number-1)`), we can see that total output has remained steady or increased in the majority of top performing zones. This can be seen by the increase in total production from 49,500 in 2011 to 64,209 in the 2016 growing season. Additionally, we can see that the total production of each zone (as indicated by the width of each bar) generally increases over time, or remains relatively constant. Moreover we can see that the rank of regions (as indicated by the plot order, bottom being lowest rank, top being highest rank) remains surprisingly steady despite the exogenous shock of drought beginning in the 2015 planting season. We do however see a retraction in total output in 2016 due to the drought, however this only seemed to revert total yields to 2014 levels. 
+Looking at the example of wheat production for the top 15 producing zones (Figure: `r paste(Figure_number-1)`), we can see that total output has remained steady or increased in the majority of top performing zones. This can be seen by the increase in total production from 49,500 in 2010 to 64,209 in the 2015 growing season. Additionally, we can see that the total production of each zone (as indicated by the width of each bar) generally increases over time, or remains relatively constant. Moreover we can see that the rank of regions (as indicated by the plot order, bottom being lowest rank, top being highest rank) remains surprisingly steady despite the exogenous shock of drought beginning in the 2015 planting season. We do however see a retraction in total output in 2015 due to the drought, however this only seemed to revert total yields to 2014 levels. 
 
 ```{r Drought in One Graph, include=F}
 # Figure DROUGHT IN ONE GRAPH 
 # Visualize stacked histograms of damage by type -------------------------------------
 setwd(file.path(Home_dir,'/Outputs4Pred/'))
 agss = read.dta13('./AgSS_2010_15_Compiled_panel_merged_clean_PCA_v4.dta') 
-agss$Year = agss$Year+1
-#agss$Year = agss$Year +1  # deal with my choice of year issue 
 agss= agss[agss$REGIONCODE != 2,] # Drop afar
 
 #WHEATDAMAGE_WEATHER_AREA_P,
@@ -293,11 +292,10 @@ We can see from Figure `r Figure_number` three time series for the major regions
 
 \newpage
 
-*Figure `r paste(Figure_number)`: Drought in one graph 2011-2016`r Figure_number =Figure_number+1 `*
+*Figure `r paste(Figure_number)`: Drought in one graph 2010-2015`r Figure_number =Figure_number+1 `*
 
 ```{r Drought in one graph figure, echo=FALSE, fig.height=9, fig.width=8, message=FALSE, warning=FALSE}
 grid.arrange(A,B3,C,ncol=1,heights=c(.25,.25,.50))
-
 ```
 
 ```{r Trade Flows,include=F}
@@ -305,58 +303,22 @@ grid.arrange(A,B3,C,ncol=1,heights=c(.25,.25,.50))
 ```
 \pagebreak
 
-Moreover Ethiopia has rapidly improved its ability to mitigate food insecurity through trade flows [@bachewe_yimer_minten]. International and international trade has likely been improved by the rapid development of the paved road network, and with the opening of the Ethiopia-Djibouti electric railway line in 2016 improving trade with this red sea port. Even in 2011, for the case of wheat, we can see how imports and internal trade flows move wheat from surplus areas to deficit areas. In Figure `r paste(Figure_number)`, we see large international imports as well as comprehensive internal trade flows at the zonal level. 
+<!-- Moreover Ethiopia has rapidly improved its ability to mitigate food insecurity through trade flows [@bachewe_yimer_minten]. International and international trade has likely been improved by the rapid development of the paved road network, and with the opening of the Ethiopia-Djibouti electric railway line in 2016 improving trade with this red sea port. Even in 2011, for the case of wheat, we can see how imports and internal trade flows move wheat from surplus areas to deficit areas. In Figure `r paste(Figure_number)`, we see large international imports as well as comprehensive internal trade flows at the zonal level.  -->
 
-*Figure `r paste(Figure_number)`: 2011 aggregate wheat trade flows at the zonal level`r Figure_number =Figure_number+1 `*
+<!-- *Figure `r paste(Figure_number)`: 2010 aggregate wheat trade flows at the zonal level`r Figure_number =Figure_number+1 `* -->
 
-![](imports.png)
-*Data obtained from [@bachewe_yimer_minten].*
+<!-- ![](imports.png) -->
+<!-- *Data obtained from [@bachewe_yimer_minten].* -->
 
-Although far from perfect we should acknowledge substantial improvements in Ethiopia's ability to mitigate and respond to localized drought. Pulling from later in the study (see "Predicting Drought Damages"), we can see that although large-scale drought may have been elusive in 2015-2016 for major growing regions, localed drought was not. Ethiopia has an extraordinary topography, with jagged mountains, rugged hilsides, and narrow canyons all being graded and tilled for agriculture. This complex terrain in turn leads to complex micro-climates in many ways much like those found in Eastern California. Rain shadows, elevation, strong inversion layers, monsoonal rain, complex wind patterns all lead to an extremely heterogenous growing environment, where conditions on one side of the mountain could be completely different than 1/2 a mile on the other. 
-
-*Figure `r paste(Figure_number)`: 2011-2016 Local clusters for the sum of drought related damages - All major crops`r droughclusterfig =Figure_number; Figure_number =Figure_number+1 `*
-
-```{r Local Morans I, include=FALSE}
-  library(spdep)
-  Reg_poly = st_read("~/Documents/IFPRI_Ethiopia_Drought_2016/Data/AdminBoundaries/ETH_adm1_UTM.shp") 
-  Reg_poly = st_transform(Reg_poly,"+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs")
-
-  # read in crop damage from All_Crops_Predict_Damages_to_all_EAs section
-  EAs_point = readRDS('~/Documents/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_2016/Outputs4Pred/allEAs_point_merge_agss.rds')
-  EAs_point_crp=EAs_point[EAs_point$R_CODE %in% c(1,3,4,7),]  # keep major growing regions
-  EAs_point_crp = EAs_point_crp[!duplicated(EAs_point_crp$geometry), ]  # remove duplicate points
-  
-  # use 25km as suggested by james
-  # use 25km distance unless there are less than 8 neighbors, then use knn = 8 
-  nb_25k = dnearneigh(st_coordinates(EAs_point_crp ), d1 = 0, d2 = 25000, row.names = seq(1,dim(st_coordinates(EAs_point_crp))[1]))
-  k8nb = knearneigh(st_coordinates(EAs_point_crp ), k=8 )
-  k8nb_nn  = split(as.data.frame(k8nb$nn), seq(nrow(as.data.frame(k8nb$nn)))) # convert nn to list 
-  nb_knn8_25k = lapply(1:length(nb_25k), function(x){if(length(nb_25k[[x]])<8){
-    return(as.integer(k8nb_nn[[x]]))}else{return(nb_25k[[x]])}}) # replace where less than 8 neighbors 
-  attributes(nb_knn8_25k) = attributes(nb_25k) # keep nb attributes 
-  
-  loc_mor_25k = localmoran(EAs_point_crp$DamageSum_allcrops, nb2listw(nb_knn8_25k, style = "W"))
-  EAs_point_crp$local_moran_p = loc_mor_25k[,'Pr(z > 0)']
-  EAs_point_crp$local_moran_z = loc_mor_25k[,'Z.Ii']
-  EAs_point_crp$local_moran_i = loc_mor_25k[,'Ii']
-  EAs_point_crp$local_moran_z_sig = "Insignficant"  # find 95% signif
-  EAs_point_crp$local_moran_z_sig[EAs_point_crp$local_moran_z > 1.96] = "Positive" 
-  EAs_point_crp$local_moran_z_sig[EAs_point_crp$local_moran_z < -1.96] = "Negative" 
-```
-```{r Plot Local Morans I, echo=FALSE}
-   # plot it 
-  plot_dam_maz = ggplot()+  geom_sf(data=Reg_poly,  aes( ),fill = 'grey20',size=0.25 ) + geom_sf(data= EAs_point_crp[EAs_point_crp$local_moran_z_sig != "Insignficant" ,],  aes(color = local_moran_z_sig ),size=0.75, alpha=0.5) +scale_colour_manual(values =  c('#6dbcc6','#c65d5d'),name='Significant \nDamage Cluster')
-  plot(plot_dam_maz)
-```
-
-To illustrate the localize nature of drought damages in Ethiopia from 2011-2016 we pull from the "Predicting Drought Damages" section of the paper. Figure `r droughclusterfig` above presents the results from a local Moran's I test on the sum of *drought related* damages for all major crops. The "Positive" class indicate a significant spatial cluster of high damage values based on a neighborhood of 25km, and "Negative" class indicates a signficant spatial clustering of low damage values. 
+<!-- Although far from perfect we should acknowledge substantial improvements in Ethiopia's ability to mitigate and respond to localized drought.  -->
+Pulling from later in the study (see "Predicting Drought Damages"), we can see that although large-scale drought may have been elusive in 2015 for major growing regions, localed drought was not. Ethiopia has an extraordinary topography, with jagged mountains, rugged hilsides, and narrow canyons all being graded and tilled for agriculture. This complex terrain in turn leads to complex micro-climates in many ways much like those found in Eastern California. Rain shadows, elevation, strong inversion layers, monsoonal rain, complex wind patterns all lead to an extremely heterogenous growing environment, where conditions on one side of the mountain could be completely different than 1/2 a mile on the other. 
 
 # Methods
 ## Data Sources
-### Survey Data - Agricultural Sample Survey Data (2011-2016)
-Survey data was obtained from Ethiopia's Central Statistical Agency's (CSA) Agricultural Sample Survey (AgSS) and was chosen for its annual collection, spatial coverage, and unique sampling structure through these six crop years. The AgSS is an annually collected government administered large-scale survey tasked with measuring agricultural production in Ethiopia at the zonal level [^1].  The survey interviews approximately 45,000 farmers per year on a range of farm management questions covering some basic demographics of the household as well as a range of questions concerning planting, harvesting and selling at the plot level. Typically, about 20 farm households are randomly sampled from small local village-level areas of approximately 200 households (the sub-kebele level). On average, based on population, approximately five of these sample areas exist at the kebele-level administration area. Although the figures vary widely, sub-kebeles are meant to approximate about 200 households per unit and the average kebele has around 1,000 households each. From this sampling frame, a random selection of about 2,200 sub-kebeles are chosen as a representative sub-sample for zonal level production projections of major agricultural production areas. Population weights are then applied to project agricultural production at the zonal level. For this study, we construct a panel data set over the six crop seasons identified because approximately 75% of the same sub-kebeles were sampled by CSA over the six meher crop seasons of interest. This effectively builds a base of five relatively favorable crop seasons, from 2010 to 2014, and allows for the drought effects of 2015-2016 as a study in contrast in terms of this significant weather event. The sample is with replacement and therefore representative of the sub-kebele but not a true panel because the same farmers were not chosen. In addition, no sampling weights are applied because we have omitted approximately 25% of the sample and are generally most interested in the localized effects.  
+### Survey Data - Agricultural Sample Survey Data (2010-2015)
+Survey data was obtained from Ethiopia's Central Statistical Agency's (CSA) Agricultural Sample Survey (AgSS) and was chosen for its annual collection, spatial coverage, and unique sampling structure through these six crop years. The AgSS is an annually collected government administered large-scale survey tasked with measuring agricultural production in Ethiopia at the zonal level [^agss].  The survey interviews approximately 45,000 farmers per year on a range of farm management questions covering some basic demographics of the household as well as a range of questions concerning planting, harvesting and selling at the plot level. Typically, about 20 farm households are randomly sampled from small local village-level areas of approximately 200 households (the sub-kebele level). On average, based on population, approximately five of these sample areas exist at the kebele-level administration area. Although the figures vary widely, sub-kebeles are meant to approximate about 200 households per unit and the average kebele has around 1,000 households each. From this sampling frame, a random selection of about 2,200 sub-kebeles are chosen as a representative sub-sample for zonal level production projections of major agricultural production areas. Population weights are then applied to project agricultural production at the zonal level. For this study, we construct a panel data set over the six crop seasons identified because approximately 75% of the same sub-kebeles were sampled by CSA over the six meher crop seasons of interest. This effectively builds a base of five relatively favorable crop seasons, from 2010 to 2014, and allows for the drought effects of 2015 as a study in contrast in terms of this significant weather event. The sample is with replacement and therefore representative of the sub-kebele but not a true panel because the same farmers were not chosen. In addition, no sampling weights are applied because we have omitted approximately 25% of the sample and are generally most interested in the localized effects.  
 
-[^1]:Beyond the nation, Ethiopia has four official levels of administrative areas. These include, in order of geographic size, regions, zones, woredas and kebeles.  There are approximately 12 regions, 88 zones, 690 woredas and 15,000 kebeles.  For our purposes, we use the sub-kebele, not recognized as a geographic region for administrative purposes, but commonly used for statistical sampling and are roughly based on population.  There are over 75,000 sub-kebeles in the country.
+[^agss]: Beyond the nation, Ethiopia has four official levels of administrative areas. These include, in order of geographic size, regions, zones, woredas and kebeles.  There are approximately 12 regions, 88 zones, 690 woredas and 15,000 kebeles.  For our purposes, we use the sub-kebele, not recognized as a geographic region for administrative purposes, but commonly used for statistical sampling and are roughly based on population.  There are over 75,000 sub-kebeles in the country.
 
 While this study collected data on the five principal Ethiopian field crops (teff, wheat, maize, barley, sorghum), because of their predominant importance in value terms for Ethiopia as well as their geographically wide-spread adoption, the analysis should therefore be placed within this context. This study covers the drought effects of only these five crops and not all agricultural production.  In other words, when we outline percentages of crop losses we are referring to losses of only these five crops and not total output in the country.  We have no reason to believe that these are not generally representative of all crop production, in terms of the drought, but a more detailed analysis would be needed to make this assertion. 
 
@@ -403,6 +365,31 @@ definitions[27,1] = '$\\textbf{Comparison to Norms}$'
 pander(definitions, justify = c('left', 'left'),split.cells = c(20,50))
 #pandoc.table(definitions, style = 'rmarkdown')
 ```
+##Spatial Considerations of the Drought
+One issue of consequence in drought conditions, such as that in 2015, is to determine to what degree the drought is extensive or limited to a small number of areas. To aid in this process we utilize measures of spatial autocorrelation, one global and another local. Global measures of spatial autocorrelation evaluate whether or not observations of drought impacts are clustered (similar values are near each other), or whether they are spatial dispersed (dissimilar values are closer to each other) for the entire dataset. Local measures of spatial autocorrelation can pick up on local concentrations of high ("Hotspots") or low values ("Coldspots"). 
+
+###Global Spatial Autocorrelation
+Global Moran’s I depicts relative spatial autocorrelation for the entire area, where positive values convey clustering and negative values convey dispersion, and can be mathematically depicted by forumula`r moransi=Formula_number` `r paste(moransi)`: `r Formula_number=Formula_number+1` below.
+
+(`r paste(moransi)`)                
+$$\ I=\frac{n\sum_{i=1}^{N}\sum_{j=1}^{N}w_{ij}z_iz_j}{S_0\sum_{j=1}^{N}z_i^2}$$
+where $z_i$ is the difference between a location *i* and its mean ($x_i-\bar{X}$), $w_{ij}$ is the spatial weight for feature *i* and it's neighbors *j*, *n* is the number of features, and $S_0$ is the aggregate of all spatial weights in formula`r s0=Formula_number` `r paste(s0)`: `r Formula_number=Formula_number+1` below:
+
+(`r paste(s0)`)   
+$$\ S_0=\sum_{i=1}^{N}\sum_{j=1}^{N}w_{ij}$$
+Here we use neighborhood definition of a 25-km radius with a low decay rate of 0.05 power. This decay function suggests that about 85% of the total value of a neighbor 25 kms away.  
+
+###Hotspot Analysis 
+A typical method for identifying local spatial clustering is the Getis-Ord analysis that identifies spatial clustering of values that exist at the statistical tails of a distribution.  For our research, we identified “hot” neighborhoods that exist in the top 5% of a normal distributed of damage value and “cold” neighborhoods that exist in the bottom 5%.  In other words, does a group neighborhood value statistically deviate from the global mean?  In our case we defined a neighborhood as a 25-km radius from the centroid of the sub-kebele with a slight decay rate of 0.05 power[^hotspot].  
+
+[^hotspot]: The issue of what defines a neighbor is somewhat controversial in the spatial literature and the choice has important impacts on the analysis. For our purposes, 25 kilometers seemed reasonable from both expert opinion and fit the actual distribution of the data well. 
+
+Using Getis-Ord generates a Z-score and P-value for each sub-kebele in their respective neighborhood.  Equation (`r Formula_number`) demonstrates the spatial clustering with a 25-kilometer neighborhood and a small distance decay parameter as a weight.  A high Z score and small P value for a feature indicates a significant hot spot. A low negative Z score and small P value indicates a significant cold spot. The higher (or lower) the Z score, the more intense the clustering. A Z score near zero means no spatial clustering. See forumula`r F1=Formula_number` `r paste(F1)` `r Formula_number=Formula_number+1` below.
+
+(`r paste(F1)`)                
+$$\ G_i^*=\frac{\sum_{j=1}^{N}w_{ij}(d)x_{j}}{\sum_{j=1}^{N}x_{j}}$$
+$$\ (d)=\Bigg\{\begin{matrix}\textrm{1, if } d_{ij}<d\textrm{ for all i,j}\\ \textrm{0, otherwise}\\\end{matrix}$$
+
 
 ## Estimating Crop Yields  
 ### Preprocessing 
@@ -419,7 +406,7 @@ We estimate three classes of statistics across each of these two distinct period
 One primary use for these data is for early season estimation of crop yields. Although AgSS provides invaluable estimates of agricultural productivity on an annual basis, lag between data collection and release is substantial. This gap leaves substantial need to timely first-order estimates for crop yields. Modivated by prelimiary panel regression results reported in the [Appendix](#appendix_anchor), we find that reasonable estimates of output per hectare can be created around mid-season. Where 'mid-season' is defined by reaching the maximum NDVI greeness value.  
 
 ####Panel Regression for "Now-Casting"
-Compared to cross-sectional approaches, panel analysis can substantially increase the degree of observed variance over both space and time. For instance, in our current application, the integration of EAS (with n = 1752) over the 2011-2016 sample period (t = 6), results in a substantially larger data (N~6900), allowing for a much greater flexibility and degrees of freedom in the modelling of the issue of interest. Here we include a series of variables that can be calculated in the first half of the growing season including contenporaneous and lagged values, Zonal fixed effects, as well as a lagged value of output per hectare. Here we estimate a series of random effect models of the following form`r F1=Formula_number` `r paste(F1)`: `r Formula_number=Formula_number+1`
+Compared to cross-sectional approaches, panel analysis can substantially increase the degree of observed variance over both space and time. For instance, in our current application, the integration of EAS (with n = 1752) over the 2010-2015 sample period (t = 6), results in a substantially larger data (N~6900), allowing for a much greater flexibility and degrees of freedom in the modelling of the issue of interest. Here we include a series of variables that can be calculated in the first half of the growing season including contenporaneous and lagged values, Zonal fixed effects, as well as a lagged value of output per hectare. Here we estimate a series of random effect models of the following form`r F1=Formula_number` `r paste(F1)`: `r Formula_number=Formula_number+1`
 
 (`r paste(F1)`)                
 $$\ Y_{itc}=\alpha_{i}+\sum_{k=1}^{K}\beta_{k}X_{it}+ \mu_{it} +\epsilon_{it}$$
@@ -446,16 +433,145 @@ Random forests (RF) are a flexible (used for classification and regression) ense
 Before we run any models we break the data into two groups, with 85% of all sub-kebele units being retained for the training and tuning of the models, and 15% of these held aside to provide independent measures of out-of-sample performance. 
 
 #### Training Data: Cross Validation & Tuning
-To enhance the performance of the models out-of-sample, we undertake two procedures on the training data; tuning and cross validation. Tuning in this case is limited to choosing the number of features (variables) randomly selected for use in each tree. We do a grid search independently for each crop finding the parameter tuning that provides the best performance. To ensure that these parameter tunings work well, we utilize k-fold cross validation whereby the training data is split further into 3 sets of sub-kebele data, the model is trained on two thirds of the data and its performance, using the Kappa coefficient, is estimated using the omitted third sub-sample. Performance for each parameter value is therefore evaluated out-of-sample three times and averaged. The optimal parameter then is that with the highest Kappa value and is specific for each crop model. Kappa[^2] is a performance indicator similar to the percentage of observations that are correctly classified but that controls for the fact that categories with large numbers of observations are easier to guess by random chance. 
+To enhance the performance of the models out-of-sample, we undertake two procedures on the training data; tuning and cross validation. Tuning in this case is limited to choosing the number of features (variables) randomly selected for use in each tree. We do a grid search independently for each crop finding the parameter tuning that provides the best performance. To ensure that these parameter tunings work well, we utilize k-fold cross validation whereby the training data is split further into 3 sets of sub-kebele data, the model is trained on two thirds of the data and its performance, using the Kappa coefficient, is estimated using the omitted third sub-sample. Performance for each parameter value is therefore evaluated out-of-sample three times and averaged. The optimal parameter then is that with the highest Kappa value and is specific for each crop model. Kappa[^kappa] is a performance indicator similar to the percentage of observations that are correctly classified but that controls for the fact that categories with large numbers of observations are easier to guess by random chance. 
+[^kappa]: see: https://en.m.wikipedia.org/wiki/Cohen%27s_kappa    
 
 #### Testing Data: Out-Of-Sample Performance
-Independent of the training data we initially withheld 15% of sub-kebele units to provide 'testing data' for accurate measures of truly out-of-sample performance for our tuned RF models. These tests should therefore be good indicators of performance for sub-kebeles excluded from the AgSS survey. To test accuracy we make predictions of the damage category on this testing data and compare them to each observations observed damage category. We provide three major performance indicators, a) overall accuracy, 2) Kappa coefficient, and 3) the recall rate[^3]. The same metrics are applied to both the national-level (all major growing regions), and the regional-level models (specific to each region).
+Independent of the training data we initially withheld 15% of sub-kebele units to provide 'testing data' for accurate measures of truly out-of-sample performance for our tuned RF models. These tests should therefore be good indicators of performance for sub-kebeles excluded from the AgSS survey. To test accuracy we make predictions of the damage category on this testing data and compare them to each observations observed damage category. We provide three major performance indicators, a) overall accuracy, 2) Kappa coefficient, and 3) the recall rate[^recall]. The same metrics are applied to both the national-level (all major growing regions), and the regional-level models (specific to each region).
 
-[^2]: see: https://en.m.wikipedia.org/wiki/Cohen%27s_kappa    
-[^3]: the percentage of sub-kebeles with 'substantial drought damage' that are correctly classified by our models.
+[^recall]: the percentage of sub-kebeles with 'substantial drought damage' that are correctly classified by our models.
 
 \newpage
 # Results & Discussion
+
+##Spatial Considerations of the 2015 Drought
+TThe 2015 drought had varying spatial impacts on Ethiopia and this section seeks to review how the drought impacted cereal crop production at a variety of spatial scales.  We find that impacts generally occurred in local neighborhoods of relatively less productive areas.  This creates “pockets” of severly affected areas that has limited impacts on overall national production figures. Figure `r paste(Figure_number)` reveals that only two of the top ten cereal production zones, aggregated by weight, were significantly affected by the drought.More specifically, North Shewa of Amhara and East Shewa of Oromia. Importantly, they are ranked eighth and ninth with this ranking scale. Furthermore, higher impact areas were located in the north and northeast of the country.  Of critical importance is the fact that while larger administrative areas had greater impact there was significant variation at the local level. This is important because many designations of drought areas are determined at the woreda or higher administrative area level. With the high variance, this suggests that areas designated as drought areas may, in fact, not be experiencing these negative shocks.  We suggest a review of this research with an eye to using smaller level administrative areas such as the kebele for assistance.  In addition, time series trends of damage are fairly consistent suggesting longer term policy actions in these higher damage areas.
+
+*Figure `r paste(Figure_number)`: Total Major Cereal Crop Production (by weight 2010-2015)`r totalweightprod =Figure_number; Figure_number =Figure_number+1 `*
+
+![""](Wheat_rank_weighted.jpg)
+
+Aggregated zonal cereal production is presented in Figure `r totalweightprod`[^rankweight]. The graph demonstrates relative stability of rankings and significant expansion of production for 2010 to 2015. Amhara and Oromia are the important zones, in terms of cereal production, and have the top 20 zones represented.  Of course, this has to do with population densities.
+
+[^rankweight]: While aggregating the five crops by weight has some important methodological concerns, weight was used to measure relative loss in production rather than value lost.  Incorportaing a price index would speak to monetary value but the price changes might reflect market movements over drought effects.  For this reason, simple weight was used.  
+
+*Figure `r paste(Figure_number)`: 2010-2015 Local clusters for the sum of drought related damages - All major crops`r droughclusterfig =Figure_number; Figure_number =Figure_number+1 `*
+
+```{r Local Morans I, include=FALSE}
+  library(spdep)
+  Reg_poly = st_read("~/Documents/IFPRI_Ethiopia_Drought_2016/Data/AdminBoundaries/ETH_adm1_UTM.shp") 
+  Reg_poly = st_transform(Reg_poly,"+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs")
+
+  # read in crop damage from All_Crops_Predict_Damages_to_all_EAs section
+  EAs_point = readRDS('~/Documents/IFPRI_Ethiopia_Drought_2016/IFPRI_Ethiopia_Drought_2016/Outputs4Pred/allEAs_point_merge_agss.rds')
+  EAs_point_crp=EAs_point[EAs_point$R_CODE %in% c(1,3,4,7),]  # keep major growing regions
+  EAs_point_crp = EAs_point_crp[!duplicated(EAs_point_crp$geometry), ]  # remove duplicate points
+  
+  # use 25km as suggested by james
+  # use 25km distance unless there are less than 8 neighbors, then use knn = 8 
+  nb_25k = dnearneigh(st_coordinates(EAs_point_crp ), d1 = 0, d2 = 25000, row.names = seq(1,dim(st_coordinates(EAs_point_crp))[1]))
+  k8nb = knearneigh(st_coordinates(EAs_point_crp ), k=8 )
+  k8nb_nn  = split(as.data.frame(k8nb$nn), seq(nrow(as.data.frame(k8nb$nn)))) # convert nn to list 
+  nb_knn8_25k = lapply(1:length(nb_25k), function(x){if(length(nb_25k[[x]])<8){
+    return(as.integer(k8nb_nn[[x]]))}else{return(nb_25k[[x]])}}) # replace where less than 8 neighbors 
+  attributes(nb_knn8_25k) = attributes(nb_25k) # keep nb attributes 
+  
+  loc_mor_25k = localmoran(EAs_point_crp$DamageSum_allcrops, nb2listw(nb_knn8_25k, style = "W"))
+  EAs_point_crp$local_moran_p = loc_mor_25k[,'Pr(z > 0)']
+  EAs_point_crp$local_moran_z = loc_mor_25k[,'Z.Ii']
+  EAs_point_crp$local_moran_i = loc_mor_25k[,'Ii']
+  EAs_point_crp$local_moran_z_sig = "Insignficant"  # find 95% signif
+  EAs_point_crp$local_moran_z_sig[EAs_point_crp$local_moran_z > 1.96] = "Positive" 
+  EAs_point_crp$local_moran_z_sig[EAs_point_crp$local_moran_z < -1.96] = "Negative" 
+```
+```{r Plot Local Morans I, echo=FALSE}
+   # plot it 
+  plot_dam_maz = ggplot()+  geom_sf(data=Reg_poly,  aes( ),fill = 'grey20',size=0.25 ) + geom_sf(data= EAs_point_crp[EAs_point_crp$local_moran_z_sig != "Insignficant" ,],  aes(color = local_moran_z_sig ),size=0.75, alpha=0.5) +scale_colour_manual(values =  c('#6dbcc6','#c65d5d'),name='Significant \nDamage Cluster')
+  plot(plot_dam_maz)
+```
+
+To illustrate the localize nature of drought damages in Ethiopia from 2010-2015 we pull from the "Predicting Drought Damages" section of the paper. Figure `r droughclusterfig` above presents the results from a local Moran's I test on the sum of *drought related* damages for all major crops. The "Positive" class indicate a significant spatial cluster of high damage values based on a neighborhood of 25km, and "Negative" class indicates a signficant spatial clustering of low damage values. 
+
+\newpage
+
+*Table `r paste(Table_number)`: Average Cereal Crop Damage by Year (%)`r Crop_dam_table=Table_number` `r Table_number =Table_number+1 `*
+
+```{r Crop damage by year table, echo=FALSE}
+  # supplied by James from stata
+  damage_table = data.frame(Year=seq(2010,2015),Mean=c(11.6,9.8,11.6,8.1,8.6,17.9),`Standard Deviation`=c(10.9,9.8,11.6,8.1,8.6,17.9),Minimum = rep(0,6),Maximum=c(83.2,76.1,79.1,60.5,94.0,95.8)) 
+  pander(damage_table,justify = rep('center', 5))
+```
+                    N=1752 for all years 
+
+Table `r Crop_dam_table` depicts average cereal crop loss across the selected sub-kebeles for the six-year period.  Overall average rates of cereal crop damage are relatively high for the six years sampled.  Typical damage reported was between 8 to 11% per sampled sub-kebele.  This suggests that about 10% of all cereal crops are lost due to various damages in a typical crop year.  As this is an average across 20 sampled farmers in the sub-kebele this figure does not account for variation within the sample.  In other words, individual farmers, or particular plots, may also experience catastrophic losses while others experience minor damage.  Policy to address this form of crop loss should be explored and could go a long way to addressing crop loss.  As expected, 2015 average crop loss rises dramatically.  However, it is important to point out that the 17.9% figure is not evenly applied across equally productive areas and so the total effects on nationally produced cereal crops is different than this figure indicates.
+
+Global Moran’s I depicts relative spatial autocorrelation for the entire area, where positive values convey clustering and negative values convey dispersion.
+
+*Figure `r paste(Figure_number)`: Indexed Global Moran’s I—Major Cereal Damage 2010-16 `r gmoransi =Figure_number; Figure_number =Figure_number+1 `*
+
+![](GlobalMoransI.png)
+
+While there is some statistically significant global clustering of damage of major cereal crops it is relatively low and demonstrates no observable trend (See Fig. `r gmoransi`).  This is an indication that ther are some areas of consistent damage but, as demonstrated later, local measures of spatial clustering provide a more nuanced view.  The AgSS allows for about 20 different types of damage (including different types of weather events (hail, floods drought), pest, birds and bad seed) but the clustering of drought impacted cereal crop damage jumped  over 7-fold in 2015.  The 2011 increase may refect a drought outlined in this period.  Overall, while there is some statistically significant global clustering, it is the 2015 drought that exhibits relatively dramatic differences.
+
+*Figure `r paste(Figure_number)`: Drought Effects by Region `r droughtreg =Figure_number; Figure_number =Figure_number+1 `*
+
+![](DroughtEffectsbyRegion.png)
+
+*Figure `r paste(Figure_number)`: Drought Effects by Zone: Tigray Region `r tigraydroughtreg =Figure_number; Figure_number =Figure_number+1 `*
+
+![](DroughtEffectsbySoneTigray.png)
+
+Boxplots are presented of the four major regions in Figure `r droughtreg`.  What is evident from the Figure is that Tigray suffered the most overall damage, has the highest median damage and the widest distribution.  The 50% quartiles are more compact, indicating a tighter distribution, moving from northern Tigray to southern SNNP. In addition, the median is skewed far left for all regions suggesting non-normal distributions that large number of observations group towards zero with outliers of higher damage much farther to the left.   For example, approximately 50% of damage values are less than (2%) in both Oromia and SNNPR.  Figure `r tigraydroughtreg` splits Tigray region into smaller zonal drought effects.  The five zonal distributions are markedly with median values ranging from 5% to as high as 40%.  Both figures suggest wide impacts at both the region and intra-regional level.  The following figures drill down into smaller spatial scales and suggest this variation exists at the intra-zonal level as well.
+
+*Figure `r paste(Figure_number)`: Drought Effects by Woreda: Zone 104 `r droughtworeda =Figure_number; Figure_number =Figure_number+1 `*
+
+![](DroughtEffectsbyWoreda.png)
+
+*Figure `r paste(Figure_number)`: Mao of Drought Effects by Zone: Tigray Region `r mapdrought =Figure_number; Figure_number =Figure_number+1 `*
+
+![](DroughtEffectMap.png)
+
+Figure `r droughtworeda` demonstrates that the variability continues to exist down to the woreda level.  While the data is not as robust, given that the number of observations are fewer as higher levels of administrative units, values are wide-ranging and indicative of the localized effects of the drought.  When placed on a map, the sub-kebeles aggregations, potentially form neighborhoods of similar values that don’t necessarily respect administrative boundaries.  Broken into 20% categorical damage values, groupings of similar colors seem to present themselves in Figure `r mapdrought`. The 25 kilometer arrow indicates what will later be used as a neighborhood and is placed there for spatial context.  The next section attempts to demonstrate group clustering of “hot” (above average) and “cold” (below average) clustering of drought damage and investigates statistical patterns related to the drought.  
+
+###Hotspot Analysis
+In order to determine hot and cold spatial damage time trends, Getis-Ord analysis was performed on total damage per crop year.  This analysis identified local neighborhoods that deviated from the mean value of that year. Individual sub-kebeles were assigned a value of plus one, zero, or minus one if they were in the top 5%, middle 90%, or bottom 5% of neighborhood damage values, respectively for each year.  These values were summed for each of the six crop years. For example, a value of -2 indicates that for two crop seasons this particular sub-kebele was in statistically significant low damage neighborhoods. A summation of all values is provided in Table `r Table_number`.
+
+*Table `r paste(Table_number)`: Cold/Hot Damage (per area)`r Dam_sum=Table_number` `r Table_number =Table_number+1 `*
+
+```{r hotspot table, echo=FALSE}
+  # supplied by James from stata
+  panderOptions('keep.line.breaks', TRUE)
+  hot_table = read.csv('sum_dam_hotspot.csv')
+  names(hot_table)=c('Category',seq(0,6),'Total')
+  pander(hot_table,justify = rep('center', 9))
+```
+
+Several important issues emerge from the hot/cold spot summation table[^tablexx]. Most notably, is the lack of sub-kebeles that had both hot and cold values. More specifically, only 23, or 1.3%, or all sub-kebeles had both positive and negative values.  This can be contrasted to 916, or 52%, of sub-kebeles that had either hot or cold values but not both. This suggests that there are certain areas prone to both above and below damage over time. Consistent areas of above and below damage which is explored later.
+
+[^tablexx]:All possible values have been inserted into the table and zeros are entered where no value exists but would be theoretically possible.  In other words, since there was only six crop seasons included, a value of 5, -2 would not be possible.
+
+*Table `r paste(Table_number)`: Cold/Hot Damage (per area)`r Dam_signif=Table_number` `r Table_number =Table_number+1 `*
+
+```{r significant hotspot table, echo=FALSE}
+  # supplied by James from stata
+  panderOptions('keep.line.breaks', TRUE)
+panderOptions('table.continues', '')
+  signif_table = read.csv('dam_significant.csv')
+names(signif_table)=c('Sub-Kebele Group','Obs','Hot/Cold Spots','Crop Damage','Elevation (m)', 'NDVI-AOC','PSNP (% of Total)','Access to Extension','Access to Extension (not Tigray)')
+  pander(signif_table,justify = 'center',split.cells = c(9))
+```
+** Statistically significant at the 99% level (using relevant normal or non-parametric tests)
+
+The values of Table `r Dam_signif` were divided into base years (2010-2014) and the specific 2015 hot drought year. The base years were averaged to determine “typical values” for each sub-kebele.  The goal was to explore predictable patterns for the 2015 drought versus non-drought sub-kebeles.  Importantly, many statistically significant differences emerge and suggest that base-line high damage areas were most effected by the drought and suggest a predictability to the impacts.
+
+In total, 293 (16.7%) sub-kebeles experienced statistically significant, above average, neighborhood drought effects. For a variety of variables, statistical differences were found between the drought sub-set and the overall control group. At the very least, this suggests a non-random pattern to the 2015 drought.
+
+The control and drought groups are divided areas that either experienced 2015 neighborhood drought effects or not.  The control group represents 1,459 or 83.3% of the entire sample and the remaining are the 2015 drought sub-group.Averages of all variables indicated in Table `r Dam_signif` are taken for 2010-2014 crop seasons and separated by categorical.  The results are striking and confirm that the drought effects were not randomly distributed.  For example, on average the control sub-kebeles experienced 0.2 number of cold spots across all years and essentially suggest no neighborhood effects of damage. On the other hand, each drought affected sub-kebele had an average of 1.4 damage hotspots. This indicates that areas that suffered from the drought, already where in high damage neighborhoods. This is confirmed by the percentage average damage from 2010-14 being about 76% greater on average (15.5% vs. 8.8%) BEFORE the drought year effects.  Other variables such as elevation and area of NDVI further suggest significant differences between the groups. The final four columns seek to identify relative policy actions existing in these two groups. 
+
+Ethiopia’s Poverty Safety Net Program (PSNP) is an internationally recognized safety net program that provides a variety of social programs to assist poorer households.  There are approximately 200 woredas designated as PSNP. For our sample, 660 or 37.7% are in PSNP designated woredas. However, when separated by drought effects, about 30% are in non-drought areas and an astonishing 76.5% of PSNP samples are in drought neighborhoods. In other words, ¾ of all of the drought woredas are in PSNP designated areas, despite the fact that PSNP sub-kebeles make up less than 40% of the entire sample.  This suggests that this government project is relatively well positioned, at least relative to crop damage effects.  Average production losses, over the entire six-year period, in PSNP areas, is 17.9% versus 10.9% in non-PSNP areas. Another potential variable is extension services, although one could expect higher services in high production areas. Contrary to this expectation, extension services are disproportionally in drought areas but this is because the Tigray region experiences disproportionately high extension services. If Tigray is removed, there is no statistical difference. 
+
+On the other hand, Agricultural Growth Program (AGP) woredas were selected in 2010 to represent high growth potential areas and are targeted for increased production.  As PSNP is social protection and AGP is high production we would expect little overlap of these two groups and actual comparisons confirm this to be the case. In our sample, contrasting the 190 woredas listed as PSNP and 81 listed as AGP, only 6 woredas are listed in both (5 from Tigray and 1 from SNNP). At the sub-kebele level, only 23 of the 1752 observations (1.3%) are listed in both. Unsurprisingly, these AGP woredas have far less damage to crops and suffered less in the 2015 drought. While the AGP sample represents 18.6% of all sampled sub-kebeles (326/1752), 21% of total sub-kebeles were not in high damage neighborhoods in 2015 and only 6.1%, or one-third the overall average, were in hot spots. Further, the non-AGP sub-kebeles had an average of 0.21 hotspots over the 2010-2015 period while the AGP woredas had an average of 0.47 cold spots over the six crop seasons. Finally, in terms of average crop losses over the six crop seasons, AGP sub-kebeles only had an average of 10.8% damage as contrasted to non-AGP value of 14.2%.  Overall, Table `r Dam_signif` reveal several statistically significant predictor variables that indicate the non-random effects of the drought.  
+
 ## Now Casting - Mid-Season OPH Estimates {#nowcastresults}
 ```{r Now Casting - Maize, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
   # read data
@@ -531,9 +647,9 @@ Looking at the results from Table `r paste(nc_maize_table)` with regression resu
 
 In Table `r paste(nc_maize_table)` we can see a decent adjusted R^2^ of `r paste(round(sum.nowcast_maz2$r.squared[2],2))`. Residuals are also relatively small with 1st and 3rd quintiles spanning `r paste(round(summary(nowcast_maz2$residuals)[2],2))` and `r paste(round(summary(nowcast_maz2$residuals)[5],2))` quintals per hectare. Although R^2^s are reasonably high for real-world data, we belive these models could be significantly improved with the use of 30m harmonized landsat sentinel data. This data should be released in 2018 and will have 5-day coverage. Implying one image is captured every 5-days. This would likely provide a high enough frequency to avoid clouds, and provide reasonable esitmates of NDVI curves, but at a much higher resolution (compared to 250m cells used here).
 
-Although interpretation is complex for this prediction-oriented model, most variables have the expected sign and significance. First we can look at contemporaneous variables measured in the current growing season. We can see that increased maximum greeness during the growing season (*G_mx*) corresponds to significantly higher yields (p<`r paste(signif(coeff.nowcast_maz2['G_mx',4],3))`. A greater NDVI 'height', the difference between growing season minimum and maximum values (*G_height*), corresponds to signficantly higher yields (p<`r paste(signif(coeff.nowcast_maz2['G_height',4],3))`. Next variables with the postfix "_leading" indicates that the variable summarizes data between the estimated planting date and maximum NDVI level in the Meher growing season. A higher total potential evapotranspiration[^4] values during 'leading' period of the growing season (*PET_G_AUC_leading*) corresponds to higher yields (p<`r paste(signif(coeff.nowcast_maz2['PET_G_AUC_leading',4],3))`. Interestingly, increased precipitation totals in the leading period of the season (*PPT_G_AUC_leading*) correspond to lower maize yields (p<`r paste(signif(coeff.nowcast_maz2['PET_G_AUC_leading',4],3))`. Next we look at one period lagged variables that give some indication of expected values for any given sub-kebele. The first (*MAIZEOPH_W, 1)*) is a one-period lag of maize outputs per hectare, unsurprisingly this variable is both significant and major determinant (p<`r paste(signif(coeff.nowcast_maz2['lag(data_in_plm$MAIZEOPH_W, 1)',4],3))`. We also see an inverse relationship between last year's season length and yields (*lag(season_length, 1) *) (p<`r paste(signif(coeff.nowcast_maz2['lag(season_length, 1)',4],3))`), where season length is the difference between estimated planting date and harvest date. This inverse relationship may be related to management practices, where farmers respond to weather or a failing season by trying to either plant early or harvest late. We also see the impact of PET in the previous season higher maximum temperatures and area under the curve (AUC) of PET corresponds to slightly higher yields (p<`r min(paste(signif(coeff.nowcast_maz2['lag(PET_G_mx, 1)',4],3)),paste(signif(coeff.nowcast_maz2['lag(PET_G_AUC, 1)',4],3)))`). Similarly, a higher mean precipitation last year (*lag(PPT_G_mn, 1)*) corresponds to significantly higher yields (p<`r paste(signif(coeff.nowcast_maz2['lag(PPT_G_mn, 1)',4],3))`), while higher total precip last year corresponds to slightly lower yields (p<`r paste(signif(coeff.nowcast_maz2['lag(PPT_G_AUC, 1)',4],3))`), although this is likely a non-linear response. We can also look at lagged values of management practices from the AgSS, with lagged improved seed use (*lag(MAIZEIMSEED, 1)*), the percetage (*lag(MAIZEFERT_CHEMICAL_AREA_P, 1)*), and intensity of chemical fertilizers (*lag(Fert_Amt_Per_Area, 1)*) all significantly related to yields now (p<`r paste(signif(coeff.nowcast_maz2['lag(MAIZEIMSEED, 1)',4],3))`,p<`r paste(signif(coeff.nowcast_maz2['lag(MAIZEFERT_CHEMICAL_AREA_P, 1)',4],3))`,p<`r paste(signif(coeff.nowcast_maz2['lag(Fert_Amt_Per_Area, 1)',4],3))`, respectively). We can also see the impacts of market access the variable *dist_pp50k* with increasing distances to population centers of 50k+ people decreasing yields (p<`r paste(signif(coeff.nowcast_maz['dist_pp50k',4],3))`).  
+Although interpretation is complex for this prediction-oriented model, most variables have the expected sign and significance. First we can look at contemporaneous variables measured in the current growing season. We can see that increased maximum greeness during the growing season (*G_mx*) corresponds to significantly higher yields (p<`r paste(signif(coeff.nowcast_maz2['G_mx',4],3))`. A greater NDVI 'height', the difference between growing season minimum and maximum values (*G_height*), corresponds to signficantly higher yields (p<`r paste(signif(coeff.nowcast_maz2['G_height',4],3))`. Next variables with the postfix "_leading" indicates that the variable summarizes data between the estimated planting date and maximum NDVI level in the Meher growing season. A higher total potential evapotranspiration[^PET] values during 'leading' period of the growing season (*PET_G_AUC_leading*) corresponds to higher yields (p<`r paste(signif(coeff.nowcast_maz2['PET_G_AUC_leading',4],3))`. Interestingly, increased precipitation totals in the leading period of the season (*PPT_G_AUC_leading*) correspond to lower maize yields (p<`r paste(signif(coeff.nowcast_maz2['PET_G_AUC_leading',4],3))`. Next we look at one period lagged variables that give some indication of expected values for any given sub-kebele. The first (*MAIZEOPH_W, 1)*) is a one-period lag of maize outputs per hectare, unsurprisingly this variable is both significant and major determinant (p<`r paste(signif(coeff.nowcast_maz2['lag(data_in_plm$MAIZEOPH_W, 1)',4],3))`. We also see an inverse relationship between last year's season length and yields (*lag(season_length, 1) *) (p<`r paste(signif(coeff.nowcast_maz2['lag(season_length, 1)',4],3))`), where season length is the difference between estimated planting date and harvest date. This inverse relationship may be related to management practices, where farmers respond to weather or a failing season by trying to either plant early or harvest late. We also see the impact of PET in the previous season higher maximum temperatures and area under the curve (AUC) of PET corresponds to slightly higher yields (p<`r min(paste(signif(coeff.nowcast_maz2['lag(PET_G_mx, 1)',4],3)),paste(signif(coeff.nowcast_maz2['lag(PET_G_AUC, 1)',4],3)))`). Similarly, a higher mean precipitation last year (*lag(PPT_G_mn, 1)*) corresponds to significantly higher yields (p<`r paste(signif(coeff.nowcast_maz2['lag(PPT_G_mn, 1)',4],3))`), while higher total precip last year corresponds to slightly lower yields (p<`r paste(signif(coeff.nowcast_maz2['lag(PPT_G_AUC, 1)',4],3))`), although this is likely a non-linear response. We can also look at lagged values of management practices from the AgSS, with lagged improved seed use (*lag(MAIZEIMSEED, 1)*), the percetage (*lag(MAIZEFERT_CHEMICAL_AREA_P, 1)*), and intensity of chemical fertilizers (*lag(Fert_Amt_Per_Area, 1)*) all significantly related to yields now (p<`r paste(signif(coeff.nowcast_maz2['lag(MAIZEIMSEED, 1)',4],3))`,p<`r paste(signif(coeff.nowcast_maz2['lag(MAIZEFERT_CHEMICAL_AREA_P, 1)',4],3))`,p<`r paste(signif(coeff.nowcast_maz2['lag(Fert_Amt_Per_Area, 1)',4],3))`, respectively). We can also see the impacts of market access the variable *dist_pp50k* with increasing distances to population centers of 50k+ people decreasing yields (p<`r paste(signif(coeff.nowcast_maz['dist_pp50k',4],3))`).  
 
-[^4]:Potential evapotranspiration is a measure of evaporative demand. It is the amount of water that could move through a system if water was not a limiting factor and is therefore related to higher temperatures and low humidity.
+[^PET]:Potential evapotranspiration is a measure of evaporative demand. It is the amount of water that could move through a system if water was not a limiting factor and is therefore related to higher temperatures and low humidity.
 
 ```{r Now Casting - Wheat, fig.height=7, message=FALSE, warning=FALSE, include=FALSE}
   # read data
@@ -1406,7 +1522,7 @@ One possible use case of these models is to predict losses outside of AgSS sampl
 
 ```
  
-*Figure `r paste(Figure_number)`: Count of Predicted Damages (>25%) at the Sub-Kebele Level 2011-2016   `r Figure_number =Figure_number+1 `*
+*Figure `r paste(Figure_number)`: Count of Predicted Damages (>25%) at the Sub-Kebele Level 2010-2015   `r Figure_number =Figure_number+1 `*
 
 ```{r All_Crops_Predict_Damages_to_all_EAs, echo=FALSE, fig.width=7, message=FALSE, warning=FALSE}
   # load processed predictions
@@ -1423,7 +1539,7 @@ One possible use case of these models is to predict losses outside of AgSS sampl
   plot(plot_dam_maz)
 ```
 
-In this particular example, we provide an estimate of the total number of drought related losses (for all crops) for the 2011-2016 growing seasons. As you can see maps like this could be used to identify isolated clusters of at-risk communities and especially those that experience repeative losses. Additionally, taking from the "Now-Casting" approach, these same loss predictions could be provided midway through the growing season, acting as a method for rapid assessment, to help target food aid or agricultural extension. 
+In this particular example, we provide an estimate of the total number of drought related losses (for all crops) for the 2010-2015 growing seasons. As you can see maps like this could be used to identify isolated clusters of at-risk communities and especially those that experience repeative losses. Additionally, taking from the "Now-Casting" approach, these same loss predictions could be provided midway through the growing season, acting as a method for rapid assessment, to help target food aid or agricultural extension. 
 
 ```{r Leaflet_All_Crops_Predict_Damages_to_all_EAs, eval=FALSE, fig.width=7, message=FALSE, warning=FALSE, include=FALSE}
   setwd(Home_dir)  
@@ -1432,7 +1548,7 @@ In this particular example, we provide an estimate of the total number of drough
   
 ```
 # Conclusions
-In this paper we find evidence of localized clusters of drought in the 2015-2016 period. However we find little to no evidence that these localized impacts effected crop yields in the most important growing areas. We find evidence however that particular areas are more prone to repetative losses across an array of crops. Considering the *generally* positive impacts of improved seeds and chemical fertilizers (crop specific, please see regressions), we believe information provided in this study could help target intervensions in these especially risk-prone areas. 
+In this paper we find evidence of localized clusters of drought in the 2015 period. However we find little to no evidence that these localized impacts effected crop yields in the most important growing areas. We find evidence however that particular areas are more prone to repetative losses across an array of crops. Considering the *generally* positive impacts of improved seeds and chemical fertilizers (crop specific, please see regressions), we believe information provided in this study could help target intervensions in these especially risk-prone areas. 
 
 Although R^2^s and predictive accuracy are reasonably high for real-world data, we belive these models could be significantly improved with the use of 30m harmonized landsat sentinel (HLS) data. This data should be released in 2018 and will have 5-day coverage. Implying one image is captured every 5-days. This would likely provide a high enough frequency to avoid clouds, and provide reasonable esitmates of NDVI curves, but at a much higher resolution (compared to 250m cells used here). We believe this will be critical to improve on our results going forward, as it will allow us to better distinguish between agriculutral and non-agricultural cells, while avoiding cells that are a mixture of crops and forest. The methods developed through this study, and previoius ones, could be easily transfered to the new HLS data stream, thus greatly improving our model accuracy, while minimizing further development time. 
 
@@ -1449,7 +1565,7 @@ One of the key challenges is how to decide on which of the 126 variables from Ag
 Here we utilize VSURF to select unique sets of variables for each crop (barley, maize, wheat, teff). Given the complexity of these permutations for each crop (100s of millions) we utilize 15 cores of the GWU supercomputer Colonial One. Each run took between 10-24 hours. 
 
 ####Panel Regression
-Compared to cross-sectional approaches, panel analysis can substantially increase the degree of observed variance over both space and time. For instance, in our current application, the integration of EAS (with n = 1752) over the 2011-2016 sample period (t = 6), results in a substantially larger data (N~6900), allowing for a much greater flexibility and degrees of freedom in the modelling of the issue of interest. Here we include a few variables of interest to the reader including Zonal and annual dummies, and a lagged value of output per hectare. Here we estimate a series of random effect models of the following form`r F1=Formula_number` `r paste(F1)`: `r Formula_number=Formula_number+1`
+Compared to cross-sectional approaches, panel analysis can substantially increase the degree of observed variance over both space and time. For instance, in our current application, the integration of EAS (with n = 1752) over the 2010-2015 sample period (t = 6), results in a substantially larger data (N~6900), allowing for a much greater flexibility and degrees of freedom in the modelling of the issue of interest. Here we include a few variables of interest to the reader including Zonal and annual dummies, and a lagged value of output per hectare. Here we estimate a series of random effect models of the following form`r F1=Formula_number` `r paste(F1)`: `r Formula_number=Formula_number+1`
 
 (`r paste(F1)`)                
 $$\ Y_{itc}=\alpha_{i}+\sum_{k=1}^{K}\beta_{k}X_{it}+ \mu_{it} +\epsilon_{it}$$
